@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+
+
+@theme {
+
+  /* Commom */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-text4: #D1D5DC;
+  --color-text5: #99A1AF;
+  --color-text6: #4A5565;
+
+  /* dark Color */
+  --color-darkBg: #01030E;
+  --color-darkPrimary: #080A1B;
+  --color-darkBorder: #151c41;
+  --color-darkLight: #16a5f1;
+
+  /* white color */
+  --color-lightBg: #F8F8F8;
+  --color-primary: #036AA1;
+  --color-border: #e0e0e0;
+
+
+  /* old color */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-dark: #1a1a1a;
+  --color-gray-light: #f5f5f5;
+  --color-gray-medium: #808080;
+  --color-gray-dark: #333333;
+  --color-bg: #ffffff;
+  --color-bg-dark: #1a1a1a;
+  --color-text: #000000;
+  --color-text-light: #ffffff;
+
+  --color-border-dark: #404040;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  color: white;
+  overflow-x: hidden;
+}
+
+html,
+body {
+  width: 100%;
+}
+
+.dark body {
+  background: #01030e;
+  color: white;
+}
+
+/* ── Suppress browser autofill background highlight ───────────────────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #1a1d29 inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Custom side scrollbar */
+body::-webkit-scrollbar,
+.sideBar::-webkit-scrollbar {
+  width: 8px;
+}
+
+body::-webkit-scrollbar-track,
+.sideBar::-webkit-scrollbar-track {
+  border-radius: 10px;
+  background: #010611;
+}
+
+body::-webkit-scrollbar-thumb,
+.sideBar::-webkit-scrollbar-thumb {
+  background: #1b2741;
+  border-radius: 10px;
+}
+
+body::-webkit-scrollbar-thumb:hover,
+.sideBar::-webkit-scrollbar-thumb:hover {
+  background: #253042;
+}
+
+.dynamicHeight {
+  height: calc(100vh - 3.6rem);
+}
+
+/* Easy use */
+.ani2 {
+  transition: all 0.2s ease-in-out !important;
+}
+
+.ani3 {
+  transition: all 0.3s ease-in-out !important;
+}
+
+.ani5 {
+  transition: all 0.5s ease-in-out !important;
+}
+
+.ani7 {
+  transition: all 0.7s ease-in-out !important;
+}
+
+/* position */
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* No scrollbar */
+.noBar::-webkit-scrollbar {
+  display: none;
+}
+
+.noBar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* select arrow  */
+.arrow {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  background: white url('data:image/svg+xml;utf8,<svg fill="%23000000" height="10px" width="9px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 330"><path d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"></path></svg>') no-repeat;
+  background-position: calc(100% - 10px) center;
+  border: 1px solid #ccc;
+  padding-right: 30px;
+}
+
+
+
+
+/* Particle animation */
+@keyframes dust-particle {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 0.6;
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: translate(5px, -3px) scale(1.2);
+  }
+
+  90% {
+    opacity: 0.4;
+  }
+
+  100% {
+    transform: translate(10px, -8px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+.animate-dust-particle {
+  animation: dust-particle 5s ease-in-out infinite;
+}

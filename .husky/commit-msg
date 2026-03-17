@@ -1,0 +1,58 @@
+
+#!/bin/sh
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+printf "\n"
+printf "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}\n"
+printf "${CYAN}║${NC}           ${BLUE}��� Validating Commit Message${NC}                      ${CYAN}║${NC}\n"
+printf "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n"
+printf "\n"
+
+# Get commit message
+commit_msg=$(cat "$1")
+
+# Check if commit message is empty
+if [ -z "$commit_msg" ]; then
+    printf "${RED}❌ Error: Commit message cannot be empty!${NC}\n"
+    printf "\n"
+    printf "${YELLOW}��� Tip: Please provide a meaningful commit message${NC}\n"
+    printf "\n"
+    exit 1
+fi
+
+# Check minimum length
+if [ ${#commit_msg} -lt 10 ]; then
+    printf "${RED}❌ Error: Commit message is too short!${NC}\n"
+    printf "\n"
+    printf "${YELLOW}��� Minimum length: 10 characters${NC}\n"
+    printf "${YELLOW}��� Current length: ${#commit_msg} characters${NC}\n"
+    printf "\n"
+    printf "${CYAN}Current message:${NC} ${commit_msg}\n"
+    printf "\n"
+    printf "${YELLOW}��� Examples of good commit messages:${NC}\n"
+    printf "   ${GREEN}✓${NC} feat: add user authentication\n"
+    printf "   ${GREEN}✓${NC} fix: resolve login button issue\n"
+    printf "   ${GREEN}✓${NC} refactor: improve code structure\n"
+    printf "   ${GREEN}✓${NC} docs: update README with examples\n"
+    printf "\n"
+    exit 1
+fi
+
+# Show success message
+printf "${GREEN}✅ Commit message is valid!${NC}\n"
+printf "\n"
+printf "${CYAN}Message:${NC} ${commit_msg}\n"
+printf "${CYAN}Length:${NC}  ${#commit_msg} characters\n"
+printf "\n"
+printf "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}\n"
+printf "${CYAN}║${NC}              ${GREEN}${BOLD}��� Ready to Push! ���${NC}                          ${CYAN}║${NC}\n"
+printf "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n"
+printf "\n"

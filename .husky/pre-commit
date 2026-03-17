@@ -1,0 +1,50 @@
+#!/bin/sh
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+printf "\n"
+printf "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}\n"
+printf "${CYAN}║${NC}              ${BLUE}��� Pre-Commit Checks Started${NC}                   ${CYAN}║${NC}\n"
+printf "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n"
+printf "\n"
+
+# Run lint-staged
+printf "${YELLOW}��� Step 1/2: Running ESLint & Prettier on staged files...${NC}\n"
+printf "\n"
+if npx lint-staged; then
+    printf "\n"
+    printf "${GREEN}✅ Lint-staged completed successfully!${NC}\n"
+else
+    printf "\n"
+    printf "${RED}❌ Lint-staged failed! Please fix the errors above.${NC}\n"
+    exit 1
+fi
+
+printf "\n"
+printf "${CYAN}────────────────────────────────────────────────────────────────${NC}\n"
+printf "\n"
+
+# Run TypeScript type checking
+printf "${YELLOW}��� Step 2/2: Running TypeScript type checking...${NC}\n"
+printf "\n"
+if npm run type-check; then
+    printf "\n"
+    printf "${GREEN}✅ Type checking passed!${NC}\n"
+else
+    printf "\n"
+    printf "${RED}❌ Type checking failed! Please fix TypeScript errors above.${NC}\n"
+    exit 1
+fi
+
+printf "\n"
+printf "${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}\n"
+printf "${CYAN}║${NC}            ${GREEN}${BOLD}✨ All Pre-Commit Checks Passed! ✨${NC}               ${CYAN}║${NC}\n"
+printf "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n"
+printf "\n"
