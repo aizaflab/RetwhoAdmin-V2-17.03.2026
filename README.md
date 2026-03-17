@@ -1,56 +1,104 @@
-# 🚀 Next.js Boilerplate 2026
+# Retwho Admin v2
 
-A modern, high-performance frontend template built with **Next.js**, **TypeScript**, and **Tailwind CSS**. Designed for speed, scalability, and a premium developer experience.
+Retwho Admin v2 is the administrative dashboard for Retwho.com. It is built with Next.js App Router, TypeScript, and Tailwind CSS v4 to manage authentication flows, admin UI components, and shared platform utilities.
 
-## ✨ Key Features
+## Project Highlights
 
-- **App Router** - Latest Next.js features and patterns.
-- **Dark Mode** - Built-in theme support with zero-flash implementation.
-- **Strict Linting** - Pre-configured ESLint, Prettier, and Husky.
-- **Optimized UI** - Minimal, black & white focused design system.
+- Admin-first architecture with route groups and shared layout/providers.
+- Auth module screens for login, forgot password, and reset password.
+- Reusable UI system (button, input, select, modal, table, pagination, tooltip, and more).
+- Theme-aware UI with light and dark design tokens.
+- Quality gates with ESLint, Prettier, TypeScript checks, Husky, and lint-staged.
 
----
+## Tech Stack
 
-## 📂 Project Structure
+- Next.js 16
+- React 19
+- TypeScript 5
+- Tailwind CSS 4
+- Redux Toolkit
+- React Hook Form + Zod
+- Axios
+
+## Folder Overview
 
 ```text
-├── 📁 app/             # Application routes & layouts
-├── 📁 components/      # UI & shared components
-│   ├── 📁 ui/          # Atomic components (buttons, inputs)
-│   └── 📁 providers/   # Context & high-level providers
-├── 📁 hooks/           # Custom React hooks
-├── 📁 lib/             # Utilities (cn, formatting, API)
-├── 📁 public/          # Static assets (images, fonts)
-└── 📁 types/           # Global TypeScript definitions
+app/                        # App Router pages, layouts, and route groups
+app/(auth)/                 # Auth pages (login, forgot-password, reset-password)
+components/forms/           # Form-level reusable inputs/selects/textarea
+components/ui/              # Design system components
+components/providers/       # App-level providers (theme, auth, confirm)
+lib/                        # API client, utilities, auth helpers
+hooks/                      # Shared hooks
+featured/                   # Redux store/hook setup
+public/                     # Static assets
 ```
 
----
+## Getting Started
 
-## 🛠️ Getting Started
+1. Install dependencies
 
-1. **Install Dependencies:**
+```bash
+npm install
+```
 
-   ```bash
-   npm install
-   ```
+2. Start development server
 
-2. **Run Development Server:**
+```bash
+npm run dev
+```
 
-   ```bash
-   npm run dev
-   ```
+3. Build for production
 
-3. **Production Build:**
-   ```bash
-   npm run build
-   ```
+```bash
+npm run build
+```
 
----
+4. Start production server
 
-## 🎨 Theme Configuration
+```bash
+npm run start
+```
 
-Colors are centralized in `app/globals.css` using CSS variables for both light and dark modes. Use Tailwind classes like `bg-primary`, `border-border`, or `text-foreground` to maintain consistency.
+## Available Scripts
 
----
+- npm run dev: Run Next.js in development mode.
+- npm run build: Create production build.
+- npm run start: Run production server.
+- npm run lint: Run ESLint with zero warnings allowed.
+- npm run lint:fix: Auto-fix lint issues.
+- npm run type-check: Run TypeScript checks without emit.
+- npm run format: Format files with Prettier.
+- npm run format:check: Verify formatting.
 
-_Built with ❤️ for rapid development._
+## Git Hooks (Husky)
+
+This project uses Husky + lint-staged:
+
+- pre-commit: runs lint-staged and TypeScript checks.
+- commit-msg: validates commit message length.
+
+If hooks are not running, execute:
+
+```bash
+npm run prepare
+git config core.hooksPath .husky/_
+```
+
+Then verify:
+
+```bash
+git config --get core.hooksPath
+```
+
+Expected output:
+
+```text
+.husky/_
+```
+
+## Notes
+
+- Theme tokens and global styles are in app/globals.css.
+- Keep new UI components variant-safe for both light and dark modes.
+- Prefer updating shared components in components/ui for consistency.
