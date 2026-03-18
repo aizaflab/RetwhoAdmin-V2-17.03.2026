@@ -29,11 +29,13 @@ export interface AccessTarget {
   assignedUserId?: string;
 }
 
+import React from "react";
+
 export interface AdminMenuItem {
   id: string;
   title: string;
-  type: "group" | "item";
-  icon?: string;
+  type: "group" | "item" | "label";
+  icon?: React.ElementType;
   path?: string;
   children?: AdminMenuItem[];
   requiredPermissions?: string[];

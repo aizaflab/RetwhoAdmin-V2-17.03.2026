@@ -3,13 +3,31 @@
 import { AdminMenuItem } from "../../access-control/_types/access.types";
 import { PERMISSIONS } from "../../access-control/_config/permission";
 
+import {
+  Building2,
+  Package,
+  Link2,
+  ShoppingCart,
+  FileText,
+  Boxes,
+  Wallet,
+  Settings,
+  Megaphone,
+  ShieldCheck,
+  Store,
+  Headphones,
+  NotebookPen,
+  BriefcaseBusiness,
+} from "lucide-react";
+import { ChartBarIcon, UsersIcon } from "../../../icons/Icons";
+
 export const ADMIN_MENU: AdminMenuItem[] = [
   {
     id: "dashboard",
     title: "Dashboard",
     type: "item",
-    icon: "LayoutDashboard",
-    path: "/admin/dashboard",
+    icon: ChartBarIcon,
+    path: "/",
     requiredPermissions: [PERMISSIONS.DASHBOARD_VIEW],
     order: 1,
   },
@@ -18,7 +36,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "department",
     title: "Department",
     type: "group",
-    icon: "Building2",
+    icon: Building2,
     requiredPermissions: [
       PERMISSIONS.DEPARTMENT_LIST,
       PERMISSIONS.DEPARTMENT_CREATE,
@@ -48,7 +66,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "product",
     title: "Product",
     type: "group",
-    icon: "Package",
+    icon: Package,
     requiredPermissions: [
       PERMISSIONS.PRODUCT_LIST,
       PERMISSIONS.PRODUCT_CREATE,
@@ -89,10 +107,16 @@ export const ADMIN_MENU: AdminMenuItem[] = [
   },
 
   {
+    id: "lbl-user",
+    title: "User Management",
+    type: "label",
+    order: 3.5,
+  },
+  {
     id: "user",
     title: "User",
     type: "group",
-    icon: "Users",
+    icon: UsersIcon,
     requiredPermissions: [
       PERMISSIONS.USER_REQUEST_LIST,
       PERMISSIONS.USER_REQUEST_CREATE,
@@ -161,7 +185,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "connect",
     title: "Connect",
     type: "group",
-    icon: "Link2",
+    icon: Link2,
     requiredPermissions: [
       PERMISSIONS.CONNECT_REQUEST_LIST,
       PERMISSIONS.CONNECT_REQUEST_CREATE,
@@ -190,7 +214,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "order",
     title: "Order",
     type: "group",
-    icon: "ShoppingCart",
+    icon: ShoppingCart,
     requiredPermissions: [PERMISSIONS.ORDER_LIST],
     order: 6,
     children: [
@@ -208,7 +232,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "report",
     title: "Report",
     type: "group",
-    icon: "FileText",
+    icon: FileText,
     requiredPermissions: [PERMISSIONS.REPORT_LIST, PERMISSIONS.ETIMESHEET_LIST],
     order: 7,
     children: [
@@ -233,7 +257,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "stock",
     title: "Stock",
     type: "group",
-    icon: "Boxes",
+    icon: Boxes,
     requiredPermissions: [PERMISSIONS.STOCK_LIST],
     order: 8,
     children: [
@@ -251,7 +275,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "account",
     title: "Account",
     type: "group",
-    icon: "Wallet",
+    icon: Wallet,
     requiredPermissions: [
       PERMISSIONS.WHOLESALER_DUE_LIST,
       PERMISSIONS.RETAILER_DUE_LIST,
@@ -316,10 +340,16 @@ export const ADMIN_MENU: AdminMenuItem[] = [
   },
 
   {
+    id: "lbl-settings",
+    title: "System & Settings",
+    type: "label",
+    order: 8.5,
+  },
+  {
     id: "setting",
     title: "Setting",
     type: "group",
-    icon: "Settings",
+    icon: Settings,
     requiredPermissions: [
       PERMISSIONS.CONTACT_REQUEST_LIST,
       PERMISSIONS.WEB_SUBSCRIBER_LIST,
@@ -355,7 +385,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "promotion",
     title: "Promotion",
     type: "group",
-    icon: "Megaphone",
+    icon: Megaphone,
     requiredPermissions: [
       PERMISSIONS.PROMOTION_LIST,
       PERMISSIONS.PROMOTION_CREATE,
@@ -383,7 +413,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "role",
     title: "Role",
     type: "group",
-    icon: "ShieldCheck",
+    icon: ShieldCheck,
     requiredPermissions: [PERMISSIONS.ROLE_LIST, PERMISSIONS.ROLE_CREATE],
     order: 12,
     children: [
@@ -408,7 +438,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "store-hub",
     title: "Store Hub",
     type: "group",
-    icon: "Store",
+    icon: Store,
     requiredPermissions: [
       PERMISSIONS.STORE_HUB_RETAILER_LIST,
       PERMISSIONS.STORE_HUB_WHOLESALER_LIST,
@@ -444,7 +474,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "support-hub",
     title: "Support Hub",
     type: "group",
-    icon: "Headphones",
+    icon: Headphones,
     requiredPermissions: [
       PERMISSIONS.SUPPORT_RESOURCE_LIST,
       PERMISSIONS.SUPPORT_ARTICLE_LIST,
@@ -488,7 +518,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "blog",
     title: "Blog",
     type: "group",
-    icon: "NotebookPen",
+    icon: NotebookPen,
     requiredPermissions: [
       PERMISSIONS.BLOG_CATEGORY_LIST,
       PERMISSIONS.BLOG_LIST,
@@ -524,7 +554,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     id: "hiring",
     title: "Hiring Deck",
     type: "group",
-    icon: "BriefcaseBusiness",
+    icon: BriefcaseBusiness,
     requiredPermissions: [
       PERMISSIONS.JOB_CATEGORY_LIST,
       PERMISSIONS.SERVICE_CATEGORY_LIST,
@@ -562,15 +592,5 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         requiredPermissions: [PERMISSIONS.HIRING_LIST],
       },
     ],
-  },
-
-  {
-    id: "help-center",
-    title: "Help Center",
-    type: "item",
-    icon: "BadgeHelp",
-    path: "/admin/help-center",
-    requiredPermissions: [PERMISSIONS.HELP_CENTER_VIEW],
-    order: 17,
   },
 ];

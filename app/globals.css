@@ -2,28 +2,24 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-
-
 @theme {
-
   /* Commom */
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-text4: #D1D5DC;
-  --color-text5: #99A1AF;
-  --color-text6: #4A5565;
+  --color-text4: #d1d5dc;
+  --color-text5: #99a1af;
+  --color-text6: #4a5565;
 
   /* dark Color */
-  --color-darkBg: #01030E;
-  --color-darkPrimary: #080A1B;
+  --color-darkBg: #01030e;
+  --color-darkPrimary: #080a1b;
   --color-darkBorder: #151c41;
   --color-darkLight: #16a5f1;
 
   /* white color */
-  --color-lightBg: #F8F8F8;
-  --color-primary: #036AA1;
+  --color-lightBg: #f8f8f8;
+  --color-primary: #036aa1;
   --color-border: #e0e0e0;
-
 
   /* old color */
   --color-white: #ffffff;
@@ -69,26 +65,36 @@ input:-webkit-autofill:active {
   transition: background-color 9999s ease-in-out 0s;
 }
 
-/* Custom side scrollbar */
-body::-webkit-scrollbar,
-.sideBar::-webkit-scrollbar {
-  width: 8px;
+/* Scrollbar */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
 }
 
-body::-webkit-scrollbar-track,
-.sideBar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
   border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-track {
   background: #010611;
 }
 
-body::-webkit-scrollbar-thumb,
-.sideBar::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb {
   background: #1b2741;
-  border-radius: 10px;
 }
 
-body::-webkit-scrollbar-thumb:hover,
-.sideBar::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #253042;
 }
 
@@ -142,14 +148,13 @@ body::-webkit-scrollbar-thumb:hover,
   -moz-appearance: none;
   appearance: none;
   cursor: pointer;
-  background: white url('data:image/svg+xml;utf8,<svg fill="%23000000" height="10px" width="9px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 330"><path d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"></path></svg>') no-repeat;
+  background: white
+    url('data:image/svg+xml;utf8,<svg fill="%23000000" height="10px" width="9px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 330"><path d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393 c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393 s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"></path></svg>')
+    no-repeat;
   background-position: calc(100% - 10px) center;
   border: 1px solid #ccc;
   padding-right: 30px;
 }
-
-
-
 
 /* Particle animation */
 @keyframes dust-particle {

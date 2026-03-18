@@ -11,13 +11,10 @@ export function useCurrentAccess(): CurrentUserAccess {
     tenantId: "t1",
     departmentId: "d1",
     featureFlags: ["blog_module", "support_module"],
-    permissions: [
-      { key: PERMISSIONS.DASHBOARD_VIEW, scope: "global" },
-      { key: PERMISSIONS.PRODUCT_LIST, scope: "tenant" },
-      { key: PERMISSIONS.PRODUCT_CREATE, scope: "tenant" },
-      { key: PERMISSIONS.ROLE_LIST, scope: "tenant" },
-      { key: PERMISSIONS.HELP_CENTER_VIEW, scope: "global" },
-    ],
+    permissions: Object.values(PERMISSIONS).map((key) => ({
+      key,
+      scope: "global",
+    })),
     deniedPermissions: [],
   };
 }

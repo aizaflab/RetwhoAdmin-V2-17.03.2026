@@ -339,7 +339,7 @@ const Modal = forwardRef(function Modal(
             data-modal-scrollable
             className={cn(
               !title ? "mt-0" : "",
-              "max-h-[65vh] overflow-auto noBar text-slate-600 dark:text-zinc-300",
+              "max-h-[85vh] overflow-auto noBar text-slate-600 dark:text-zinc-300",
               "flex flex-col",
             )}
             style={{
