@@ -34,7 +34,7 @@ export function SidebarItem({
       }
     >
       {isSubmenu && !collapsed && !hideDot && (
-        <div className="size-2 rounded-full bg-gray-300 -ml-1"></div>
+        <div className="size-2 rounded-full bg-gray-300 dark:bg-darkBorder -ml-1"></div>
       )}
 
       <Link
@@ -43,7 +43,7 @@ export function SidebarItem({
           "flex flex-1 items-center rounded px-3 py-2.5 text-sm font-medium transition-all",
           active
             ? "bg-primary text-white"
-            : "text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800",
+            : "text-slate-700 dark:text-text5 hover:bg-slate-100 dark:hover:bg-darkPrimary hover:text-slate-900 dark:hover:text-white",
           collapsed ? "justify-center" : "gap-3",
         ].join(" ")}
       >

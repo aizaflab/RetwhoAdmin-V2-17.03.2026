@@ -15,10 +15,44 @@ import { GlobalTooltip } from "./GlobalTooltip";
 import logoImg from "@/public/img/logo/logo.svg";
 import React, { useMemo, useState, useRef } from "react";
 import { HoverContext, HoverState } from "./SidebarContext";
-import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
+  ShoppingBag,
+  PackagePlus,
+  ClipboardCheck,
+} from "lucide-react";
 import { ADMIN_MENU } from "@/components/modules/navigation/_config/admin-menu";
 import { useSidebar } from "@/components/modules/navigation";
 import { cn } from "@/lib/utils";
+
+const MOCK_ACTIVITIES = [
+  {
+    title: "New order placed",
+    desc: "Order #4092 received just now.",
+    icon: ShoppingBag,
+    color: "text-emerald-600 dark:text-emerald-400",
+    bg: "bg-emerald-100 dark:bg-emerald-500/20",
+    dot: "bg-emerald-500",
+  },
+  {
+    title: "Product Published",
+    desc: "Samsung S24 Ultra is live.",
+    icon: PackagePlus,
+    color: "text-blue-600 dark:text-blue-400",
+    bg: "bg-blue-100 dark:bg-blue-500/20",
+    dot: "bg-blue-500",
+  },
+  {
+    title: "Task Completed",
+    desc: "Employee verified user request.",
+    icon: ClipboardCheck,
+    color: "text-purple-600 dark:text-purple-400",
+    bg: "bg-purple-100 dark:bg-purple-500/20",
+    dot: "bg-purple-500",
+  },
+];
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -36,6 +70,23 @@ export default function Sidebar() {
     isHovered: false,
   });
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [activityIdx, setActivityIdx] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  React.useEffect(() => {
+    if (collapsed) return;
+
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setActivityIdx((prev) => (prev + 1) % MOCK_ACTIVITIES.length);
+        setIsAnimating(false);
+      }, 300); // 300ms for slide-out animation
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [collapsed]);
 
   const setHover = (e: React.MouseEvent, item: AdminMenuItem) => {
     if (!collapsed) return;
@@ -77,7 +128,7 @@ export default function Sidebar() {
         />
 
         <aside
-          className={`fixed top-0 bottom-0 left-0 z-100 flex h-screen flex-col border-r border-slate-200 bg-white transition-all duration-300 ${
+          className={`fixed top-0 bottom-0 left-0 z-100 flex h-screen flex-col border-r border-slate-200 dark:border-darkBorder bg-white dark:bg-darkBg transition-all duration-300 ${
             collapsed ? "w-[270px] md:w-[80px]" : "w-[270px]"
           } ${
             !isMobileOpen
@@ -87,7 +138,7 @@ export default function Sidebar() {
         >
           <div
             className={[
-              "flex items-center border-b border-slate-200 px-4 h-[69px]",
+              "flex items-center border-b border-slate-200 dark:border-darkBorder px-4 h-[69px]",
               collapsed ? "justify-center" : "justify-between",
             ].join(" ")}
           >
@@ -104,7 +155,7 @@ export default function Sidebar() {
             <button
               type="button"
               onClick={() => setCollapsed((prev) => !prev)}
-              className="rounded-lg border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-100 cursor-pointer hidden md:flex"
+              className="rounded-lg border border-slate-200 dark:border-darkBorder p-2 text-slate-700 dark:text-gray-300 transition hover:bg-slate-100 dark:bg-darkPrimary dark:hover:bg-darkBorder/70 cursor-pointer hidden md:flex"
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
@@ -140,12 +191,12 @@ export default function Sidebar() {
                       title={collapsed ? item.title : undefined}
                     >
                       {collapsed ? (
-                        <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 tracking-widest">
+                        <span className="text-[10px] font-bold text-text4 dark:text-slate-600 tracking-widest">
                           •••
                         </span>
                       ) : (
                         <>
-                          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap truncate">
+                          <span className="text-[11px] font-medium text-text4 dark:text-text5/70 uppercase tracking-widest whitespace-nowrap truncate">
                             {item.title}
                           </span>
                           <div className="h-px flex-1 bg-linear-to-r from-slate-200 to-transparent dark:from-slate-700/50 mt-0.5"></div>
@@ -178,15 +229,81 @@ export default function Sidebar() {
             </nav>
           </div>
 
-          <div className="border-t border-slate-200 p-3">
+          <div className="border-t border-slate-200/70 dark:border-slate-800 p-3 py-2.5 bg-white dark:bg-darkPrimary">
             <div
-              className={[
-                "rounded-xl bg-slate-50 p-3 text-xs text-slate-600",
+              className={cn(
+                "group relative overflow-hidden rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 p-3  transition-all",
                 collapsed ? "hidden" : "block",
-              ].join(" ")}
+              )}
             >
-              Signed in with controlled access permissions.
+              <div className="absolute top-2.5 right-2.5 flex size-1.5">
+                <span
+                  className={cn(
+                    "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                    MOCK_ACTIVITIES[activityIdx].dot,
+                  )}
+                ></span>
+                <span
+                  className={cn(
+                    "relative inline-flex rounded-full size-1.5",
+                    MOCK_ACTIVITIES[activityIdx].dot,
+                  )}
+                ></span>
+              </div>
+
+              <div
+                className={cn(
+                  "flex gap-2.5 items-start relative z-10 w-full pr-4 transition-all duration-300 transform",
+                  isAnimating
+                    ? "opacity-0 translate-y-2 scale-95"
+                    : "opacity-100 translate-y-0 scale-100",
+                )}
+              >
+                <div
+                  className={cn(
+                    "shrink-0 flex items-center justify-center size-8 rounded-lg shadow-xs transition-colors duration-300",
+                    MOCK_ACTIVITIES[activityIdx].bg,
+                    MOCK_ACTIVITIES[activityIdx].color,
+                  )}
+                >
+                  {(() => {
+                    const Icon = MOCK_ACTIVITIES[activityIdx].icon;
+                    return <Icon className="size-4" />;
+                  })()}
+                </div>
+
+                <div className="flex flex-col min-w-0 flex-1">
+                  <h4 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight truncate transition-colors duration-300">
+                    {MOCK_ACTIVITIES[activityIdx].title}
+                  </h4>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 transition-colors duration-300">
+                    {MOCK_ACTIVITIES[activityIdx].desc}
+                  </p>
+                </div>
+              </div>
             </div>
+
+            {/* Collapsed state */}
+            {collapsed && (
+              <div className="flex flex-col items-center justify-center mt-auto mb-1">
+                <div
+                  className={cn(
+                    "relative flex size-9 items-center justify-center rounded-xl border border-slate-200/60 dark:border-slate-800  transition-all duration-300",
+                    MOCK_ACTIVITIES[activityIdx].bg,
+                    MOCK_ACTIVITIES[activityIdx].color,
+                    isAnimating
+                      ? "opacity-0 scale-75"
+                      : "opacity-100 scale-100",
+                  )}
+                  title={MOCK_ACTIVITIES[activityIdx].title}
+                >
+                  {(() => {
+                    const Icon = MOCK_ACTIVITIES[activityIdx].icon;
+                    return <Icon className="size-4" />;
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
           <GlobalTooltip
             hoverState={hoverState}

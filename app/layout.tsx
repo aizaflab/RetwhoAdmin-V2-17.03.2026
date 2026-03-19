@@ -19,9 +19,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Next.js Template - Modern Frontend Boilerplate",
-  description:
-    "A clean, minimal Next.js template with TypeScript, Tailwind CSS, and dark mode support. Perfect starting point for your next project.",
+  title: "Retwho-Admin",
+  description: "Retwho-Admin - Admin Dashboard",
 };
 
 export default function RootLayout({

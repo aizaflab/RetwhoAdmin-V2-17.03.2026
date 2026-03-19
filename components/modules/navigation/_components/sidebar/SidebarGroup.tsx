@@ -31,8 +31,8 @@ export function SidebarGroup({ item, pathname, collapsed }: SidebarGroupProps) {
           className={[
             "flex w-full items-center justify-center rounded px-3 py-2.5 transition-all outline-none cursor-pointer",
             open || childActive
-              ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-              : "text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800",
+              ? "bg-slate-100 dark:bg-darkPrimary text-black  dark:text-white"
+              : "text-slate-700 dark:text-text5 hover:bg-slate-100 dark:hover:bg-darkPrimary hover:text-black dark:hover:text-white",
           ].join(" ")}
         >
           {Icon ? <Icon className="h-5 w-5 shrink-0" /> : null}
@@ -49,8 +49,8 @@ export function SidebarGroup({ item, pathname, collapsed }: SidebarGroupProps) {
         className={[
           "flex w-full items-center justify-between rounded px-3 py-2.5 text-sm font-semibold transition-all cursor-pointer",
           open || childActive
-            ? "bg-slate-100 text-slate-900"
-            : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+            ? "bg-slate-100 dark:bg-darkBorder/70 text-black dark:text-white"
+            : "text-slate-700 dark:text-text5 hover:bg-slate-100 dark:hover:bg-darkBorder/70 dark:hover:text-white hover:text-black",
         ].join(" ")}
       >
         <span className="flex min-w-0 items-center gap-3">
@@ -72,7 +72,7 @@ export function SidebarGroup({ item, pathname, collapsed }: SidebarGroupProps) {
         ].join(" ")}
       >
         <div className="overflow-hidden">
-          <div className="ml-5 pt-2 space-y-1 border-l border-slate-200 ">
+          <div className="ml-5 pt-2 space-y-1 border-l border-slate-200 dark:border-darkBorder ">
             {item.children.map((child) => (
               <SidebarItem
                 key={child.id}

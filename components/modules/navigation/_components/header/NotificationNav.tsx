@@ -240,7 +240,7 @@ export function NotificationNav() {
       {/* Dropdown Panel */}
 
       <div
-        className={`absolute sm:right-0 -right-16 top-[50px] w-[370px] sm:w-[420px] bg-white dark:bg-slate-900/80 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-gray-200/70 dark:border-white/10 z-50 overflow-hidden origin-top-right transition-all duration-200 ease-out ${
+        className={`absolute sm:right-0 -right-16 top-[50px] w-[370px] sm:w-[420px]  rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] border bg-white dark:bg-darkBg border-border/70 dark:border-darkBorder z-50 overflow-hidden origin-top-right transition-all duration-200 ease-out ${
           openDropdown
             ? "opacity-100 translate-y-0 visible pointer-events-auto"
             : "opacity-0 translate-y-2 invisible pointer-events-none"
