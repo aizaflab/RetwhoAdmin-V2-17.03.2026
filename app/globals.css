@@ -66,35 +66,41 @@ input:-webkit-autofill:active {
 }
 
 /* Scrollbar */
-
-::-webkit-scrollbar {
+::-webkit-scrollbar,
+.custom-scroll ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 
-::-webkit-scrollbar-track {
+::-webkit-scrollbar-track,
+.custom-scroll ::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 10px;
 }
 
-::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb,
+.custom-scroll ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover,
+.custom-scroll ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-.dark ::-webkit-scrollbar-track {
+.dark ::-webkit-scrollbar-track,
+.dark .custom-scroll ::-webkit-scrollbar-track {
   background: #010611;
 }
 
-.dark ::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb,
+.dark .custom-scroll ::-webkit-scrollbar-thumb {
   background: #1b2741;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover,
+.dark .custom-scroll ::-webkit-scrollbar-thumb:hover {
   background: #253042;
 }
 

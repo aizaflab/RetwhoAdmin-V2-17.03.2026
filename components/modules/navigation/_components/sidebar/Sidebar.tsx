@@ -15,13 +15,20 @@ import { GlobalTooltip } from "./GlobalTooltip";
 import logoImg from "@/public/img/logo/logo.svg";
 import React, { useMemo, useState, useRef } from "react";
 import { HoverContext, HoverState } from "./SidebarContext";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { ADMIN_MENU } from "@/components/modules/navigation/_config/admin-menu";
+import { useSidebar } from "@/components/modules/navigation";
+import { cn } from "@/lib/utils";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const currentAccess = useCurrentAccess();
-  const [collapsed, setCollapsed] = useState(false);
+  const {
+    isCollapsed: collapsed,
+    setIsCollapsed: setCollapsed,
+    isMobileOpen,
+    setIsMobileOpen,
+  } = useSidebar();
 
   const [hoverState, setHoverState] = useState<HoverState>({
     item: null,
@@ -54,108 +61,141 @@ export default function Sidebar() {
 
   return (
     <HoverContext.Provider value={{ setHover, clearHover }}>
-      <aside
-        className={[
-          "sticky top-0 flex h-screen flex-col border-r border-slate-200 bg-white transition-all duration-300",
-          collapsed ? "w-[80px]" : "w-[280px]",
-        ].join(" ")}
-      >
+      <>
+        {/* Overlay for mobile (< md) */}
+
         <div
-          className={[
-            "flex items-center border-b border-slate-200 px-4 py-2",
-            collapsed ? "justify-center" : "justify-between",
-          ].join(" ")}
+          className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden transition-all duration-300 ${isMobileOpen ? "opacity-100 visible pointer-events-auto" : "opacity-0 invisible pointer-events-none"}`}
+          onClick={() => setIsMobileOpen(false)}
+        />
+
+        {/* Spacer for layout */}
+        <div
+          className={`shrink-0 transition-all duration-300 hidden md:block ${
+            collapsed ? "w-[80px]" : "w-[80px] lg:w-[270px]"
+          }`}
+        />
+
+        <aside
+          className={`fixed top-0 bottom-0 left-0 z-100 flex h-screen flex-col border-r border-slate-200 bg-white transition-all duration-300 ${
+            collapsed ? "w-[270px] md:w-[80px]" : "w-[270px]"
+          } ${
+            !isMobileOpen
+              ? "-translate-x-full md:translate-x-0"
+              : "translate-x-0"
+          }`}
         >
-          {!collapsed && (
-            <Link href="/">
-              <Image
-                src={logoImg}
-                alt="Retwho"
-                className="h-14 w-fit mx-auto"
-              />
-            </Link>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setCollapsed((prev) => !prev)}
-            className="rounded-lg border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-100"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          <div
+            className={[
+              "flex items-center border-b border-slate-200 px-4 h-[69px]",
+              collapsed ? "justify-center" : "justify-between",
+            ].join(" ")}
           >
-            {collapsed ? (
-              <PanelLeftOpen className="h-4 w-4" />
-            ) : (
-              <PanelLeftClose className="h-4 w-4" />
+            {!collapsed && (
+              <Link href="/">
+                <Image
+                  src={logoImg}
+                  alt="Retwho"
+                  className="h-14 w-fit mx-auto"
+                />
+              </Link>
             )}
-          </button>
-        </div>
 
-        <div className="custom-scroll flex-1 px-3 py-4 [scrollbar-gutter:stable] overflow-hidden hover:overflow-y-auto">
-          <nav className="space-y-2">
-            {allowedMenu.map((item) => {
-              if (item.type === "label") {
-                return (
-                  <div
-                    key={item.id}
-                    className={`mt-3 mb-1 flex items-center transition-all ${collapsed ? "justify-center" : "px-3 gap-3"}`}
-                    title={collapsed ? item.title : undefined}
-                  >
-                    {collapsed ? (
-                      <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 tracking-widest">
-                        •••
-                      </span>
-                    ) : (
-                      <>
-                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap truncate">
-                          {item.title}
+            <button
+              type="button"
+              onClick={() => setCollapsed((prev) => !prev)}
+              className="rounded-lg border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-100 cursor-pointer hidden md:flex"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {collapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </button>
+
+            <button
+              onClick={() => setIsMobileOpen(false)}
+              className={cn(
+                "relative md:hidden size-8 rounded-[11px] flex items-center justify-center cursor-pointer ",
+                "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
+                "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-primary/50",
+                "transition-all duration-200",
+                "text-gray-700 dark:text-gray-300",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              )}
+            >
+              <X className="size-[18px]" />
+            </button>
+          </div>
+
+          <div className="custom-scroll flex-1 px-3 py-4 [scrollbar-gutter:stable]md:overflow-hidden md:hover:overflow-y-auto overflow-y-auto">
+            <nav className="space-y-2">
+              {allowedMenu.map((item) => {
+                if (item.type === "label") {
+                  return (
+                    <div
+                      key={item.id}
+                      className={`mt-3 mb-1 flex items-center transition-all ${collapsed ? "justify-center" : "px-3 gap-3"}`}
+                      title={collapsed ? item.title : undefined}
+                    >
+                      {collapsed ? (
+                        <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 tracking-widest">
+                          •••
                         </span>
-                        <div className="h-px flex-1 bg-linear-to-r from-slate-200 to-transparent dark:from-slate-700/50 mt-0.5"></div>
-                      </>
-                    )}
-                  </div>
-                );
-              }
+                      ) : (
+                        <>
+                          <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap truncate">
+                            {item.title}
+                          </span>
+                          <div className="h-px flex-1 bg-linear-to-r from-slate-200 to-transparent dark:from-slate-700/50 mt-0.5"></div>
+                        </>
+                      )}
+                    </div>
+                  );
+                }
 
-              if (item.type === "item") {
+                if (item.type === "item") {
+                  return (
+                    <SidebarItem
+                      key={item.id}
+                      item={item}
+                      pathname={pathname}
+                      collapsed={collapsed}
+                    />
+                  );
+                }
+
                 return (
-                  <SidebarItem
+                  <SidebarGroup
                     key={item.id}
                     item={item}
                     pathname={pathname}
                     collapsed={collapsed}
                   />
                 );
-              }
-
-              return (
-                <SidebarGroup
-                  key={item.id}
-                  item={item}
-                  pathname={pathname}
-                  collapsed={collapsed}
-                />
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="border-t border-slate-200 p-3">
-          <div
-            className={[
-              "rounded-xl bg-slate-50 p-3 text-xs text-slate-600",
-              collapsed ? "hidden" : "block",
-            ].join(" ")}
-          >
-            Signed in with controlled access permissions.
+              })}
+            </nav>
           </div>
-        </div>
-        <GlobalTooltip
-          hoverState={hoverState}
-          pathname={pathname}
-          keepHover={keepHover}
-          clearHover={clearHover}
-        />
-      </aside>
+
+          <div className="border-t border-slate-200 p-3">
+            <div
+              className={[
+                "rounded-xl bg-slate-50 p-3 text-xs text-slate-600",
+                collapsed ? "hidden" : "block",
+              ].join(" ")}
+            >
+              Signed in with controlled access permissions.
+            </div>
+          </div>
+          <GlobalTooltip
+            hoverState={hoverState}
+            pathname={pathname}
+            keepHover={keepHover}
+            clearHover={clearHover}
+          />
+        </aside>
+      </>
     </HoverContext.Provider>
   );
 }

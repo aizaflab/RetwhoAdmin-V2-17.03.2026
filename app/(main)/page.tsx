@@ -1,171 +1,54 @@
 export default function DashboardPage() {
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm dark:bg-zinc-950 dark:border-zinc-800">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-zinc-100">
-          Welcome to Retwho Admin Dashboard
-        </h2>
-        <p className="text-gray-600 dark:text-zinc-400">
-          This is a generic dashboard page. Here we set up the sidebar
-          navigation with configuration rules based on roles and permissions.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-zinc-950 dark:border-zinc-800"
-          >
-            <div className="p-3 mr-4 text-blue-500 bg-blue-100 rounded-full dark:text-blue-100 dark:bg-blue-500">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Revenue
-              </p>
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                $10,234.00
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-zinc-950 dark:border-zinc-800"
-          >
-            <div className="p-3 mr-4 text-blue-500 bg-blue-100 rounded-full dark:text-blue-100 dark:bg-blue-500">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Revenue
-              </p>
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                $10,234.00
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-zinc-950 dark:border-zinc-800"
-          >
-            <div className="p-3 mr-4 text-blue-500 bg-blue-100 rounded-full dark:text-blue-100 dark:bg-blue-500">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Revenue
-              </p>
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                $10,234.00
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-zinc-950 dark:border-zinc-800"
-          >
-            <div className="p-3 mr-4 text-blue-500 bg-blue-100 rounded-full dark:text-blue-100 dark:bg-blue-500">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Revenue
-              </p>
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                $10,234.00
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-zinc-950 dark:border-zinc-800"
-          >
-            <div className="p-3 mr-4 text-blue-500 bg-blue-100 rounded-full dark:text-blue-100 dark:bg-blue-500">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Revenue
-              </p>
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                $10,234.00
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="flex items-center p-4 bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-zinc-950 dark:border-zinc-800"
-          >
-            <div className="p-3 mr-4 text-blue-500 bg-blue-100 rounded-full dark:text-blue-100 dark:bg-blue-500">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Total Revenue
-              </p>
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-                $10,234.00
-              </p>
-            </div>
-          </div>
-        ))}
+    <div className="space-y-5 bg-white p-5 rounded-lg">
+      <div className="h-400">
+        <div className=" mx-auto text-black">
+          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Blanditiis
+          quis molestias ullam nemo natus, incidunt quos officia. Nam velit
+          alias explicabo. Corrupti doloribus animi sit sed dignissimos culpa
+          fuga ad quas blanditiis! At tempora quis sed? Tenetur natus accusamus
+          amet maiores a impedit! Doloribus similique itaque debitis, deserunt
+          dignissimos minima quod culpa harum molestiae pariatur nesciunt, quis
+          alias perspiciatis iusto commodi aut mollitia, iste vel nostrum
+          incidunt quasi! Nemo placeat accusantium est distinctio, officia,
+          assumenda culpa beatae repudiandae esse rem nam, voluptates sint rerum
+          mollitia odit dolorum dignissimos labore hic. Ut pariatur esse facere
+          praesentium voluptas corporis eligendi, natus molestiae inventore
+          accusantium odio dolorum placeat! Possimus laudantium doloremque
+          dignissimos aut? Dolor sed laborum animi eius id explicabo a quos
+          dolore iste temporibus numquam eaque dicta, iusto iure facilis minus
+          totam, tenetur illum magnam nobis architecto? Modi deserunt ipsam
+          obcaecati ea sed. Modi quod commodi consectetur sapiente error
+          eveniet, architecto deserunt quae necessitatibus ratione facilis
+          aperiam amet omnis itaque officia ullam, pariatur consequuntur quaerat
+          rem fuga nobis facere quo. Eum officiis repudiandae, odio vitae rerum
+          enim soluta, architecto nulla tempora perspiciatis reprehenderit
+          blanditiis, aliquid numquam magnam dicta doloremque impedit dolores
+          quidem asperiores laudantium illum aperiam? Eveniet aliquam magnam
+          fugit dolorum? Ratione adipisci ut incidunt nam rerum earum pariatur
+          repudiandae distinctio optio vero provident, beatae ab expedita
+          ducimus? Veniam odio architecto quos esse corporis labore accusantium
+          fugit repudiandae, doloremque assumenda perspiciatis quas voluptate
+          dolor, debitis voluptatem magni illo recusandae molestiae voluptas
+          possimus in ducimus ad! Omnis eaque dicta eos id aut ab vel natus est
+          praesentium et magnam nam officiis voluptatum dolorem ducimus nulla
+          illo aliquid reiciendis labore vero odit, quibusdam sunt blanditiis
+          molestias? Quas at sint perferendis rem maxime, eos illo sequi
+          cupiditate exercitationem repudiandae beatae dolores fugiat fugit
+          laborum molestiae ullam velit totam accusantium amet autem non
+          impedit. Laboriosam veniam culpa quam odit provident facere
+          dignissimos facilis quis tenetur beatae nulla quo fuga reiciendis
+          blanditiis consequuntur quisquam, adipisci perspiciatis in magni
+          distinctio fugiat voluptas consectetur similique. Quae, nihil
+          molestias? Quo quibusdam sequi numquam aspernatur labore consequuntur
+          in earum nostrum, iusto, natus enim tempore. Dicta, asperiores!
+          Doloremque et molestiae quidem nulla sapiente ipsa impedit maiores
+          explicabo, suscipit in ex natus similique consectetur voluptatibus
+          quae quaerat amet eum vitae eius ducimus recusandae? Nihil sed esse
+          tenetur id placeat animi quibusdam ut incidunt, consectetur nemo nisi
+          non, quod ipsa porro quis laudantium assumenda excepturi aliquam neque
+          voluptas. Accusamus molestiae maiores veritatis. Accusamus, unde?
+        </div>
       </div>
     </div>
   );

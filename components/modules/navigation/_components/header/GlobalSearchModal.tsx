@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Modal } from "@/components/ui/modal/Modal";
+import { cn } from "@/lib/utils";
 import {
   Search,
   Command,
@@ -11,8 +12,6 @@ import {
   ShoppingCart,
   Users,
   CornerDownLeft,
-  ArrowUp,
-  ArrowDown,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -51,15 +50,31 @@ export function GlobalSearchModal() {
   return (
     <>
       {/* Header Widget */}
-      <div className="hidden sm:flex items-center gap-2 max-w-xs w-full">
+      <div className="flex items-center gap-2 sm:max-w-xs sm:w-full">
         <button
           onClick={() => setIsOpen(true)}
-          className="relative w-full group flex items-center justify-between pl-10 pr-3 py-2 border border-slate-200 dark:border-slate-800 rounded-full leading-5 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer outline-none"
+          className={cn(
+            // Base / Mobile styles (matches other header icons)
+            "relative size-8 rounded-[11px] flex items-center justify-center cursor-pointer transition-all duration-200 outline-none",
+            "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
+            "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-primary/50",
+            "text-gray-700 dark:text-gray-300",
+            // Desktop styles (sm and up)
+            "sm:w-full sm:justify-between sm:pl-10 sm:pr-3 sm:py-2.5 sm:border-slate-200 dark:sm:border-slate-800 sm:rounded-full sm:h-auto sm:leading-5",
+            "sm:bg-slate-50 dark:sm:bg-slate-900/50 sm:text-slate-500 dark:sm:text-slate-400 sm:hover:bg-slate-100 dark:sm:hover:bg-slate-800 sm:hover:border-slate-200 dark:sm:hover:border-slate-800",
+            "group",
+          )}
         >
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          {/* Mobile Icon */}
+          <Search className="size-[18px] sm:hidden group-hover:text-primary transition-colors" />
+
+          {/* Desktop Search Icon */}
+          <div className="absolute inset-y-0 left-0 pl-3 hidden sm:flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-slate-400 group-hover:text-primary transition-colors" />
           </div>
-          <span className="text-sm">Search anything...</span>
+
+          <span className="text-sm hidden sm:inline">Search anything...</span>
+
           <div className="hidden sm:flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
             <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-1 font-sans text-[14px] font-medium text-slate-500 dark:text-slate-400">
               ⌘
