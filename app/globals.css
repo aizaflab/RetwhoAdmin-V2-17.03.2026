@@ -32,6 +32,23 @@
   --color-bg: #ffffff;
   --color-bg-dark: #1a1a1a;
   --color-border-dark: #404040;
+
+  /* Category colors */
+  --color-cat-indigo: #818cf8;
+  --color-cat-indigo-dark: #4f46e5;
+  --color-cat-indigo-light: #e0e7ff;
+
+  --color-cat-amber: #fbbf24;
+  --color-cat-amber-dark: #d97706;
+  --color-cat-amber-light: #fef3c7;
+
+  --color-cat-cyan: #22d3ee;
+  --color-cat-cyan-dark: #0891b2;
+  --color-cat-cyan-light: #cffafe;
+
+  --color-cat-emerald: #34d399;
+  --color-cat-emerald-dark: #059669;
+  --color-cat-emerald-light: #d1fae5;
 }
 
 body {
@@ -46,6 +63,7 @@ html,
 body {
   width: 100%;
   color: black;
+  font-family: var(--font-adikaz), sans-serif;
 }
 
 .dark body {

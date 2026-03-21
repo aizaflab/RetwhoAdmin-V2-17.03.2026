@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 export default function Header() {
   const { isMobileOpen, setIsMobileOpen } = useSidebar();
   return (
-    <header className="sticky top-0 z-30 flex h-[69px] items-center justify-between gap-2 border-b border-gray-200 bg-white/80 backdrop-blur-md px-3 sm:px-5 dark:border-slate-800 dark:bg-black/80 transition-all">
+    <header className="sticky top-0 z-30 flex h-[69px] items-center justify-between gap-2 border-b border-gray-200 bg-white/80 backdrop-blur-md px-3 sm:px-5 dark:border-darkBorder dark:bg-darkBg transition-all">
       {/* Left section: Mobile Menu & Search */}
       <div className="flex flex-1 items-center gap-4">
         <div className="md:hidden">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
+import localFont from "next/font/local";
 import {
   ThemeProvider,
   AuthProvider,
@@ -8,14 +9,30 @@ import {
 } from "@/components/providers";
 import { Toaster } from "sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// ১. Roboto (Google Font)
+const roboto = Roboto({
+  weight: ["400", "500", "700"],
   subsets: ["latin"],
+  display: "swap",
+  variable: "--font-roboto",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// ২. Adikaz Pro (Local Font)
+const adikazPro = localFont({
+  src: [
+    {
+      path: "../public/fonts/Adikaz_Pro_Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/Adikaz_Pro_Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  display: "swap",
+  variable: "--font-adikaz",
 });
 
 export const metadata: Metadata = {
@@ -60,7 +77,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${adikazPro.variable} ${roboto.variable} antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>

@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Lazy initialization: read from localStorage only once during initial render
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("theme") as Theme | null;
+      const stored = localStorage.getItem("adminTheme") as Theme | null;
       return stored || "system";
     }
     return "system";
@@ -57,7 +57,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     if (typeof window !== "undefined") {
-      localStorage.setItem("theme", newTheme);
+      localStorage.setItem("adminTheme", newTheme);
     }
   };
 
