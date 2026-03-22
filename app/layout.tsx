@@ -1,38 +1,18 @@
 import type { Metadata } from "next";
-import { Roboto } from "next/font/google";
 import "./globals.css";
-import localFont from "next/font/local";
+
 import {
   ThemeProvider,
   AuthProvider,
   ConfirmProvider,
 } from "@/components/providers";
 import { Toaster } from "sonner";
+import { Poppins } from "next/font/google";
 
-// ১. Roboto (Google Font)
-const roboto = Roboto({
-  weight: ["400", "500", "700"],
+const poppins = Poppins({
   subsets: ["latin"],
-  display: "swap",
-  variable: "--font-roboto",
-});
-
-// ২. Adikaz Pro (Local Font)
-const adikazPro = localFont({
-  src: [
-    {
-      path: "../public/fonts/Adikaz_Pro_Regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/Adikaz_Pro_Bold.woff2",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  display: "swap",
-  variable: "--font-adikaz",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
@@ -54,7 +34,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('theme') || 'system';
+                  const theme = localStorage.getItem('adminTheme') || 'system';
                   const root = document.documentElement;
                   
                   if (theme === 'dark') {
@@ -77,7 +57,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${adikazPro.variable} ${roboto.variable} antialiased`}
+        className={` ${poppins.variable} antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>

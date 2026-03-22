@@ -63,12 +63,15 @@ html,
 body {
   width: 100%;
   color: black;
-  font-family: var(--font-adikaz), sans-serif;
 }
 
 .dark body {
   background: #01030e;
   color: white;
+}
+
+.poppins {
+  font-family: "Poppins", sans-serif;
 }
 
 /* ── Suppress browser autofill background highlight ───────────────────────── */

@@ -45,7 +45,7 @@ export function GlobalTooltip({
     >
       {isGroup ? (
         <div className="min-w-[200px] bg-white border border-slate-200 rounded-md p-2 dark:bg-slate-900 dark:border-slate-700 h-full flex flex-col transition-all duration-300">
-          <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 dark:border-slate-800 mb-2 truncate">
+          <div className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100 dark:border-slate-800 mb-2 truncate">
             {item.title}
           </div>
           <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto custom-scroll">

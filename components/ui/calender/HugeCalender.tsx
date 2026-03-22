@@ -1,16 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 "use client";
 
 import {
-  JSX,
   useId,
   useRef,
   useState,
   useEffect,
   forwardRef,
-  useCallback,
+  type ReactNode,
   type MouseEvent,
   type KeyboardEvent,
 } from "react";
@@ -30,44 +26,49 @@ import {
   eachDayOfInterval,
 } from "date-fns";
 
-import { cn } from "@/lib/utils";
-import type React from "react";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  CalendarIcon,
-  XIcon,
-} from "@/components/icons/Icons";
+import { cn } from "../../../lib/utils";
 import { createPortal } from "react-dom";
-import { Checkbox } from "../checkbox/Checkbox";
 import SimpleSelect from "../select/SimpleSelect";
-import { TimeRangePicker } from "../input/NumberInput";
+import { CalendarIcon, XIcon } from "@/components/icons/Icons";
 
-interface DateRange {
+/* ------------------------------------------------------------------ */
+/*  Types                                                               */
+/* ------------------------------------------------------------------ */
+
+export interface DateRange {
   start: Date | null;
   end: Date | null;
 }
 
-type Placement = "bottom" | "top";
-type AMPM = "AM" | "PM";
+type DateDesignStyle = "minimal" | "box";
+type DateShape = "" | "rounded-sm" | "rounded-md" | "rounded-full";
+type Variant = "professional";
+type Align = "left" | "right";
 
 interface PopupStyle {
   top: number;
   left: number;
-  width: number;
+  width: number | string;
   position: "absolute" | "fixed";
   zIndex: number;
+  transform?: string;
 }
 
-interface HugeCalenderProps extends Omit<
+interface Shortcut {
+  label: string;
+  getValue?: () => DateRange;
+}
+
+export interface HugeCalenderProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   "value" | "onChange"
 > {
+  className?: string;
   value?: DateRange;
   onChange?: (range: DateRange) => void;
   placeholder?: string;
-  minDate?: Date | null;
-  maxDate?: Date | null;
+  minDate?: Date;
+  maxDate?: Date;
   disabled?: boolean;
   readOnly?: boolean;
   showClearButton?: boolean;
@@ -76,23 +77,23 @@ interface HugeCalenderProps extends Omit<
   error?: string;
   helperText?: string;
   fullWidth?: boolean;
-  startIcon?: JSX.Element;
+  startIcon?: ReactNode;
+  endIcon?: ReactNode;
   inputClass?: string;
   requiredSign?: boolean;
-  required?: boolean;
-  endIcon?: JSX.Element;
-  variant?: "professional";
-  dateDesignStyle?: "minimal" | "box";
-  dateShape?: string;
   gridBox?: boolean;
+  variant?: Variant;
+  dateDesignStyle?: DateDesignStyle;
+  dateShape?: DateShape;
+  align?: Align;
+  showTime?: boolean;
 }
 
-type QuickShortcut = {
-  label: string;
-  getValue?: () => DateRange;
-};
+/* ------------------------------------------------------------------ */
+/*  Constants                                                           */
+/* ------------------------------------------------------------------ */
 
-const QUICK_SHORTCUTS: QuickShortcut[] = [
+const QUICK_SHORTCUTS: Shortcut[] = [
   { label: "Today", getValue: () => ({ start: new Date(), end: new Date() }) },
   {
     label: "Yesterday",
@@ -137,6 +138,13 @@ const QUICK_SHORTCUTS: QuickShortcut[] = [
     },
   },
   {
+    label: "Last 6 Months",
+    getValue: () => {
+      const today = new Date();
+      return { start: addMonths(today, -6), end: today };
+    },
+  },
+  {
     label: "This Year",
     getValue: () => {
       const today = new Date();
@@ -154,10 +162,34 @@ const QUICK_SHORTCUTS: QuickShortcut[] = [
       };
     },
   },
-  {
-    label: "Custom",
-  },
+  { label: "Custom" },
 ];
+
+const DAYS_OF_WEEK = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
+
+const MONTHS_OPTIONS = [
+  { value: "january", label: "January" },
+  { value: "february", label: "February" },
+  { value: "march", label: "March" },
+  { value: "april", label: "April" },
+  { value: "may", label: "May" },
+  { value: "june", label: "June" },
+  { value: "july", label: "July" },
+  { value: "august", label: "August" },
+  { value: "september", label: "September" },
+  { value: "october", label: "October" },
+  { value: "november", label: "November" },
+  { value: "december", label: "December" },
+] as const;
+
+const YEAR_OPTIONS = Array.from({ length: 100 }, (_, i) => {
+  const year = new Date().getFullYear() - i;
+  return { value: year.toString(), label: year.toString() };
+});
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                           */
+/* ------------------------------------------------------------------ */
 
 const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
   (
@@ -177,7 +209,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       helperText,
       fullWidth = false,
       startIcon,
-      inputClass = "sm:w-[355px] w-[270px]",
+      inputClass = "w-[355px]",
       requiredSign = false,
       gridBox = false,
       required,
@@ -185,28 +217,29 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       variant = "professional",
       dateDesignStyle = "minimal",
       dateShape = "",
+      align = "left",
+      showTime = false,
       ...props
     },
     ref,
   ) => {
     /* ---------- RANGE STATE ---------- */
     const [dateRange, setDateRange] = useState<DateRange>(value);
-    const [selectingStart, setSelectingStart] = useState(true);
+    const [selectingStart, setSelectingStart] = useState<boolean>(true);
     const [hoverDate, setHoverDate] = useState<Date | null>(null);
     const [activeShortcut, setActiveShortcut] = useState<string | null>(null);
 
-    /* ---------- TIME STATE ---------- */
-    const [showTime, setShowTime] = useState(true);
-    const [startHour, setStartHour] = useState("12");
-    const [startMin, setStartMin] = useState("00");
-    const [startPeriod, setStartPeriod] = useState<AMPM>("AM");
-    const [endHour, setEndHour] = useState("11");
-    const [endMin, setEndMin] = useState("59");
-    const [endPeriod, setEndPeriod] = useState<AMPM>("PM");
+    /* ---------- TIME DISPLAY (controlled by showTime prop) ---------- */
+    const startHour = "12";
+    const startMin = "00";
+    const startPeriod = "AM";
+    const endHour = "11";
+    const endMin = "59";
+    const endPeriod = "PM";
 
     /* ---------- CALENDAR NAV & FOCUS ---------- */
     const baseInitialMonth = startOfMonth(
-      dateRange.start || dateRange.end || new Date(),
+      dateRange.start ?? dateRange.end ?? new Date(),
     );
 
     const [leftMonth, setLeftMonth] = useState<Date>(baseInitialMonth);
@@ -214,21 +247,19 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       addMonths(baseInitialMonth, 1),
     );
 
-    const [focusedDate, setFocusedDate] = useState<Date | null>(
-      dateRange.start || dateRange.end || new Date(),
+    const [focusedDate, setFocusedDate] = useState<Date>(
+      dateRange.start ?? dateRange.end ?? new Date(),
     );
 
-    const daysOfWeek = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-    const mobileDaysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
-
     /* ---------- MONTH/YEAR PICKER STATE ---------- */
-    const [isMonthYearPickerOpen, setIsMonthYearPickerOpen] = useState(false);
+    const [isMonthYearPickerOpen, setIsMonthYearPickerOpen] =
+      useState<boolean>(false);
 
     /* ---------- POPUP / POSITION ---------- */
-    const [isOpen, setIsOpen] = useState(false);
-    const [isVisible, setIsVisible] = useState(false);
-    const [hasCoords, setHasCoords] = useState(false);
-    const [placement, setPlacement] = useState<Placement>("bottom");
+    const [isOpen, setIsOpen] = useState<boolean>(false);
+    const [isVisible, setIsVisible] = useState<boolean>(false);
+    const [hasCoords, setHasCoords] = useState<boolean>(false);
+    const [placement, setPlacement] = useState<"bottom" | "top">("bottom");
     const [popupStyle, setPopupStyle] = useState<PopupStyle>({
       top: 0,
       left: 0,
@@ -247,7 +278,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
 
     /* ---------- HELPERS ---------- */
 
-    const getActualScrollY = () => {
+    const getActualScrollY = (): number => {
       if (typeof window === "undefined") return 0;
       const bodyStyle = window.getComputedStyle(document.body);
       if (bodyStyle.position === "fixed") {
@@ -257,33 +288,24 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       return window.scrollY;
     };
 
-    const calculatePositionBase = useCallback((): {
-      rect: DOMRect;
-      left: number;
-      position: "absolute" | "fixed";
-      isInModal: boolean;
-    } | null => {
+    const calculatePositionBase = () => {
       if (!triggerRefc.current || typeof window === "undefined") return null;
       const rect = triggerRefc.current.getBoundingClientRect();
       const isInModal = !!triggerRefc.current.closest('[role="dialog"]');
-
       const left = rect.left;
       const position: "absolute" | "fixed" = isInModal ? "fixed" : "absolute";
-
       return { rect, left, position, isInModal };
-    }, []);
+    };
 
-    const calculatePosition = useCallback(() => {
+    const calculatePosition = () => {
       const base = calculatePositionBase();
       if (!base || typeof window === "undefined") return;
 
       const { rect, left, position, isInModal } = base;
       const spacing = 8;
 
-      const isMobile = window.innerWidth < 768;
-      const popupWidth = isMobile ? Math.min(window.innerWidth - 20, 340) : 660;
-
       let topPosition: number;
+
       if (position === "fixed") {
         topPosition = rect.bottom + spacing;
       } else {
@@ -291,23 +313,18 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
         topPosition = rect.bottom + scrollY + spacing;
       }
 
-      let adjustedLeft = left;
-      if (left + popupWidth > window.innerWidth) {
-        adjustedLeft = window.innerWidth - popupWidth - 10;
-      }
-      if (adjustedLeft < 10) adjustedLeft = 10;
-
       setPopupStyle({
         top: topPosition,
-        left: adjustedLeft,
-        width: popupWidth,
+        left: align === "right" ? rect.right : left,
+        width: "max-content",
         position,
         zIndex: isInModal ? 10000 : 9999,
+        transform: align === "right" ? "translateX(-100%)" : "none",
       });
 
       setPlacement("bottom");
       setHasCoords(true);
-    }, [calculatePositionBase]);
+    };
 
     const openPopup = () => {
       if (disabled || readOnly) return;
@@ -315,7 +332,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       setIsOpen(true);
       requestAnimationFrame(() => setIsVisible(true));
 
-      const baseDate = dateRange.start || dateRange.end || new Date();
+      const baseDate = dateRange.start ?? dateRange.end ?? new Date();
       const baseMonth = startOfMonth(baseDate);
 
       setFocusedDate(baseDate);
@@ -333,14 +350,13 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       }, 150);
     };
 
-    const isDateDisabled = (date: Date) => {
-      if (!date) return false;
+    const isDateDisabled = (date: Date): boolean => {
       if (minDate && date < startOfDay(minDate)) return true;
       if (maxDate && date > endOfDay(maxDate)) return true;
       return false;
     };
 
-    const getDaysInMonthList = (date: Date) => {
+    const getDaysInMonthList = (date: Date): (Date | null)[] => {
       const start = startOfMonth(date);
       const end = endOfMonth(date);
       const days: (Date | null)[] = [];
@@ -382,7 +398,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       });
     };
 
-    const getDaysCount = () => {
+    const getDaysCount = (): number => {
       if (dateRange.start && dateRange.end) {
         return (
           differenceInDays(
@@ -394,7 +410,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       return 0;
     };
 
-    const formatDateHeader = () => {
+    const formatDateHeader = (): string => {
       if (dateRange.start && dateRange.end) {
         const startStr = format(dateRange.start, "MM.d.yyyy");
         const endStr = format(dateRange.end, "MM.d.yyyy");
@@ -407,7 +423,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
 
         return `${startStr} – ${endStr}`;
       }
-      return placeholder;
+      return placeholder ?? "";
     };
 
     const hasRange = !!(dateRange.start || dateRange.end);
@@ -419,45 +435,45 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       inHover: boolean,
       isTodayDate: boolean,
       disabledDate: boolean,
-    ) => {
+    ): string => {
       const shapeClass = dateShape || "rounded-md";
 
       if (disabledDate) {
-        return `${shapeClass} text-gray-300 dark:text-[#676767] cursor-not-allowed`;
+        return `${shapeClass} text-gray-300 cursor-not-allowed`;
       }
 
       const inFullRange = inRange || inHover;
 
       if (dateDesignStyle === "box") {
         if (isStart || isEnd) {
-          return `${shapeClass} bg-blue-600 dark:bg-white dark:text-black text-white border border-blue-600 dark:border-white font-semibold`;
+          return `${shapeClass} bg-gray-400 text-white border border-gray-400 font-semibold`;
         }
         if (inFullRange) {
-          return `${shapeClass} bg-blue-100 dark:bg-[#3d3d3d] text-blue-900 dark:text-white border border-blue-300 dark:border-[#424242]`;
+          return `${shapeClass} bg-gray-100 text-gray-900 border border-gray-300`;
         }
         if (highlightToday && isTodayDate) {
-          return `${shapeClass} border border-blue-500 dark:border-white text-blue-600 dark:text-white bg-white dark:bg-[#292929] font-semibold`;
+          return `${shapeClass} border border-gray-500 text-gray-600 bg-white font-semibold`;
         }
-        return `${shapeClass} border border-gray-200 dark:border-[#424242] text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-[#3d3d3d]`;
+        return `${shapeClass} border border-gray-200 text-gray-700 hover:bg-gray-50`;
       }
 
       // minimal
       if (isStart || isEnd) {
-        return `${shapeClass} bg-blue-600 dark:bg-white dark:text-black text-white font-semibold`;
+        return `${shapeClass} bg-gray-300 text-black`;
       }
       if (inFullRange) {
-        return `${shapeClass} bg-blue-100 dark:bg-[#3d3d3d] text-blue-900 dark:text-white`;
+        return `${shapeClass} bg-gray-100 dark:bg-gray-500/20 text-gray-900 dark:text-gray-100`;
       }
       if (highlightToday && isTodayDate) {
-        return `${shapeClass} text-blue-600 dark:text-white border border-blue-500 dark:border-white font-semibold`;
+        return `${shapeClass} text-gray-600 dark:text-gray-400 border font-semibold`;
       }
-      return `${shapeClass} text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3d3d3d]`;
+      return `${shapeClass} text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3A3A]`;
     };
 
     const handleDateClick = (date: Date) => {
       if (isDateDisabled(date)) return;
 
-      let newRange = { ...dateRange };
+      let newRange: DateRange = { ...dateRange };
 
       if (
         selectingStart ||
@@ -468,7 +484,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
         setSelectingStart(false);
         setActiveShortcut(null);
       } else {
-        if (date < dateRange.start) {
+        if (dateRange.start && date < dateRange.start) {
           newRange = { start: date, end: dateRange.start };
         } else {
           newRange = { start: dateRange.start, end: date };
@@ -500,9 +516,9 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       onChange?.(range);
     };
 
-    const handleClear = (e?: MouseEvent | KeyboardEvent) => {
+    const handleClear = (e?: MouseEvent<HTMLButtonElement>) => {
       e?.stopPropagation?.();
-      const emptyRange = { start: null, end: null };
+      const emptyRange: DateRange = { start: null, end: null };
       setDateRange(emptyRange);
       setSelectingStart(true);
       setHoverDate(null);
@@ -516,11 +532,12 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
 
     useEffect(() => {
       if (!isOpen) return;
-      const handleOutside = (e: globalThis.MouseEvent) => {
+      const handleOutside = (e: Event) => {
+        const target = e.target as Node;
         if (
           portalRefC.current &&
-          (portalRefC.current.contains(e.target as Node) ||
-            triggerRefc.current?.contains(e.target as Node))
+          (portalRefC.current.contains(target) ||
+            triggerRefc.current?.contains(target))
         ) {
           return;
         }
@@ -539,7 +556,8 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
         window.removeEventListener("scroll", reposition, true);
         window.removeEventListener("resize", reposition);
       };
-    }, [isOpen, calculatePosition]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
     /* ---------- KEYBOARD HANDLERS ---------- */
 
@@ -553,7 +571,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
 
       if (e.key === "Escape" && hasRange) {
         e.preventDefault();
-        handleClear(e);
+        handleClear();
       }
     };
 
@@ -599,49 +617,33 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
 
     /* ---------- MONTH/YEAR PICKER HANDLERS ---------- */
 
-    const monthsOptions = [
-      { value: "january", label: "January" },
-      { value: "february", label: "February" },
-      { value: "march", label: "March" },
-      { value: "april", label: "April" },
-      { value: "may", label: "May" },
-      { value: "june", label: "June" },
-      { value: "july", label: "July" },
-      { value: "august", label: "August" },
-      { value: "september", label: "September" },
-      { value: "october", label: "October" },
-      { value: "november", label: "November" },
-      { value: "december", label: "December" },
-    ];
-
-    const yearOptions = Array.from({ length: 100 }, (_, i) => {
-      const year = new Date().getFullYear() - i;
-      return { value: year.toString(), label: year.toString() };
-    });
-
-    // Handle Month Selection for start or end calendar
     const handleMonthSelection = (month: string, isStart: boolean) => {
-      const monthIndex = monthsOptions.findIndex(
+      const monthIndex = MONTHS_OPTIONS.findIndex(
         (option) => option.value === month,
       );
-      const updatedMonth = isStart
-        ? setLeftMonth(addMonths(leftMonth, monthIndex - leftMonth.getMonth()))
-        : setRightMonth(
-            addMonths(rightMonth, monthIndex - rightMonth.getMonth()),
-          );
+      if (isStart) {
+        setLeftMonth(addMonths(leftMonth, monthIndex - leftMonth.getMonth()));
+      } else {
+        setRightMonth(
+          addMonths(rightMonth, monthIndex - rightMonth.getMonth()),
+        );
+      }
     };
 
-    // Handle Year Selection for start or end calendar
     const handleYearSelection = (year: string, isStart: boolean) => {
       const numericYear = parseInt(year, 10);
       const updatedYear = isStart
         ? new Date(numericYear, leftMonth.getMonth())
         : new Date(numericYear, rightMonth.getMonth());
-      isStart ? setLeftMonth(updatedYear) : setRightMonth(updatedYear);
+      if (isStart) {
+        setLeftMonth(updatedYear);
+      } else {
+        setRightMonth(updatedYear);
+      }
     };
 
-    const validPopupStyle =
-      hasCoords && popupStyle.width > 0 ? popupStyle : undefined;
+    const validPopupStyle: PopupStyle | undefined =
+      hasCoords && popupStyle.width ? popupStyle : undefined;
 
     /* ---------- RENDER CALENDAR GRID ---------- */
 
@@ -655,40 +657,37 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
             onClick={(e) => e.stopPropagation()}
           >
             {/* Month Picker */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1">
               <SimpleSelect
-                options={monthsOptions}
-                value={monthsOptions[month.getMonth()].value}
-                onChange={(month) =>
-                  handleMonthSelection(month, panel === "left")
-                }
-                placeholder="Month"
-                className="border-r-0 dark:border-[#3d3d3d] text-[10px] sm:text-xs h-7 sm:h-8"
+                options={[...MONTHS_OPTIONS]}
+                value={MONTHS_OPTIONS[month.getMonth()].value}
+                onChange={(m) => handleMonthSelection(m, panel === "left")}
+                placeholder="Select a month"
+                className="border-r-0"
               />
             </div>
 
             {/* Year Picker */}
-            <div className="w-[60px] sm:w-24 shrink-0">
+            <div className="w-24">
               <SimpleSelect
-                options={yearOptions}
+                options={YEAR_OPTIONS}
                 value={month.getFullYear().toString()}
-                onChange={(year) => handleYearSelection(year, panel === "left")}
-                placeholder="Year"
-                className="dark:border-[#3d3d3d] text-[10px] sm:text-xs h-7 sm:h-8"
+                onChange={(y) => handleYearSelection(y, panel === "left")}
+                placeholder="Select a year"
               />
             </div>
           </div>
 
           {/* Day names */}
           <div className={cn("grid grid-cols-7 gap-0 mb-1")}>
-            {daysOfWeek.map((day) => (
+            {DAYS_OF_WEEK.map((day) => (
               <div
                 key={day}
                 className={cn(
                   "text-center text-xs font-medium py-1.5",
                   variant === "professional"
-                    ? "text-gray-600 dark:text-[#676767]"
-                    : "text-slate-700 dark:text-gray-400",
+                    ? "text-gray-600"
+                    : "text-slate-700",
                 )}
               >
                 {day}
@@ -698,23 +697,25 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
 
           {/* Days */}
           <div
-            className={`grid grid-cols-7 gap-0 gap-y-0.5 ${gridBox ? "border-t border-l border-border" : ""}`}
+            className={`grid grid-cols-7 gap-0 gap-y-0.5 ${
+              gridBox ? "border-t border-l border-border" : ""
+            }`}
           >
             {days.map((date, idx) => {
-              const isStart = date && isRangeStart(date);
-              const isEnd = date && isRangeEnd(date);
-              const inRange = date && isInRange(date);
-              const inHover = date && isInHoverRange(date);
-              const isTodayDate = date && isToday(date);
+              const isStart = date ? isRangeStart(date) : false;
+              const isEnd = date ? isRangeEnd(date) : false;
+              const inRange = date ? isInRange(date) : false;
+              const inHover = date ? isInHoverRange(date) : false;
+              const isTodayDate = date ? isToday(date) : false;
               const disabledDate = date ? isDateDisabled(date) : false;
 
               const dateStyles = date
                 ? getDateStyles(
-                    !!isStart,
-                    !!isEnd,
-                    !!inRange,
-                    !!inHover,
-                    !!isTodayDate,
+                    isStart,
+                    isEnd,
+                    inRange,
+                    inHover,
+                    isTodayDate,
                     disabledDate,
                   )
                 : "";
@@ -723,25 +724,20 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                 <div
                   key={idx}
                   className={cn(
-                    " flex items-center justify-center",
-                    gridBox &&
-                      "border-b border-r border-border dark:border-[#424242]",
+                    "flex items-center justify-center",
+                    gridBox && "border-b border-r border-border",
                     variant === "professional" ? "h-8" : "h-10",
                   )}
                 >
                   {date ? (
                     <button
                       type="button"
-                      onClick={() => {
-                        handleDateClick(date);
-                      }}
-                      onMouseEnter={() => {
-                        setHoverDate(date);
-                      }}
+                      onClick={() => handleDateClick(date)}
+                      onMouseEnter={() => setHoverDate(date)}
                       onMouseLeave={() => setHoverDate(null)}
                       disabled={disabledDate}
                       className={cn(
-                        " text-xs transition-all cursor-pointer",
+                        "text-xs transition-all cursor-pointer",
                         disabledDate && "opacity-50",
                         variant === "professional" ? "size-7" : "size-8",
                         dateStyles,
@@ -765,16 +761,11 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
     const renderPopupContent = () => {
       if (variant === "professional") {
         return (
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-lg border border-border shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div id={gridId} className="flex min-h-[300px]">
-              {/* Shortcuts Sidebar (Remains on left) */}
-              <div className="w-20 sm:w-32 shrink-0 py-4 border-r border-border flex flex-col justify-between bg-muted/30">
-                <div className="space-y-1 px-1 sm:px-3">
-                  <div className="px-1 mb-2">
-                    <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">
-                      Presets
-                    </span>
-                  </div>
+          <div className="w-[354px] sm:w-[500px] lg:w-[600px] max-w-[95vw] bg-white dark:bg-[#1E1E1E] rounded-md border border-gray-200 dark:border-[#3A3A3A] shadow-md">
+            <div id={gridId} className="flex min-h-84">
+              {/* Shortcuts */}
+              <div className="w-28 lg:w-32 shrink-0 py-3 border-r border-border dark:border-[#3A3A3A] relative">
+                <div className="space-y-[3px] px-2 lg:px-3">
                   {QUICK_SHORTCUTS.map((shortcut) => {
                     const isCustom = shortcut.label === "Custom";
                     const isActive = activeShortcut === shortcut.label;
@@ -797,10 +788,14 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                           }
                         }}
                         className={cn(
-                          "w-full text-left px-2 py-1.5 text-[10px] sm:text-xs font-semibold rounded-sm transition-all cursor-pointer",
+                          "w-full text-left px-2 lg:px-2.5 py-1.5 text-[11px] lg:text-xs font-medium rounded-sm transition-all cursor-pointer truncate",
                           isActive
-                            ? "bg-blue-600 text-white shadow-sm"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            ? isCustom
+                              ? "bg-purple-600 text-white"
+                              : "bg-primary text-white"
+                            : isCustom && (!dateRange.start || !dateRange.end)
+                              ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                              : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#3A3A3A]",
                         )}
                       >
                         {shortcut.label}
@@ -808,50 +803,21 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                     );
                   })}
                 </div>
-
-                <div className="px-2 sm:px-3 border-t border-border pt-3 mt-auto sm:bock hidden">
-                  <label className="flex items-center gap-1.5 cursor-pointer py-1 px-1 rounded hover:bg-muted/50 transition-colors">
-                    <Checkbox
-                      checked={showTime}
-                      onChange={(e) => setShowTime(e.target.checked)}
-                      size="sm"
-                    />
-                    <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-                      Time
-                    </span>
-                  </label>
-                </div>
               </div>
 
-              {/* Calendar Area */}
-              <div className="flex-1 flex flex-col bg-background min-w-0">
-                {showTime && (
-                  <TimeRangePicker
-                    startHour={startHour}
-                    startMin={startMin}
-                    startPeriod={startPeriod}
-                    endHour={endHour}
-                    endMin={endMin}
-                    endPeriod={endPeriod}
-                    onChangeStartHour={setStartHour}
-                    onChangeStartMin={setStartMin}
-                    onChangeStartPeriod={(v) => setStartPeriod(v)}
-                    onChangeEndHour={setEndHour}
-                    onChangeEndMin={setEndMin}
-                    onChangeEndPeriod={(v) => setEndPeriod(v)}
-                  />
-                )}
-
+              {/* Main */}
+              <div className="flex-1 flex flex-col min-w-0">
+                {/* Month/Year Picker + Dual Calendar */}
                 <div className="w-full overflow-hidden">
                   <div
                     className={cn(
-                      "flex w-full transition-transform duration-500",
+                      "flex w-full transition-transform duration-500 ease-in-out",
                       isMonthYearPickerOpen
                         ? "-translate-x-full"
                         : "translate-x-0",
                     )}
                   >
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-4 p-3 sm:p-4 flex-1 min-w-full max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-y-visible">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-2 lg:pt-5 lg:p-4 flex-1 min-w-full">
                       {renderCalendar(leftMonth, "left")}
                       <div className="hidden lg:block">
                         {renderCalendar(rightMonth, "right")}
@@ -860,29 +826,28 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                   </div>
                 </div>
 
-                {/* Footer */}
-                <div className="px-3 sm:px-4 py-2.5 border-t border-border flex items-center justify-between bg-muted/20">
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <div className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[9px] sm:text-[10px] font-bold">
-                      {getDaysCount()} DAYS
+                <div className="px-4 py-3 border-t border-gray-200 dark:border-[#3A3A3A] flex lg:flex-row flex-col items-center justify-between gap-3 lg:gap-0">
+                  <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-start">
+                    <div className="text-xs font-medium text-white bg-gray-400 dark:bg-[#3A3A3A] rounded px-3 py-1.5 whitespace-nowrap">
+                      {getDaysCount()} days
                     </div>
                     <button
                       type="button"
                       onClick={() => handleClear()}
-                      className="text-[9px] sm:text-[10px] font-bold text-muted-foreground hover:text-foreground uppercase transition-colors cursor-pointer"
+                      className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-transparent border border-gray-300 dark:border-[#3A3A3A] rounded hover:bg-gray-50 dark:hover:bg-[#3A3A3A] transition-colors"
                     >
                       Clear
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="flex items-center justify-end gap-2 w-full lg:w-auto">
                     <button
                       type="button"
                       onClick={() => {
                         handleClear();
                         closePopup();
                       }}
-                      className="px-2.5 py-1.5 text-[9px] sm:text-[10px] font-bold text-muted-foreground hover:text-foreground uppercase cursor-pointer"
+                      className="flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-transparent border border-gray-300 dark:border-[#3A3A3A] rounded hover:bg-gray-50 dark:hover:bg-[#3A3A3A] transition-colors text-center"
                     >
                       Cancel
                     </button>
@@ -892,7 +857,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                         closePopup();
                         inputRef.current?.focus();
                       }}
-                      className="px-3 sm:px-4 py-1.5 text-[9px] sm:text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm transition-all cursor-pointer uppercase"
+                      className="flex-1 lg:flex-none px-4 py-1.5 text-xs font-medium text-white bg-primary hover:bg-green-600 rounded transition-colors text-center"
                     >
                       Apply
                     </button>
@@ -910,7 +875,10 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
     return (
       <div className={cn("relative", fullWidth && "w-full", className)}>
         {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            id={headerId}
+          >
             {label}
             {(requiredSign || required) && (
               <span className="text-red-500 ml-1">*</span>
@@ -923,14 +891,11 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
             ref={(node) => {
               inputRef.current = node;
               if (typeof ref === "function") ref(node);
-              else if (ref)
-                (
-                  ref as React.MutableRefObject<HTMLInputElement | null>
-                ).current = node;
+              else if (ref) ref.current = node;
             }}
             type="text"
             className={cn(
-              "flex h-10 w-full rounded-md border border-border dark:border-[#3a3a3a] bg-background dark:bg-transparent px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              "flex h-10 w-full rounded-md border border-border dark:border-[#3a3a3a] bg-background dark:bg-transparent px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
               startIcon || (!startIcon && !readOnly && !disabled)
                 ? "pl-10"
                 : "pl-3",
@@ -1006,11 +971,11 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
               ref={portalRefC}
               id={popupId}
               role="dialog"
-              aria-modal="false"
+              aria-modal={false}
               aria-labelledby={headerId}
               aria-describedby={gridId}
               data-placement={placement}
-              style={validPopupStyle}
+              style={validPopupStyle as React.CSSProperties}
               className={cn(
                 "absolute -mt-0.5 z-50 bg-transparent border-none shadow-none transition-all duration-150 ease-in-out",
                 isVisible && !disabled && !readOnly

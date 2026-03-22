@@ -13,7 +13,7 @@ export default function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen bg-[#F8F8F8] dark:bg-black font-sans flex">
+      <div className="min-h-screen bg-[#F8F8F8] dark:bg-black flex">
         <Sidebar />
         <div className="flex-1 flex flex-col min-h-screen min-w-0">
           <Header />

@@ -180,7 +180,7 @@ export default function Sidebar() {
             </button>
           </div>
 
-          <div className="custom-scroll flex-1 px-3 py-4 [scrollbar-gutter:stable]md:overflow-hidden md:hover:overflow-y-auto overflow-y-auto">
+          <div className="custom-scroll flex-1 px-3 py-4 [scrollbar-gutter:stable] md:overflow-hidden md:hover:overflow-y-auto overflow-y-auto">
             <nav className="space-y-2">
               {allowedMenu.map((item) => {
                 if (item.type === "label") {
@@ -191,12 +191,12 @@ export default function Sidebar() {
                       title={collapsed ? item.title : undefined}
                     >
                       {collapsed ? (
-                        <span className="text-[10px] font-bold text-text4 dark:text-slate-600 tracking-widest">
+                        <span className="text-[10px] font-bold text-text5 dark:text-black/70 tracking-widest">
                           •••
                         </span>
                       ) : (
                         <>
-                          <span className="text-[11px] font-medium text-text4 dark:text-text5/70 uppercase tracking-widest whitespace-nowrap truncate">
+                          <span className="text-[11px] font-medium text-text5 dark:text-text5/70 uppercase tracking-widest whitespace-nowrap truncate">
                             {item.title}
                           </span>
                           <div className="h-px flex-1 bg-linear-to-r from-slate-200 to-transparent dark:from-slate-700/50 mt-0.5"></div>

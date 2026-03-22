@@ -32,7 +32,7 @@ export function SidebarGroup({ item, pathname, collapsed }: SidebarGroupProps) {
             "flex w-full items-center justify-center rounded px-3 py-2.5 transition-all outline-none cursor-pointer",
             open || childActive
               ? "bg-slate-100 dark:bg-darkPrimary text-black  dark:text-white"
-              : "text-slate-700 dark:text-text5 hover:bg-slate-100 dark:hover:bg-darkPrimary hover:text-black dark:hover:text-white",
+              : "text-black/70 dark:text-text5 hover:bg-slate-100 dark:hover:bg-darkPrimary hover:text-black dark:hover:text-white",
           ].join(" ")}
         >
           {Icon ? <Icon className="h-5 w-5 shrink-0" /> : null}
@@ -47,10 +47,10 @@ export function SidebarGroup({ item, pathname, collapsed }: SidebarGroupProps) {
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={[
-          "flex w-full items-center justify-between rounded px-3 py-2.5 text-sm font-semibold transition-all cursor-pointer",
+          "flex w-full items-center justify-between rounded px-3 py-2.5 text-sm font-medium transition-all cursor-pointer",
           open || childActive
             ? "bg-slate-100 dark:bg-darkBorder/70 text-black dark:text-white"
-            : "text-slate-700 dark:text-text5 hover:bg-slate-100 dark:hover:bg-darkBorder/70 dark:hover:text-white hover:text-black",
+            : "text-black/70 dark:text-text5 hover:bg-slate-100 dark:hover:bg-darkBorder/70 dark:hover:text-white hover:text-black",
         ].join(" ")}
       >
         <span className="flex min-w-0 items-center gap-3">
