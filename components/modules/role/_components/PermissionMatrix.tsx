@@ -1,8 +1,7 @@
 "use client";
 
 import { PERMISSIONS } from "@/components/modules/access-control/_config/permission";
-import { ChevronDown, ChevronRight, Check } from "lucide-react";
-import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox/Checkbox";
 
 type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
@@ -12,13 +11,24 @@ interface PermissionMatrixProps {
   readOnly?: boolean;
 }
 
+interface ResourceRow {
+  name: string;
+  label: string;
+  permissions: {
+    add: PermissionKey | null;
+    edit: PermissionKey | null;
+    view: PermissionKey | null;
+    delete: PermissionKey | null;
+  };
+}
+
 // Group permissions by module (first segment of the key)
 interface PermissionGroup {
   module: string;
   label: string;
   color: string;
   bgColor: string;
-  permissions: { key: PermissionKey; label: string; action: string }[];
+  resources: ResourceRow[];
 }
 
 const MODULE_META: Record<
@@ -111,13 +121,21 @@ function formatLabel(key: string): string {
   return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function getColumnKey(action: string): keyof ResourceRow["permissions"] | null {
+  if (["create"].includes(action)) return "add";
+  if (["update", "manage"].includes(action)) return "edit";
+  if (["list", "view"].includes(action)) return "view";
+  if (["delete"].includes(action)) return "delete";
+  return null;
+}
+
 function buildGroups(): PermissionGroup[] {
   const map = new Map<string, PermissionGroup>();
 
   for (const [, value] of Object.entries(PERMISSIONS)) {
     const parts = value.split(".");
     const moduleKey = parts[0];
-    const resource = parts[1] ?? "";
+    const resourceKey = parts[1] ?? "";
     const action = parts[2] ?? "view";
 
     if (!map.has(moduleKey)) {
@@ -126,14 +144,24 @@ function buildGroups(): PermissionGroup[] {
         color: "text-gray-600",
         bgColor: "bg-gray-50",
       };
-      map.set(moduleKey, { module: moduleKey, ...meta, permissions: [] });
+      map.set(moduleKey, { module: moduleKey, ...meta, resources: [] });
     }
 
-    map.get(moduleKey)!.permissions.push({
-      key: value as PermissionKey,
-      label: formatLabel(resource),
-      action,
-    });
+    const group = map.get(moduleKey)!;
+    let resource = group.resources.find((r) => r.name === resourceKey);
+    if (!resource) {
+      resource = {
+        name: resourceKey,
+        label: formatLabel(resourceKey),
+        permissions: { add: null, edit: null, view: null, delete: null },
+      };
+      group.resources.push(resource);
+    }
+
+    const colKey = getColumnKey(action);
+    if (colKey) {
+      resource.permissions[colKey] = value as PermissionKey;
+    }
   }
 
   return Array.from(map.values());
@@ -147,8 +175,6 @@ export default function PermissionMatrix({
   onChange,
   readOnly = false,
 }: PermissionMatrixProps) {
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-
   const isAllSelected = ALL_KEYS.every((k) => selected.has(k));
 
   const toggleAll = () => {
@@ -162,7 +188,9 @@ export default function PermissionMatrix({
 
   const toggleGroup = (group: PermissionGroup) => {
     if (readOnly || !onChange) return;
-    const groupKeys = group.permissions.map((p) => p.key);
+    const groupKeys = group.resources.flatMap(
+      (r) => Object.values(r.permissions).filter(Boolean) as PermissionKey[],
+    );
     const allSelected = groupKeys.every((k) => selected.has(k));
     const next = new Set(selected);
     if (allSelected) {
@@ -184,22 +212,10 @@ export default function PermissionMatrix({
     onChange(next);
   };
 
-  const toggleCollapse = (module: string) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(module)) {
-        next.delete(module);
-      } else {
-        next.add(module);
-      }
-      return next;
-    });
-  };
-
   return (
-    <div className="space-y-1">
+    <div className="space-y-4">
       {/* Master toggle */}
-      <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-gray-50 dark:bg-darkPrimary border border-border/50 dark:border-darkBorder/50 mb-4">
+      <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-gray-50 dark:bg-darkPrimary border border-border/50 dark:border-darkBorder/50">
         <div>
           <p className="text-sm font-semibold text-black dark:text-white">
             All Permissions
@@ -222,125 +238,126 @@ export default function PermissionMatrix({
         )}
       </div>
 
-      {/* Groups */}
-      {PERMISSION_GROUPS.map((group) => {
-        const groupKeys = group.permissions.map((p) => p.key);
-        const selectedCount = groupKeys.filter((k) => selected.has(k)).length;
-        const allGroupSelected = selectedCount === groupKeys.length;
-        const someGroupSelected = selectedCount > 0 && !allGroupSelected;
-        const isOpen = !collapsed.has(group.module);
-
-        return (
-          <div
-            key={group.module}
-            className="rounded-xl border border-border/50 dark:border-darkBorder/50 overflow-hidden"
-          >
-            {/* Group header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-darkBg cursor-pointer select-none gap-3">
-              <button
-                type="button"
-                className="flex items-center gap-2.5 flex-1 min-w-0"
-                onClick={() => toggleCollapse(group.module)}
-              >
-                <span
-                  className={`inline-flex items-center justify-center w-6 h-6 rounded-md text-xs font-bold shrink-0 ${group.color} ${group.bgColor}`}
-                >
-                  {group.label[0]}
-                </span>
-                <span className="text-sm font-semibold text-black dark:text-white truncate">
-                  {group.label}
-                </span>
-                <span className="text-xs text-text5 shrink-0">
-                  {selectedCount}/{groupKeys.length}
-                </span>
-                {isOpen ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-text5 ml-auto shrink-0" />
-                ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-text5 ml-auto shrink-0" />
-                )}
-              </button>
-
-              {/* Group select-all toggle */}
-              {!readOnly && (
-                <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={allGroupSelected}
-                    disabled={readOnly}
-                    ref={(el) => {
-                      if (el) el.indeterminate = someGroupSelected;
-                    }}
-                    onChange={() => toggleGroup(group)}
-                  />
-                  <div className="w-9 h-5 bg-gray-200 dark:bg-darkBorder peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              )}
+      <div className="border border-border/50 dark:border-darkBorder/50 rounded-lg bg-white dark:bg-darkBg ">
+        <div className="min-w-[600px]">
+          {/* Table Header */}
+          <div className="grid grid-cols-[1fr_80px_80px_80px_80px] md:grid-cols-[1fr_100px_100px_100px_100px] items-center px-4 py-3 bg-gray-50 dark:bg-darkPrimary border-b border-border/50 dark:border-darkBorder/50 sticky top-17 z-10 rounded-t-xl">
+            <div className="text-sm font-semibold text-text6 dark:text-text4">
+              Pages
             </div>
-
-            {/* Permission chips */}
-            {isOpen && (
-              <div className="px-4 pb-4 pt-2 bg-gray-50/50 dark:bg-darkPrimary/30 border-t border-border/30 dark:border-darkBorder/30">
-                <div className="flex flex-wrap gap-2">
-                  {group.permissions.map(({ key, label, action }) => {
-                    const isChecked = selected.has(key);
-                    const actionColor =
-                      action === "create"
-                        ? "border-emerald-300 dark:border-emerald-700"
-                        : action === "update"
-                          ? "border-amber-300 dark:border-amber-700"
-                          : action === "delete"
-                            ? "border-rose-300 dark:border-rose-700"
-                            : action === "manage"
-                              ? "border-violet-300 dark:border-violet-700"
-                              : "border-border dark:border-darkBorder";
-
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => toggleKey(key)}
-                        disabled={readOnly}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150 select-none ${
-                          readOnly && !isChecked ? "hidden" : ""
-                        } ${readOnly ? "cursor-default" : "cursor-pointer"} ${
-                          isChecked
-                            ? "bg-primary text-white border-primary shadow-sm shadow-primary/30 dark:bg-blue-600 dark:border-blue-500"
-                            : `bg-white dark:bg-darkBg text-text6 dark:text-text5 ${actionColor} hover:border-primary/50 hover:text-primary dark:hover:text-blue-400`
-                        }`}
-                      >
-                        {isChecked ? (
-                          <Check className="w-3 h-3 shrink-0" />
-                        ) : (
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              action === "create"
-                                ? "bg-emerald-500"
-                                : action === "update"
-                                  ? "bg-amber-500"
-                                  : action === "delete"
-                                    ? "bg-rose-500"
-                                    : action === "manage"
-                                      ? "bg-violet-500"
-                                      : "bg-blue-400"
-                            }`}
-                          />
-                        )}
-                        <span>{label}</span>
-                        <span
-                          className={`text-[10px] font-normal ${isChecked ? "opacity-75" : "opacity-50"}`}
-                        >
-                          {action}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <div className="text-sm font-semibold text-text6 dark:text-text4 text-center">
+              Add
+            </div>
+            <div className="text-sm font-semibold text-text6 dark:text-text4 text-center">
+              Edit
+            </div>
+            <div className="text-sm font-semibold text-text6 dark:text-text4 text-center">
+              View
+            </div>
+            <div className="text-sm font-semibold text-text6 dark:text-text4 text-center">
+              Delete
+            </div>
           </div>
-        );
-      })}
+
+          {/* Modules List */}
+          <div className="divide-y divide-border/50 dark:divide-darkBorder/50">
+            {PERMISSION_GROUPS.map((group) => {
+              const groupKeys = group.resources.flatMap(
+                (r) =>
+                  Object.values(r.permissions).filter(
+                    Boolean,
+                  ) as PermissionKey[],
+              );
+              const selectedCount = groupKeys.filter((k) =>
+                selected.has(k),
+              ).length;
+              const allGroupSelected = selectedCount === groupKeys.length;
+              const someGroupSelected = selectedCount > 0 && !allGroupSelected;
+
+              return (
+                <div key={group.module}>
+                  {/* Group Header */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-gray-50/50 dark:bg-white/5 border-b border-border/50 dark:border-darkBorder/20">
+                    <div className="flex items-center gap-3">
+                      <span className=" font-semibold text-gray-900 dark:text-white tracking-wide">
+                        {group.label}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-5">
+                      <span className="text-xs text-text5 font-medium">
+                        {selectedCount}/{groupKeys.length}
+                      </span>
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center justify-center"
+                      >
+                        {!readOnly && (
+                          <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={allGroupSelected}
+                              disabled={readOnly}
+                              ref={(el) => {
+                                if (el) el.indeterminate = someGroupSelected;
+                              }}
+                              onChange={() => toggleGroup(group)}
+                            />
+                            <div className="w-9 h-5 bg-gray-200 dark:bg-darkBorder peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resource Rows */}
+                  <div className="divide-y divide-border/20 dark:divide-darkBorder/20">
+                    {group.resources.map((resource) => (
+                      <div
+                        key={resource.name}
+                        className="grid grid-cols-[1fr_80px_80px_80px_80px] md:grid-cols-[1fr_100px_100px_100px_100px] items-center px-4 py-3 hover:bg-gray-50/40 dark:hover:bg-white/2 transition-colors"
+                      >
+                        <div className="text-sm text-text6/80 dark:text-text4 font-medium pl-2">
+                          {resource.label}
+                        </div>
+                        {["add", "edit", "view", "delete"].map((colKey) => {
+                          const pKey =
+                            resource.permissions[
+                              colKey as keyof typeof resource.permissions
+                            ];
+                          return (
+                            <div
+                              key={colKey}
+                              className="flex justify-center items-center"
+                            >
+                              {pKey ? (
+                                <Checkbox
+                                  checked={selected.has(pKey)}
+                                  onValueChange={() => toggleKey(pKey)}
+                                  disabled={readOnly}
+                                  size="md"
+                                />
+                              ) : (
+                                <Checkbox
+                                  disabled
+                                  checked={false}
+                                  size="md"
+                                  className="opacity-30 mix-blend-luminosity"
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

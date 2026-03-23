@@ -189,7 +189,7 @@ export default function RoleFormEditor({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-md text-sm font-semibold text-white bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
           >
             {saving ? (
               <>
@@ -223,28 +223,7 @@ export default function RoleFormEditor({
         </div>
 
         {/* Right — Permission Matrix */}
-        <div className="lg:col-span-2 rounded-xl border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-5">
-          <h3 className="text-sm font-semibold text-black dark:text-white border-b border-border/50 dark:border-darkBorder/30 pb-3 mb-4 flex items-center justify-between">
-            Permission Matrix
-            <span className="flex items-center gap-3 text-[10px] font-medium text-text5">
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                view/list
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                create
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                update
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
-                manage
-              </span>
-            </span>
-          </h3>
+        <div className="lg:col-span-2 rounded-xl p-3 sm:p-5 border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg ">
           <PermissionMatrix selected={selected} onChange={setSelected} />
         </div>
       </div>

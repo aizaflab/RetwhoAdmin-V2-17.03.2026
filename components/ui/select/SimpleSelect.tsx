@@ -16,6 +16,7 @@ interface SimpleSelectProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  arrowClass?: string;
 }
 
 const SimpleSelect = ({
@@ -25,6 +26,7 @@ const SimpleSelect = ({
   placeholder,
   className,
   disabled = false,
+  arrowClass,
 }: SimpleSelectProps) => {
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement | null>(null);
@@ -79,7 +81,7 @@ const SimpleSelect = ({
             placeholder}
         </span>
         <CaretDownOutlineIcon
-          className={`size-5 transition-transform duration-300 ${isSelectOpen ? "rotate-180" : "rotate-0"}`}
+          className={` size-5 transition-transform duration-300 ${isSelectOpen ? "rotate-180" : "rotate-0"} ${arrowClass}`}
         />
       </button>
 

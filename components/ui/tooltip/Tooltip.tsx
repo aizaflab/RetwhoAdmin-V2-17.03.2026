@@ -70,6 +70,7 @@ interface TooltipProps {
   showArrow?: boolean;
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  disabled?: boolean;
 }
 
 function Tooltip({
@@ -81,19 +82,25 @@ function Tooltip({
   showArrow = true,
   defaultOpen = false,
   onOpenChange,
+  disabled = false,
 }: TooltipProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const triggerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
+  const effectiveIsOpen = disabled ? false : isOpen;
+
   const handleOpen = useCallback(() => {
+    if (disabled) return;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      setIsOpen(true);
-      onOpenChange?.(true);
+      if (!disabled) {
+        setIsOpen(true);
+        onOpenChange?.(true);
+      }
     }, delayDuration);
-  }, [delayDuration, onOpenChange]);
+  }, [delayDuration, onOpenChange, disabled]);
 
   const handleClose = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -108,13 +115,16 @@ function Tooltip({
   }, []);
 
   const eventHandlers = {
-    onMouseEnter: trigger === "hover" ? handleOpen : undefined,
+    onMouseEnter: trigger === "hover" && !disabled ? handleOpen : undefined,
     onMouseLeave: trigger === "hover" ? handleClose : undefined,
-    onClick: trigger === "click" ? () => setIsOpen((prev) => !prev) : undefined,
-    onFocus: trigger === "focus" ? handleOpen : undefined,
+    onClick:
+      trigger === "click" && !disabled
+        ? () => setIsOpen((prev) => !prev)
+        : undefined,
+    onFocus: trigger === "focus" && !disabled ? handleOpen : undefined,
     onBlur: trigger === "focus" ? handleClose : undefined,
     onContextMenu:
-      trigger === "contextMenu"
+      trigger === "contextMenu" && !disabled
         ? (e: React.MouseEvent) => {
             e.preventDefault();
             setIsOpen((prev) => !prev);
@@ -125,7 +135,7 @@ function Tooltip({
   return (
     <TooltipContext.Provider
       value={{
-        isOpen,
+        isOpen: effectiveIsOpen,
         setIsOpen,
         triggerRef,
         contentRef,
@@ -162,11 +172,15 @@ const TooltipTrigger = forwardRef<HTMLDivElement, TooltipTriggerProps>(
       [triggerRef, forwardedRef],
     );
 
+    // Filter out asChild so it doesn't get spread to the DOM
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { asChild, ...domProps } = props as TooltipTriggerProps;
+
     return (
       <div
         ref={handleRefChange}
         className={cn("cursor-help", className)}
-        {...props}
+        {...domProps}
       >
         {children}
       </div>
@@ -429,6 +443,7 @@ interface SimpleTooltipProps {
   color?: string;
   trigger?: TooltipTriggerType;
   showArrow?: boolean;
+  disabled?: boolean;
 }
 
 function SimpleTooltip({
@@ -443,6 +458,7 @@ function SimpleTooltip({
   color,
   trigger = "hover",
   showArrow = true,
+  disabled = false,
 }: SimpleTooltipProps) {
   const getSizeClasses = (): string => {
     const sizes: Record<TooltipSize, string> = {
@@ -460,6 +476,7 @@ function SimpleTooltip({
       color={color}
       trigger={trigger}
       showArrow={showArrow}
+      disabled={disabled}
     >
       <TooltipTrigger asChild>{children}</TooltipTrigger>
       <TooltipContent className={cn(getSizeClasses(), contentClassName)}>

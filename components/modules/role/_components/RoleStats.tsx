@@ -58,12 +58,12 @@ export default function RoleStats({ roles }: RoleStatsProps) {
       {stats.map((stat) => (
         <div
           key={stat.label}
-          className="relative rounded-xl border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-4 sm:p-5"
+          className="relative rounded-xl border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-3 sm:p-5"
         >
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs text-text5 font-medium">{stat.label}</p>
-              <h3 className="text-2xl font-bold text-black dark:text-white mt-1.5 tabular-nums">
+              <h3 className="text-2xl font-semibold text-black dark:text-white mt-1.5 tabular-nums poppins">
                 {stat.value}
               </h3>
             </div>

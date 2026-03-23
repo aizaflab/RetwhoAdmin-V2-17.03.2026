@@ -34,6 +34,7 @@ interface TableProps<T> {
   tableClassName?: string;
   paginationClass?: string;
   headerColor?: string;
+  bordered?: boolean;
 }
 
 // Table Component Definition
@@ -54,6 +55,7 @@ const Table = <T,>({
   tableClassName,
   paginationClass = "",
   headerColor = "bg-[#FFE8E4]",
+  bordered = false,
 }: TableProps<T>) => {
   const renderCellContent = (row: T, rowIndex: number, column: Column<T>) => {
     const value = column.accessor ? column.accessor(row) : row[column.id];
@@ -62,13 +64,17 @@ const Table = <T,>({
 
   // Render table header
   const renderTableHeader = () => (
-    <thead className={`${headerColor} dark:bg-[#3A3A3A] text-muted-foreground`}>
+    <thead
+      className={`${headerColor} dark:bg-[#3A3A3A] text-muted-foreground border-b border-border/50 dark:border-darkBorder/50`}
+    >
       <tr>
         {columns.map((column) => (
           <th
             key={String(column.id)}
             className={cn(
               "px-4 py-4 text-left text-sm font-medium whitespace-nowrap",
+              bordered &&
+                "border-r last:border-r-0 border-border/50 dark:border-darkBorder/50",
               column.className,
             )}
             style={{
@@ -104,7 +110,11 @@ const Table = <T,>({
             {columns.map((column) => (
               <td
                 key={`${rowIndex}-${String(column.id)}`}
-                className="px-4 py-3 text-sm whitespace-nowrap"
+                className={cn(
+                  "px-4 py-3 text-sm whitespace-nowrap",
+                  bordered &&
+                    "border-r last:border-r-0 border-border/50 dark:border-darkBorder/50",
+                )}
                 style={{
                   ...(column.width != null ? { width: column.width } : {}),
                   ...(column.minWidth != null
@@ -142,8 +152,14 @@ const Table = <T,>({
   return (
     <div className={cn("w-full", className)}>
       {/* Table */}
-      <div className="w-full border border-gray-100 dark:border-[#3A3A3A] rounded-md overflow-x-auto">
-        <table className={cn("w-full", tableClassName)}>
+      <div className="w-full border border-border/50 dark:border-darkBorder/50 rounded-md overflow-x-auto">
+        <table
+          className={cn(
+            "w-full",
+            bordered && "border-collapse",
+            tableClassName,
+          )}
+        >
           {renderTableHeader()}
           {renderTableRows()}
         </table>

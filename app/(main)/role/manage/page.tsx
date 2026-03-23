@@ -15,8 +15,12 @@ import type { Role } from "@/components/modules/role";
 import { ShieldCheck } from "lucide-react";
 import RoleUserAssignment from "@/components/modules/role/_components/RoleUserAssignment";
 import { MOCK_ADMIN_USERS } from "@/components/modules/role/_data/mock-admin-users";
+import { Button } from "@/components/ui/button/Button";
+import { useRouter } from "next/navigation";
+import { PlusIcon } from "@/components/icons/Icons";
 
 export default function ManageRolePage() {
+  const router = useRouter();
   const user = useCurrentAccess();
   const [roles, setRoles] = useState<Role[]>(MOCK_ROLES);
   const [assigningRole, setAssigningRole] = useState<Role | null>(null);
@@ -61,28 +65,25 @@ export default function ManageRolePage() {
     >
       <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
         {/* Page header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-semibold text-black dark:text-white flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-primary dark:text-blue-400" />
-              Manage Roles
-            </h1>
-            <p className="text-sm text-text5 mt-0.5">
-              Control access by assigning roles and permissions to admin users
-            </p>
-          </div>
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="sm:text-2xl text-xl font-medium ">Manage Roles</h1>
+          {canCreate && (
+            <Button onClick={() => router.push("/role/add")} className="px-3.5">
+              <PlusIcon className="size-4.5" />
+              Add Role
+            </Button>
+          )}
         </div>
 
         {/* Stats */}
         <RoleStats roles={roles} />
 
         {/* Table */}
-        <div className="rounded-xl border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-3 sm:p-5">
+        <div className="rounded-xl border border-border/50 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-3 sm:p-5">
           <RoleListTable
             roles={roles}
             onDelete={handleDelete}
             onAssignUsers={(role) => setAssigningRole(role)}
-            canCreate={canCreate}
           />
         </div>
       </div>

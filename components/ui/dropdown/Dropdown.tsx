@@ -40,6 +40,7 @@ interface DropdownProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   fullWidth?: boolean;
   disabled?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export function Dropdown({
@@ -47,6 +48,7 @@ export function Dropdown({
   className,
   fullWidth = false,
   disabled = false,
+  onOpenChange,
   ...props
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,13 +60,16 @@ export function Dropdown({
 
   const toggle = () => {
     if (!disabled) {
-      setIsOpen(!isOpen);
+      const nextOpen = !isOpen;
+      setIsOpen(nextOpen);
+      onOpenChange?.(nextOpen);
       setActiveIndex(-1);
     }
   };
 
   const close = () => {
     setIsOpen(false);
+    onOpenChange?.(false);
     setActiveIndex(-1);
   };
 
@@ -86,6 +91,7 @@ export function Dropdown({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // Handle keyboard navigation
@@ -127,6 +133,7 @@ export function Dropdown({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, activeIndex]);
 
   // Focus active item
