@@ -92,16 +92,16 @@ export default function DashboardActivity() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-text4/20 dark:border-darkBorder/30">
-                <th className="py-3 text-xs font-semibold text-text5 uppercase tracking-wider">
+                <th className="w-[22%] py-3 text-xs font-semibold text-text5 uppercase tracking-wider">
                   Order ID
                 </th>
-                <th className="py-3 text-xs font-semibold text-text5 uppercase tracking-wider">
+                <th className="w-[35%] py-3 text-xs font-semibold text-text5 uppercase tracking-wider">
                   Customer
                 </th>
-                <th className="py-3 text-xs font-semibold text-text5 uppercase tracking-wider">
+                <th className="w-[23%] py-3 text-xs font-semibold text-text5 uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="py-3 text-xs font-semibold text-text5 uppercase tracking-wider">
+                <th className="w-[20%] py-3 text-xs font-semibold text-text5 uppercase tracking-wider text-right">
                   Status
                 </th>
               </tr>
@@ -121,9 +121,9 @@ export default function DashboardActivity() {
                   <td className="py-3 text-sm font-semibold text-black dark:text-white">
                     {order.amount}
                   </td>
-                  <td className="py-3">
+                  <td className="py-3 text-right">
                     <span
-                      className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${order.color}`}
+                      className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full ${order.color}`}
                     >
                       {order.status}
                     </span>

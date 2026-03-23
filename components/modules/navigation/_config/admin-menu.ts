@@ -426,7 +426,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
       },
       {
         id: "role-add",
-        title: "Add Role",
+        title: "Create Role",
         type: "item",
         path: "/admin/role/add",
         requiredPermissions: [PERMISSIONS.ROLE_CREATE],
