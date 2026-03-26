@@ -433,12 +433,14 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
     ) => (
       <div
         className={cn(
-          "flex items-center justify-between text-sm px-3 py-2 cursor-pointer rounded transition-colors w-full",
+          "flex items-center justify-between text-sm px-3 py-2.5 cursor-pointer rounded w-full",
           isSelected
-            ? "bg-primary/10 text-primary font-medium"
-            : "text-foreground",
-          isHighlighted && !isSelected ? "bg-primary/5" : "",
-          !isSelected && !isHighlighted ? "hover:bg-primary/5" : "",
+            ? "dark:bg-darkBorder bg-text4/40 dark:text-white text-black"
+            : "hover:bg-text4/30 dark:hover:bg-darkBorder/30 dark:text-text5",
+          isHighlighted && !isSelected ? "dark:bg-darkBorder bg-text5" : "",
+          !isSelected && !isHighlighted
+            ? "hover:bg-text4/30 dark:hover:bg-darkBorder/30"
+            : "",
         )}
       >
         <div className="flex items-center truncate">
@@ -468,7 +470,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
         )}
       >
         {label && (
-          <label className="text-sm font-medium text-foreground">
+          <label className="text-sm font-medium dark:font-normal text-text6 dark:text-white">
             {label}
             {(requiredSign || required) && (
               <span className="text-red-500 ml-1">*</span>
@@ -480,7 +482,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
           <button
             type="button"
             className={cn(
-              "flex sm:h-11 h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm  focus:outline-none focus:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer transition-all",
+              "flex sm:h-11 h-10 w-full items-center justify-between rounded-md border border-border dark:border-darkBorder bg-background px-3 py-2 text-sm  focus:outline-none focus:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer",
               startIcon ? "pl-10" : "",
               error ? "border-destructive" : "",
               fieldClass ? fieldClass : "",
@@ -565,7 +567,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
                   placement === "top" ? "bottom left" : "top left",
               }}
               className={cn(
-                "absolute rounded-lg border border-border bg-popover text-popover-foreground shadow-xl p-1.5 transition duration-150 ease-in-out will-change-transform",
+                "absolute rounded-md border border-border dark:border-darkBorder/80 dark:bg-darkPrimary bg-white text-popover-foreground shadow-xl p-1.5 transition duration-150 ease-in-out will-change-transform",
                 IsSelectVisible
                   ? "opacity-100 translate-y-0 scale-100"
                   : placement === "top"
@@ -575,7 +577,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
             >
               <div
                 ref={listboxRef}
-                className="max-h-60 overflow-auto rounded-md space-y-0.5 bg-popover sideBar"
+                className="max-h-60 overflow-auto rounded-md space-y-0.5 bg-white dark:bg-darkPrimary sideBar"
               >
                 {options.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-muted-foreground">

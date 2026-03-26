@@ -132,7 +132,7 @@ const Pagination = ({
     switch (size) {
       case "small":
         return {
-          button: "size-7 text-xs",
+          button: "size-8 text-xs",
           text: "text-xs",
           gap: "gap-0.5",
         };
@@ -222,135 +222,156 @@ const Pagination = ({
       <div
         className={cn(
           "flex flex-wrap items-center gap-3 sm:gap-4 w-full",
-          align === "start"
-            ? "justify-start"
-            : align === "end"
-              ? "justify-end"
-              : "justify-center",
+          showPageInfo && "lg:justify-between",
+          !showPageInfo || align !== "center"
+            ? align === "start"
+              ? "justify-start"
+              : align === "end"
+                ? "justify-end"
+                : "justify-center"
+            : "justify-center",
         )}
       >
         {/* Page info */}
         {showPageInfo && (
-          <div
-            className={cn(
-              "text-slate-500 dark:text-zinc-400 font-medium whitespace-nowrap hidden sm:block",
-              sizeClasses.text,
-            )}
-          >
-            {showingLabel}{" "}
-            <span className="font-semibold text-slate-900 dark:text-zinc-200">
-              {startItem} - {endItem}
-            </span>{" "}
-            {ofLabel}{" "}
-            <span className="font-semibold text-slate-900 dark:text-zinc-200">
-              {totalItems}
-            </span>
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                "text-slate-500 dark:text-zinc-400 font-medium whitespace-nowrap hidden sm:block",
+                sizeClasses.text,
+              )}
+            >
+              {showingLabel}{" "}
+              <span className="font-semibold text-slate-900 dark:text-zinc-200">
+                {startItem} - {endItem}
+              </span>{" "}
+              {ofLabel}{" "}
+              <span className="font-semibold text-slate-900 dark:text-zinc-200">
+                {totalItems}
+              </span>
+            </div>
+            |
+            <div
+              className={cn(
+                "text-slate-400 font-medium whitespace-nowrap hidden sm:block",
+                sizeClasses.text,
+              )}
+            >
+              Page{" "}
+              <span className="font-bold text-slate-600 dark:text-zinc-300">
+                {page}
+              </span>{" "}
+              of {totalPages}
+            </div>
           </div>
         )}
 
-        {/* Pagination controls */}
-        {totalPages > 1 && (
-          <div
-            className={cn(
-              "flex items-center",
-              sizeClasses.gap,
-              variantClasses.wrapper,
-            )}
-          >
-            {/* Previous Button */}
-            {showPrevNextButtons && (
-              <button
-                type="button"
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-                className={cn(
-                  "flex items-center justify-center transition-all duration-200",
-                  variantClasses.button,
-                  sizeClasses.button,
-                  page === 1 && "opacity-40 cursor-not-allowed",
-                  "dark:text-zinc-300",
-                )}
-                aria-label="Previous page"
-              >
-                <ChevronLeftIcon className="size-4" />
-              </button>
-            )}
-
-            {/* Page Numbers */}
-            {showPageNumbers && (
-              <div className={cn("flex items-center", sizeClasses.gap)}>
-                {getPageNumbers().map((pageNumber, index) => {
-                  if (pageNumber === "leftDots" || pageNumber === "rightDots") {
-                    return (
-                      <span
-                        key={`dots-${index}`}
-                        className={cn(
-                          "hidden sm:flex items-center justify-center text-slate-400",
-                          sizeClasses.button,
-                        )}
-                      >
-                        <EllipsisIcon className="size-4" />
-                      </span>
-                    );
-                  }
-
-                  const isActive = page === pageNumber;
-                  const isDistant =
-                    index > 0 &&
-                    index < getPageNumbers().length - 1 &&
-                    Math.abs((pageNumber as number) - page) > 1;
-
-                  return (
-                    <button
-                      type="button"
-                      key={pageNumber}
-                      onClick={() => handlePageChange(pageNumber as number)}
-                      className={cn(
-                        "flex items-center justify-center transition-all duration-200 font-medium",
-                        variantClasses.button,
-                        sizeClasses.button,
-                        "dark:text-zinc-300",
-                        isActive && variantClasses.activeButton,
-                        isActive && colorClasses,
-                        isDistant && "hidden md:flex",
-                        !isActive &&
-                          index !== 0 &&
-                          index !== getPageNumbers().length - 1 &&
-                          "hidden sm:flex",
-                      )}
-                      aria-label={`Page ${pageNumber}`}
-                      aria-current={isActive ? "page" : undefined}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Next Button */}
-            {showPrevNextButtons && (
-              <button
-                type="button"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === totalPages}
-                className={cn(
-                  "flex items-center justify-center transition-all duration-200",
-                  variantClasses.button,
-                  sizeClasses.button,
-                  page === totalPages && "opacity-40 cursor-not-allowed",
-                  "dark:text-zinc-300",
-                )}
-                aria-label="Next page"
-              >
-                <ChevronRightIcon className="size-4" />
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Page size options & Total Pages */}
         <div className="flex items-center gap-3 sm:gap-4">
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div
+              className={cn(
+                "flex items-center",
+                sizeClasses.gap,
+                variantClasses.wrapper,
+              )}
+            >
+              {/* Previous Button */}
+              {showPrevNextButtons && (
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                  className={cn(
+                    "flex items-center justify-center transition-all duration-200",
+                    variantClasses.button,
+                    sizeClasses.button,
+                    page === 1 && "opacity-40 cursor-not-allowed",
+                    "dark:text-zinc-300",
+                  )}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeftIcon className="size-4" />
+                </button>
+              )}
+
+              {/* Page Numbers */}
+              {showPageNumbers && (
+                <div className={cn("flex items-center", sizeClasses.gap)}>
+                  {getPageNumbers().map((pageNumber, index) => {
+                    if (
+                      pageNumber === "leftDots" ||
+                      pageNumber === "rightDots"
+                    ) {
+                      return (
+                        <span
+                          key={`dots-${index}`}
+                          className={cn(
+                            "hidden sm:flex items-center justify-center text-slate-400",
+                            sizeClasses.button,
+                          )}
+                        >
+                          <EllipsisIcon className="size-4" />
+                        </span>
+                      );
+                    }
+
+                    const isActive = page === pageNumber;
+                    const isDistant =
+                      index > 0 &&
+                      index < getPageNumbers().length - 1 &&
+                      Math.abs((pageNumber as number) - page) > 1;
+
+                    return (
+                      <button
+                        type="button"
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber as number)}
+                        className={cn(
+                          "flex items-center justify-center transition-all duration-200 font-medium",
+                          variantClasses.button,
+                          sizeClasses.button,
+                          "dark:text-zinc-300",
+                          isActive && variantClasses.activeButton,
+                          isActive && colorClasses,
+                          isDistant && "hidden md:flex",
+                          !isActive &&
+                            index !== 0 &&
+                            index !== getPageNumbers().length - 1 &&
+                            "hidden sm:flex",
+                        )}
+                        aria-label={`Page ${pageNumber}`}
+                        aria-current={isActive ? "page" : undefined}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Next Button */}
+              {showPrevNextButtons && (
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                  className={cn(
+                    "flex items-center justify-center transition-all duration-200",
+                    variantClasses.button,
+                    sizeClasses.button,
+                    page === totalPages && "opacity-40 cursor-not-allowed",
+                    "dark:text-zinc-300",
+                  )}
+                  aria-label="Next page"
+                >
+                  <ChevronRightIcon className="size-4" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Page size options & Total Pages */}
           {showPageSizeOptions && (
             <div className="flex items-center gap-2">
               <Select
@@ -366,18 +387,6 @@ const Pagination = ({
               />
             </div>
           )}
-          <div
-            className={cn(
-              "text-slate-400 font-medium whitespace-nowrap hidden sm:block",
-              sizeClasses.text,
-            )}
-          >
-            Page{" "}
-            <span className="font-bold text-slate-600 dark:text-zinc-300">
-              {page}
-            </span>{" "}
-            of {totalPages}
-          </div>
         </div>
       </div>
     </div>

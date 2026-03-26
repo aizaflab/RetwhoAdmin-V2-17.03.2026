@@ -566,8 +566,8 @@ export function DropdownMenu({
     <div
       className={cn(
         "absolute z-50 overflow-hidden rounded-md",
-        "bg-white dark:bg-[#1a1a1a]",
-        "border border-gray-200 dark:border-white/10",
+        "bg-white dark:bg-darkPrimary",
+        "border border-gray-200 dark:border-darkBorder/80",
         "shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)]",
         "transition-all duration-150 ease-out",
         effectiveSide === "top" && "origin-bottom",

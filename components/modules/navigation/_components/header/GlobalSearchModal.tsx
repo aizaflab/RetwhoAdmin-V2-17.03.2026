@@ -63,7 +63,7 @@ export function GlobalSearchModal() {
             // Desktop styles (sm and up)
             "sm:w-full sm:justify-between sm:pl-10 sm:pr-3 sm:py-2.5 sm:rounded-full sm:h-auto sm:leading-5",
             "dark:bg-darkBorder/30 hover:bg-gray-mid dark:hover:bg-darkBorder/40 border-slate-200 dark:border-darkBorder",
-            "group",
+            "group ",
           )}
         >
           {/* Mobile Icon */}
@@ -99,14 +99,14 @@ export function GlobalSearchModal() {
         <div className="flex flex-col w-full bg-white dark:bg-darkPrimary rounded-lg">
           {/* Main Input */}
           <div className="flex items-center px-4 py-3 border-b border-border dark:border-darkBorder relative bg-gray-light/50 dark:bg-darkPrimary/20">
-            <Search className="h-5 w-5 text-text4 absolute left-5" />
+            <Search className="h-5 w-5 text-text6 dark:text-text5 absolute left-5" />
             <input
               ref={inputRef}
               type="text"
               placeholder="What are you looking for?"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent pl-10 pr-4 py-2 text-black dark:text-white placeholder-text4 focus:outline-none text-sm"
+              className="flex-1 bg-transparent pl-10 pr-4 py-2 text-black dark:text-white placeholder-text6  dark:placeholder-text4  focus:outline-none text-sm"
             />
             <kbd
               className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md border border-border dark:border-darkBorder bg-white dark:bg-darkBorder font-sans text-xs font-medium text-text5 dark:text-text4 cursor-pointer hover:bg-gray-light dark:hover:bg-darkBorder/80 transition"
@@ -133,7 +133,7 @@ export function GlobalSearchModal() {
               </div>
             ) : (
               <>
-                <div className="px-2 py-1 text-[10px] font-medium text-text4 dark:text-text5 uppercase tracking-widest">
+                <div className="px-2 py-1 text-[10px] font-medium text-text6 dark:text-text5 uppercase tracking-widest">
                   Quick Shortcuts
                 </div>
                 <div className="space-y-1 mb-4 mt-2">
@@ -242,7 +242,7 @@ export function GlobalSearchModal() {
                   </Link>
                 </div>
 
-                <div className="px-2 py-1 text-[10px] font-medium text-text4 dark:text-text5 uppercase pt-4 tracking-widest border-t border-border dark:border-darkBorder">
+                <div className="px-2 py-1 text-[10px] font-medium text-text6 dark:text-text5 uppercase pt-4 tracking-widest border-t border-border dark:border-darkBorder">
                   Actions
                 </div>
                 <div className="space-y-1 mt-2">

@@ -31,6 +31,7 @@ interface TableProps<T> {
   onRowClick?: (row: T) => void;
   actions?: boolean;
   className?: string;
+  rowClass?: string;
   tableClassName?: string;
   paginationClass?: string;
   headerColor?: string;
@@ -52,6 +53,7 @@ const Table = <T,>({
   onRowClick,
   actions,
   className,
+  rowClass,
   tableClassName,
   paginationClass = "",
   headerColor = "bg-[#FFE8E4]",
@@ -96,13 +98,13 @@ const Table = <T,>({
 
   // Render table rows
   const renderTableRows = () => (
-    <tbody className="divide-y divide-gray-100 dark:divide-[#3A3A3A]">
+    <tbody className="divide-y divide-gray-100 dark:divide-darkBorder/50">
       {data.length > 0 ? (
         data.map((row, rowIndex) => (
           <tr
             key={rowIndex}
             className={cn(
-              "hover:bg-secondary dark:hover:bg-[#262626] transition-colors",
+              "hover:bg-secondary dark:hover:bg-darkBorder/10",
               onRowClick && "cursor-pointer",
             )}
             onClick={() => onRowClick && onRowClick(row)}
@@ -112,6 +114,7 @@ const Table = <T,>({
                 key={`${rowIndex}-${String(column.id)}`}
                 className={cn(
                   "px-4 py-3 text-sm whitespace-nowrap",
+                  rowClass,
                   bordered &&
                     "border-r last:border-r-0 border-border/50 dark:border-darkBorder/50",
                 )}

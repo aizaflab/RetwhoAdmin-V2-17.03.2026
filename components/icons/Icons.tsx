@@ -763,3 +763,498 @@ export const ArrowDownOutlineIcon = ({
     />
   </svg>
 );
+
+export const DeleteIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={12}
+    height={12}
+    viewBox="0 0 24 24"
+    className={className}
+  >
+    <path
+      fill={color}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={strokeWidth}
+      d="M10 5h4a2 2 0 1 0-4 0M8.5 5a3.5 3.5 0 1 1 7 0h5.75a.75.75 0 0 1 0 1.5h-1.32l-1.17 12.111A3.75 3.75 0 0 1 15.026 22H8.974a3.75 3.75 0 0 1-3.733-3.389L4.07 6.5H2.75a.75.75 0 0 1 0-1.5zm2 4.75a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0zM14.25 9a.75.75 0 0 1 .75.75v7.5a.75.75 0 0 1-1.5 0v-7.5a.75.75 0 0 1 .75-.75m-7.516 9.467a2.25 2.25 0 0 0 2.24 2.033h6.052a2.25 2.25 0 0 0 2.24-2.033L18.424 6.5H5.576z"
+    ></path>
+  </svg>
+);
+
+export const KeyboardIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <g
+      fill="none"
+      stroke={color}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={strokeWidth}
+    >
+      <path d="M10 8h.01M12 12h.01M14 8h.01M16 12h.01M18 8h.01M6 8h.01M7 16h10m-9-4h.01" />
+      <rect width={20} height={16} x={2} y={4} rx={2} />
+    </g>
+  </svg>
+);
+
+export const EditIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={12}
+    height={12}
+    viewBox="0 0 24 24"
+    className={className}
+  >
+    <path
+      fill="none"
+      stroke={color}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={strokeWidth}
+      d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"
+    ></path>
+  </svg>
+);
+export const Undo2Icon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <g>
+      <path d="M9 14L4 9l5-5" />
+      <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" />
+    </g>
+  </svg>
+);
+
+export const Redo2Icon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <g>
+      <path d="m15 14l5-5l-5-5" />
+      <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13" />
+    </g>
+  </svg>
+);
+
+export const FlexTextIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <g>
+      <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+      <path d="M14 2v5a1 1 0 0 0 1 1h5M10 9H8m8 4H8m8 4H8" />
+    </g>
+  </svg>
+);
+
+export const TypeIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M12 4v16M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2M9 20h6" />
+  </svg>
+);
+
+export const BoldIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />
+  </svg>
+);
+
+export const ItalicIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />
+  </svg>
+);
+
+export const UnderlineIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M6 4v6a6 6 0 0 0 12 0V4M4 20h16" />
+  </svg>
+);
+
+export const StrikethroughIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M16 4H9a3 3 0 0 0-2.83 4M14 12a4 4 0 0 1 0 8H6m-2-8h16" />
+  </svg>
+);
+
+export const CodeIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="m18 16l4-4l-4-4M6 8l-4 4l4 4m8.5-12l-5 16" />
+  </svg>
+);
+
+export const PaletteIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <g>
+      <path d="M12 22a1 1 0 0 1 0-20a10 9 0 0 1 10 9a5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" />
+      <circle cx={13.5} cy={6.5} r={0.5} fill={color} />
+      <circle cx={17.5} cy={10.5} r={0.5} fill={color} />
+      <circle cx={6.5} cy={12.5} r={0.5} fill={color} />
+      <circle cx={8.5} cy={7.5} r={0.5} fill={color} />
+    </g>
+  </svg>
+);
+
+export const AlignLeftIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M15 12H3m14 6H3M21 6H3" />
+  </svg>
+);
+
+export const AlignCenterIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M17 12H7m12 6H5M21 6H3" />
+  </svg>
+);
+
+export const AlignRightIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M21 12H9m12 6H7M21 6H3" />
+  </svg>
+);
+
+export const ListIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13" />
+  </svg>
+);
+
+export const ListOrderIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M11 5h10m-10 7h10m-10 7h10M4 4h1v5M4 9h2m.5 11H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02" />
+  </svg>
+);
+
+export const ImageIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <g>
+      <rect width={18} height={18} x={3} y={3} rx={2} ry={2} />
+      <circle cx={9} cy={9} r={2} />
+      <path d="m21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </g>
+  </svg>
+);
+
+export const LinkIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <g>
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </g>
+  </svg>
+);
+
+export const QuoteIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2a1 1 0 0 1 1 1v1a2 2 0 0 1-2 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1a6 6 0 0 0 6-6V5a2 2 0 0 0-2-2zM5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2a1 1 0 0 1 1 1v1a2 2 0 0 1-2 2a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1a6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" />
+  </svg>
+);
+
+export const MinusIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <path d="M5 12h14" />
+  </svg>
+);
+
+export const CopyIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <g>
+      <rect width={14} height={14} x={8} y={8} rx={2} ry={2} />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </g>
+  </svg>
+);
+
+export const ClipboardIcon = ({
+  className = "w-4 h-4",
+  color = "currentColor",
+  strokeWidth = 1.7,
+}: IconProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth={strokeWidth}
+  >
+    <g>
+      <rect width={8} height={4} x={8} y={2} rx={1} ry={1} />
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <path d="m9 14l2 2l4-4" />
+    </g>
+  </svg>
+);

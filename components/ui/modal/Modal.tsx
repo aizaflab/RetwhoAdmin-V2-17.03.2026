@@ -263,7 +263,7 @@ const Modal = forwardRef(function Modal(
     <div
       data-modal-container="true"
       className={cn(
-        "fixed inset-0 flex items-center z-10000 justify-center p-4 bg-black/40 backdrop-blur-sm focus:outline-none ani3",
+        "fixed inset-0 flex items-center z-10000 justify-center p-1 bg-black/40 backdrop-blur-sm focus:outline-none ani3",
         animIn ? "opacity-100" : "opacity-0 pointer-events-none",
         overlayClassName,
       )}
@@ -284,7 +284,7 @@ const Modal = forwardRef(function Modal(
               node;
         }}
         className={cn(
-          "relative w-full rounded-lg overflow-hidden ani3 focus:outline-none border",
+          "relative w-full rounded-lg overflow-hidden ani3 focus:outline-none border ",
           animIn
             ? "translate-y-0 scale-100 opacity-100"
             : "translate-y-5 scale-90 opacity-0",
@@ -307,7 +307,7 @@ const Modal = forwardRef(function Modal(
         {showCloseButton && (
           <button
             type="button"
-            className="absolute right-3 top-3 rounded-full size-9 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-white/5 transition-all focus:outline-none z-10 cursor-pointer"
+            className="absolute right-3 top-3 rounded-lg size-9 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-white/5 transition-all focus:outline-none z-10 cursor-pointer"
             onClick={onClose}
             aria-label="Close"
           >
@@ -315,7 +315,7 @@ const Modal = forwardRef(function Modal(
           </button>
         )}
 
-        <div className="sm:p-7 p-3">
+        <div className="sm:p-6 p-3">
           {title && (
             <div className="mb-5 pr-8">
               <h2

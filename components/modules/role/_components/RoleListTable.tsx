@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Role } from "../_types/role.types";
-import { Modal } from "@/components/ui/modal/Modal";
+import DeleteModal from "@/components/ui/modal/DeleteModal";
 import RoleViewDrawer from "./RoleViewDrawer";
 import { Input, SimpleSelect } from "@/components/ui";
 import { Table, Column } from "@/components/ui/table/Table";
@@ -227,7 +227,7 @@ export default function RoleListTable({
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search roles..."
               startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg"
+              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80 dark:focus:border-darkBorder"
             />
           </div>
 
@@ -267,43 +267,21 @@ export default function RoleListTable({
       )}
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        open={!!roleToDelete}
-        onClose={() => setRoleToDelete(null)}
-        title="Delete Role"
-        size="small"
-        variant="destructive"
-        footer={
-          <>
-            <button
-              onClick={() => setRoleToDelete(null)}
-              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-lg transition-colors border border-transparent dark:border-zinc-700"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                if (roleToDelete) {
-                  onDelete?.(roleToDelete.id);
-                  setRoleToDelete(null);
-                }
-              }}
-              className="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete Role
-            </button>
-          </>
-        }
-      >
-        <p>
-          Are you sure you want to delete the role{" "}
-          <span className="font-semibold text-black dark:text-white">
-            {roleToDelete?.name}
-          </span>
-          ? This action cannot be undone.
-        </p>
-      </Modal>
+      <DeleteModal
+        title="Are You Sure?"
+        text={`Are you sure you want to delete the role "${roleToDelete?.name}"? This action cannot be undone.`}
+        deleteModal={!!roleToDelete}
+        setDeleteModal={(open) => {
+          if (!open) setRoleToDelete(null);
+        }}
+        selectedRow={roleToDelete}
+        handleDelete={(role) => {
+          if (role) {
+            onDelete?.(role.id);
+            setRoleToDelete(null);
+          }
+        }}
+      />
     </div>
   );
 }

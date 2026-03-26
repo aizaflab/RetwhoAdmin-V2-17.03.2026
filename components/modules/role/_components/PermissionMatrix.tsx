@@ -9,6 +9,7 @@ interface PermissionMatrixProps {
   selected: Set<PermissionKey>;
   onChange?: (selected: Set<PermissionKey>) => void;
   readOnly?: boolean;
+  isDrawer?: boolean;
 }
 
 interface ResourceRow {
@@ -174,6 +175,7 @@ export default function PermissionMatrix({
   selected,
   onChange,
   readOnly = false,
+  isDrawer = false,
 }: PermissionMatrixProps) {
   const isAllSelected = ALL_KEYS.every((k) => selected.has(k));
 
@@ -238,10 +240,18 @@ export default function PermissionMatrix({
         )}
       </div>
 
-      <div className="border border-border/50 dark:border-darkBorder/50 rounded-lg bg-white dark:bg-darkBg ">
-        <div className="min-w-[600px]">
+      <div
+        className={`border border-border/50 dark:border-darkBorder/50 rounded-lg bg-white dark:bg-darkBg ${isDrawer ? "overflow-x-auto" : ""}`}
+      >
+        <div className={isDrawer ? "min-w-[450px]" : "min-w-[600px]"}>
           {/* Table Header */}
-          <div className="grid grid-cols-[1fr_80px_80px_80px_80px] md:grid-cols-[1fr_100px_100px_100px_100px] items-center px-4 py-3 bg-gray-50 dark:bg-darkPrimary border-b border-border/50 dark:border-darkBorder/50 sticky top-17 z-10 rounded-t-xl">
+          <div
+            className={` items-center px-4 py-3 bg-gray-50 dark:bg-darkPrimary border-b border-border/50 dark:border-darkBorder/50 rounded-t-xl ${
+              isDrawer
+                ? "grid grid-cols-[1fr_60px_60px_60px_60px] "
+                : "sticky top-17 z-10 grid grid-cols-[1fr_80px_80px_80px_80px] md:grid-cols-[1fr_100px_100px_100px_100px]"
+            }`}
+          >
             <div className="text-sm font-semibold text-text6 dark:text-text4">
               Pages
             </div>
@@ -278,8 +288,8 @@ export default function PermissionMatrix({
                 <div key={group.module}>
                   {/* Group Header */}
                   <div className="flex items-center justify-between px-4 py-3 bg-gray-50/50 dark:bg-white/5 border-b border-border/50 dark:border-darkBorder/20">
-                    <div className="flex items-center gap-3">
-                      <span className=" font-semibold text-gray-900 dark:text-white tracking-wide">
+                    <div className="flex items-center gap-3 ">
+                      <span className=" font-semibold text-gray-900 dark:text-white tracking-wide ">
                         {group.label}
                       </span>
                     </div>
@@ -316,7 +326,7 @@ export default function PermissionMatrix({
                     {group.resources.map((resource) => (
                       <div
                         key={resource.name}
-                        className="grid grid-cols-[1fr_80px_80px_80px_80px] md:grid-cols-[1fr_100px_100px_100px_100px] items-center px-4 py-3 hover:bg-gray-50/40 dark:hover:bg-white/2 transition-colors"
+                        className={`grid items-center px-4 py-3 hover:bg-gray-50/40 dark:hover:bg-white/2 transition-colors ${isDrawer ? " grid-cols-[1fr_60px_60px_60px_60px]" : " grid-cols-[1fr_80px_80px_80px_80px] md:grid-cols-[1fr_100px_100px_100px_100px]"}`}
                       >
                         <div className="text-sm text-text6/80 dark:text-text4 font-medium pl-2">
                           {resource.label}

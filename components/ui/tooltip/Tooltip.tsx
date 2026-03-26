@@ -411,7 +411,7 @@ function TooltipContentInternal({
         ...style,
       }}
       className={cn(
-        "bg-zinc-900 dark:bg-zinc-800 text-white min-w-max rounded-md px-3 py-1.5 text-sm shadow-xl",
+        "bg-zinc-900 dark:bg-darkBorder text-white min-w-max rounded-md px-3 py-1.5 text-sm shadow-xl",
         className,
       )}
       {...props}

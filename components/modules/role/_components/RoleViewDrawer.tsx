@@ -93,7 +93,7 @@ export default function RoleViewDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="View Role"
-        className="fixed top-0 right-0 z-500 h-full w-full max-w-[420px]
+        className="fixed top-0 right-0 z-500 h-full w-full max-w-[500px]
                    flex flex-col
                    bg-white dark:bg-darkBg
                    border-l border-border/60 dark:border-darkBorder/60
@@ -232,8 +232,12 @@ export default function RoleViewDrawer({
                   No permissions assigned
                 </p>
               ) : (
-                <div className="mt-2 pl-[-1px]">
-                  <PermissionMatrix selected={selectedPerms} readOnly />
+                <div className="mt-2">
+                  <PermissionMatrix
+                    selected={selectedPerms}
+                    readOnly
+                    isDrawer
+                  />
                 </div>
               )}
             </div>

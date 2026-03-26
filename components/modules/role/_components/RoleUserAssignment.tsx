@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { X, Search, Users, UserCheck, UserX, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Users, UserX } from "lucide-react";
 import { Role, AdminUser } from "../_types/role.types";
+import { Input } from "@/components/ui";
+import { XIcon } from "@/components/icons/Icons";
+import { Button } from "@/components/ui/button/Button";
 
 interface RoleUserAssignmentProps {
   role: Role;
@@ -17,18 +20,18 @@ function getInitials(name: string) {
     .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 1);
 }
 
 const AVATAR_COLORS = [
-  "bg-blue-500",
-  "bg-violet-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-cyan-500",
-  "bg-indigo-500",
-  "bg-teal-500",
+  "bg-blue-200",
+  "bg-violet-200",
+  "bg-emerald-200",
+  "bg-amber-200",
+  "bg-rose-200",
+  "bg-cyan-200",
+  "bg-indigo-200",
+  "bg-teal-200",
 ];
 
 function avatarColor(id: string) {
@@ -121,7 +124,7 @@ export default function RoleUserAssignment({
         role="dialog"
         aria-modal="true"
         aria-label="Assign Users"
-        className="fixed top-0 right-0 z-500 h-full w-full max-w-[420px]
+        className="fixed top-0 right-0 z-500 h-full w-full max-w-105
                    flex flex-col
                    bg-white dark:bg-darkBg
                    border-l border-border/60 dark:border-darkBorder/60
@@ -149,14 +152,14 @@ export default function RoleUserAssignment({
           </div>
           <button
             onClick={handleClose}
-            className="flex items-center justify-center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text5 hover:text-black dark:hover:text-white hover:border-primary/40 transition-all"
+            className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text5 hover:text-primary/70 dark:hover:text-white hover:border-primary/40 transition-all"
           >
-            <X className="w-4 h-4" />
+            <XIcon className="w-4 h-4" />
           </button>
         </div>
 
         {/* ── Tabs + Stats ── */}
-        <div className="px-5 pt-4 pb-3 shrink-0 space-y-3">
+        <div className="px-5 pt-3 pb-3 shrink-0 space-y-2">
           {/* Quick stats */}
 
           {/* Tabs */}
@@ -165,9 +168,9 @@ export default function RoleUserAssignment({
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-150 capitalize ${
+                className={`flex-1 py-2.5 cursor-pointer text-xs font-semibold rounded-md transition-all duration-150 capitalize ${
                   tab === t
-                    ? "bg-white dark:bg-darkBg text-black dark:text-white shadow-sm"
+                    ? "bg-white dark:bg-darkBorder text-black dark:text-white shadow-sm"
                     : "text-text5 hover:text-text6 dark:hover:text-text4"
                 }`}
               >
@@ -180,19 +183,19 @@ export default function RoleUserAssignment({
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text5" />
-            <input
+            <Input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              startIcon={<Search className="size-4 text-text5" />}
               placeholder="Search by name, email or department..."
-              className="w-full pl-8 pr-4 py-2 text-sm rounded-lg border border-border dark:border-darkBorder bg-white dark:bg-darkPrimary text-black dark:text-white placeholder:text-text5 outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+              className="h-10 dark:border-darkBorder dark:focus:border-primary"
             />
           </div>
         </div>
 
         {/* ── User List (scrollable) ── */}
-        <div className="flex-1 overflow-y-auto px-5 pb-3 space-y-1.5 min-h-0">
+        <div className="flex-1 overflow-y-auto noBar px-5 pb-3 space-y-1.5 min-h-0">
           {displayUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
               <UserX className="w-8 h-8 text-text5/50" />
@@ -206,7 +209,7 @@ export default function RoleUserAssignment({
                   key={user.id}
                   type="button"
                   onClick={() => toggleUser(user.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-150 text-left group ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all duration-150 text-left group cursor-pointer ${
                     isAssigned
                       ? "border-primary/30 bg-primary/5 dark:bg-primary/10 dark:border-primary/40"
                       : "border-border/50 dark:border-darkBorder/40 bg-white dark:bg-darkBg hover:border-primary/25 hover:bg-gray-50/70 dark:hover:bg-darkBorder/10"
@@ -214,25 +217,18 @@ export default function RoleUserAssignment({
                 >
                   {/* Avatar */}
                   <div
-                    className={`flex items-center justify-center w-9 h-9 rounded-full text-white text-xs font-bold shrink-0 ${avatarColor(user.id)}`}
+                    className={`flex items-center justify-center w-9 h-9 rounded-xl text-text6 text-sm font-semibold shrink-0 ${avatarColor(user.id)}`}
                   >
                     {getInitials(user.name)}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-black dark:text-white truncate">
+                    <p className="text-[13px] poppins text-black dark:text-white truncate">
                       {user.name}
                     </p>
                     <p className="text-xs text-text5 truncate">{user.email}</p>
                   </div>
-
-                  {/* Department */}
-                  {user.department && (
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-gray-100 dark:bg-darkBorder text-text5 shrink-0">
-                      {user.department}
-                    </span>
-                  )}
 
                   {/* Checkbox */}
                   <div
@@ -282,42 +278,18 @@ export default function RoleUserAssignment({
             })()}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 text-sm font-semibold rounded-lg border border-border dark:border-darkBorder bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/40 hover:text-black dark:hover:text-white transition-all"
-            >
+            <Button variant="outline" onClick={handleClose}>
               Cancel
-            </button>
-            <button
+            </Button>
+
+            <Button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+              className="rounded-lg px-6"
+              loading={saving}
             >
-              {saving ? (
-                <svg
-                  className="animate-spin w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    className="opacity-25"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                    className="opacity-75"
-                  />
-                </svg>
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-              {saving ? "Saving..." : "Save Assignment"}
-            </button>
+              {saving ? "Saving..." : "Save"}
+            </Button>
           </div>
         </div>
       </div>
