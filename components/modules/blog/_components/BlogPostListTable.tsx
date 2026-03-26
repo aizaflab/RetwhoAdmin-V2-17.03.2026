@@ -11,6 +11,8 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  DropdownSeparator,
+  DropdownLabel,
 } from "@/components/ui/dropdown/Dropdown";
 import {
   Edit2,
@@ -29,6 +31,10 @@ interface BlogPostListTableProps {
   posts: BlogPost[];
   categories: BlogCategory[];
   onDelete?: (id: string) => void;
+  onUpdateStatus?: (
+    id: string,
+    status: "published" | "draft" | "archived",
+  ) => void;
 }
 
 const STATUS_STYLES = {
@@ -43,6 +49,7 @@ function BlogPostListTable({
   posts,
   categories,
   onDelete,
+  onUpdateStatus,
 }: BlogPostListTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -181,6 +188,48 @@ function BlogPostListTable({
               >
                 View Details
               </DropdownItem>
+
+              {onUpdateStatus && (
+                <>
+                  <DropdownSeparator />
+                  <DropdownLabel>Update Status</DropdownLabel>
+                  {row.status !== "published" && (
+                    <DropdownItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdateStatus(row.id, "published");
+                      }}
+                      className="text-emerald-600 dark:text-emerald-400 text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Mark as Published
+                    </DropdownItem>
+                  )}
+                  {row.status !== "draft" && (
+                    <DropdownItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdateStatus(row.id, "draft");
+                      }}
+                      className="text-amber-600 dark:text-amber-400 text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Mark as Draft
+                    </DropdownItem>
+                  )}
+                  {row.status !== "archived" && (
+                    <DropdownItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdateStatus(row.id, "archived");
+                      }}
+                      className="text-slate-600 dark:text-slate-400 text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Mark as Archived
+                    </DropdownItem>
+                  )}
+                </>
+              )}
+
+              <DropdownSeparator />
               <DropdownItem
                 icon={<Trash2 className="size-3.5" />}
                 destructive
