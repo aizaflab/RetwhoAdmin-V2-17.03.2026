@@ -85,7 +85,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             type={type}
             id={inputId}
             className={cn(
-              "flex h-11 w-full rounded-md border border-border dark:border-[#424242] dark:font-[350] bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-gray-500 focus:outline-none focus:border-gray-500 disabled:cursor-not-allowed disabled:opacity-50 text-black dark:text-white",
+              "flex h-11 w-full rounded-md border border-border dark:border-[#424242] dark:font-[350] bg-transparent px-3 py-2 text-sm ring-offset-background placeholder:text-gray-500 focus:outline-none focus:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 text-black dark:text-white",
               startIcon && "pl-10",
               endIcon && "pr-10",
               error && "border-red-500 ",

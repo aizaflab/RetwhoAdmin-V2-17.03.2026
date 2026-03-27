@@ -107,7 +107,7 @@ export default function BlogPostForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Top Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-darkBg p-6 rounded-xl border border-border/50 dark:border-darkBorder">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder">
         {/* Left Column */}
         <div className="space-y-4">
           <Input
@@ -117,7 +117,7 @@ export default function BlogPostForm({
             onValueChange={handleTitleChange}
             error={errors.title}
             fullWidth
-            className="dark:border-darkBorder focus:border-[#1b2241]"
+            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
           />
 
           <div>
@@ -161,7 +161,7 @@ export default function BlogPostForm({
               setFormData((prev) => ({ ...prev, altText: val }))
             }
             fullWidth
-            className="dark:border-darkBorder focus:border-[#1b2241]"
+            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
           />
 
           <Input
@@ -172,7 +172,7 @@ export default function BlogPostForm({
               setFormData((prev) => ({ ...prev, imageTitle: val }))
             }
             fullWidth
-            className="dark:border-darkBorder focus:border-[#1b2241]"
+            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
           />
         </div>
 
@@ -188,7 +188,7 @@ export default function BlogPostForm({
             }}
             error={errors.slug}
             fullWidth
-            className="dark:border-darkBorder focus:border-[#1b2241]"
+            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
           />
 
           <div className="space-y-1.5 flex-1 flex flex-col">
@@ -198,7 +198,7 @@ export default function BlogPostForm({
             <div
               role="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative border-2 border-dashed border-[#EAECF0] dark:border-darkBorder rounded-lg p-6 flex flex-col items-center justify-center flex-1 cursor-pointer hover:border-[#6C63FF] transition-colors bg-white dark:bg-darkBg min-h-45"
+              className="relative border-2 border-dashed border-[#EAECF0] dark:border-darkBorder rounded-lg p-6 flex flex-col items-center justify-center flex-1 cursor-pointer hover:border-[#6C63FF]  bg-white dark:bg-darkBg min-h-45"
             >
               <input
                 type="file"
@@ -243,8 +243,8 @@ export default function BlogPostForm({
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-center space-y-2">
-                  <div className="p-2 border border-[#EAECF0] rounded-lg bg-white shadow-sm">
-                    <CloudUploadIcon className="h-6 w-6 text-[#667085]" />
+                  <div className="p-2 border border-[#EAECF0] rounded-lg bg-white dark:bg-darkBorder/50 dark:border-darkBorder shadow-sm">
+                    <CloudUploadIcon className="h-6 w-6 text-[#667085] dark:text-white" />
                   </div>
                   <div>
                     <p className="text-sm text-[#475467] font-medium">
@@ -263,10 +263,7 @@ export default function BlogPostForm({
       </div>
 
       {/* SEO Section */}
-      <div className="bg-white dark:bg-darkBg p-6 rounded-xl border border-border/50 dark:border-darkBorder space-y-4">
-        <h2 className="text-lg font-semibold border-b border-border/30 dark:border-darkBorder/30 pb-3">
-          SEO Info
-        </h2>
+      <div className="bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder space-y-4">
         <div className="relative">
           <Input
             label={`Meta Title (Characters: ${formData.metaTitle.length}/60)`}
@@ -277,6 +274,7 @@ export default function BlogPostForm({
             }
             error={errors.metaTitle}
             fullWidth
+            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
           />
         </div>
 
@@ -290,7 +288,7 @@ export default function BlogPostForm({
               setFormData({ ...formData, metaDescription: e.target.value })
             }
             rows={3}
-            className={`w-full rounded-md border ${formData.metaDescription.length > 160 ? "border-red-500" : "border-border dark:border-[#424242]"} p-3 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 placeholder:text-gray-400`}
+            className={`w-full rounded-md border ${formData.metaDescription.length > 160 ? "border-red-500" : "border-border dark:border-[#424242]"} p-3 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 placeholder:text-gray-400 dark:border-darkBorder dark:focus:border-[#1b2241]`}
             placeholder="Enter blog meta description"
           />
           {errors.metaDescription && (
@@ -302,8 +300,8 @@ export default function BlogPostForm({
       </div>
 
       {/* Content Section */}
-      <div className="bg-white dark:bg-darkBg p-6 rounded-xl border border-border/50 dark:border-darkBorder space-y-1">
-        <label className="text-sm font-medium dark:font-[350] text-[#344054] dark:text-gray-100 block">
+      <div className="bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder ">
+        <label className="text-sm font-medium dark:font-[350] text-[#344054] dark:text-gray-100 block mb-1.5">
           Content
         </label>
 
@@ -315,18 +313,18 @@ export default function BlogPostForm({
       </div>
 
       {/* Footer Buttons */}
-      <div className="flex items-center gap-3 pt-4 bg-white dark:bg-darkBg p-6 rounded-xl border border-border/50">
+      <div className="flex items-center justify-end gap-5">
         <Button
           type="submit"
-          className="flex-1 max-w-30 bg-[#0284c7] hover:bg-[#0284c7]/90 text-white"
+          className="px-8 bg-[#0284c7] hover:bg-[#0284c7]/90 text-white"
         >
           Save
         </Button>
         <Button
           type="button"
-          variant="ghost"
+          variant="outline"
           onClick={() => router.back()}
-          className="flex-1 max-w-25 text-gray-500"
+          className="px-7  text-gray-500"
         >
           Cancel
         </Button>

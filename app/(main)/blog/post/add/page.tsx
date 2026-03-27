@@ -22,15 +22,14 @@ export default function AddBlogPage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.back()}
-          className="p-2 rounded-lg bg-white dark:bg-darkPrimary border border-border/50 dark:border-darkBorder/50 hover:bg-gray-50 dark:hover:bg-darkBorder/40 transition-colors"
+          className="size-8 center rounded-lg bg-white dark:bg-darkPrimary border border-border/50 dark:border-darkBorder/50 hover:bg-gray-50 dark:hover:bg-darkBorder/40  cursor-pointer"
         >
           <MoveLeft className="w-5 h-5 text-black dark:text-white" />
         </button>
         <div>
-          <h1 className="sm:text-2xl text-xl font-medium text-black">
+          <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
             Add New Post
           </h1>
-          <p className="text-sm text-text5 mt-0.5">Create a new blog article</p>
         </div>
       </div>
 

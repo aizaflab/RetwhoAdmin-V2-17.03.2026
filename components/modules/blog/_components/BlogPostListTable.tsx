@@ -20,12 +20,16 @@ import {
   MoreVertical,
   Eye,
   Image as ImageIcon,
+  Archive,
+  Globe,
+  FileEdit,
 } from "lucide-react";
 import { SearchIcon, PlusIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button/Button";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import BlogPostViewDrawer from "./BlogPostViewDrawer";
+import Image from "next/image";
 
 interface BlogPostListTableProps {
   posts: BlogPost[];
@@ -82,11 +86,13 @@ function BlogPostListTable({
           <div className="flex items-center gap-3">
             <div className="relative w-12 h-12 rounded-lg bg-gray-100 dark:bg-darkBorder overflow-hidden shrink-0">
               {row.bannerImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={row.bannerImage}
                   alt={row.altText}
                   className="w-full h-full object-cover"
+                  width={1000}
+                  height={1000}
+                  priority
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-text5">
@@ -177,7 +183,7 @@ function BlogPostListTable({
               </DropdownTrigger>
             </SimpleTooltip>
 
-            <DropdownMenu align="end" className="min-w-37.5 p-1 font-medium">
+            <DropdownMenu align="right" className="min-w-37.5 p-1 font-medium">
               <DropdownItem
                 icon={<Eye className="w-4 h-4" />}
                 onClick={(e) => {
@@ -192,38 +198,43 @@ function BlogPostListTable({
               {onUpdateStatus && (
                 <>
                   <DropdownSeparator />
-                  <DropdownLabel>Update Status</DropdownLabel>
+                  <DropdownLabel className="text-[9px] items-center gap-1.5 uppercase tracking-wider text-text5 py-1.5 pb-2  pl-0 flex">
+                    Status Actions
+                  </DropdownLabel>
                   {row.status !== "published" && (
                     <DropdownItem
+                      icon={<Globe className="w-3.5 h-3.5" />}
                       onClick={(e) => {
                         e.stopPropagation();
                         onUpdateStatus(row.id, "published");
                       }}
-                      className="text-emerald-600 dark:text-emerald-400 text-xs rounded-sm py-2 cursor-pointer"
+                      className="text-emerald-600 dark:text-emerald-400 text-xs rounded-sm py-2 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                     >
-                      Mark as Published
+                      Publish to Site
                     </DropdownItem>
                   )}
                   {row.status !== "draft" && (
                     <DropdownItem
+                      icon={<FileEdit className="w-3.5 h-3.5" />}
                       onClick={(e) => {
                         e.stopPropagation();
                         onUpdateStatus(row.id, "draft");
                       }}
-                      className="text-amber-600 dark:text-amber-400 text-xs rounded-sm py-2 cursor-pointer"
+                      className="text-amber-600 dark:text-amber-400 text-xs rounded-sm py-2 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-950/20"
                     >
-                      Mark as Draft
+                      Revert to Draft
                     </DropdownItem>
                   )}
                   {row.status !== "archived" && (
                     <DropdownItem
+                      icon={<Archive className="w-3.5 h-3.5" />}
                       onClick={(e) => {
                         e.stopPropagation();
                         onUpdateStatus(row.id, "archived");
                       }}
-                      className="text-slate-600 dark:text-slate-400 text-xs rounded-sm py-2 cursor-pointer"
+                      className="text-slate-600 dark:text-slate-400 text-xs rounded-sm py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/20"
                     >
-                      Mark as Archived
+                      Move to Archive
                     </DropdownItem>
                   )}
                 </>

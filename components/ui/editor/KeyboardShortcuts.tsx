@@ -59,7 +59,7 @@ export default function KeyboardShortcuts() {
         type="button"
         onClick={() => setIsOpen(true)}
         title="Keyboard Shortcuts"
-        className="h-8 w-8 center border border-transparent rounded hover:bg-[#ffffff] group transition-colors flex items-center justify-center p-0 text-white hover:text-primary"
+        className="h-8 w-8 center border border-transparent rounded hover:bg-gray-100 dark:hover:bg-darkBorder group transition-colors flex items-center justify-center p-0 text-white hover:text-primary dark:hover:text-white"
       >
         <KeyboardIcon className="size-5 text-current" />
       </button>
@@ -72,10 +72,10 @@ export default function KeyboardShortcuts() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-[#0B1315] w-full max-w-md rounded-xl shadow-2xl border border-gray-200 dark:border-[#2a3033]"
+            className="bg-white dark:bg-darkBg w-full max-w-md rounded-xl shadow-2xl border border-gray-200 dark:border-darkBorder"
           >
             {/* Header */}
-            <div className="flex justify-between items-center p-5 border-b border-gray-100 dark:border-[#2a3033]">
+            <div className="flex justify-between items-center p-5 border-b border-gray-100 dark:border-darkBorder">
               <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 <KeyboardIcon className="size-5" /> Keyboard Shortcuts
               </h2>
@@ -92,8 +92,8 @@ export default function KeyboardShortcuts() {
               {Object.entries(categorized).map(
                 ([category, categoryShortcuts]) => (
                   <div key={category}>
-                    <h3 className="text-sm font-semibold text-[#8B5CF6] dark:text-[#6C63FF] mb-3 flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-[#8B5CF6] dark:bg-[#6C63FF] rounded-full"></div>
+                    <h3 className="text-sm font-semibold text-primary dark:text-darkLight mb-3 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-primary dark:bg-darkLight rounded-full"></div>
                       {category}
                     </h3>
                     <div className="space-y-2 ml-4">

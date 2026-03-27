@@ -106,7 +106,7 @@ const ResizableImage = Image.extend({
       // Alignment controls
       const alignmentControls = document.createElement("div");
       alignmentControls.className =
-        "absolute top-2 left-2 bg-[#0B1315]/50 backdrop-blur rounded-lg shadow-lg p-1 group-hover:opacity-100 transition-opacity flex gap-1";
+        "absolute top-2 left-2 bg-darkPrimary/50 backdrop-blur rounded-lg shadow-lg p-1 group-hover:opacity-100 transition-opacity flex gap-1";
 
       ["left", "center", "right"].forEach((value) => {
         const btn = document.createElement("button");
@@ -616,8 +616,8 @@ export default function TextEditor({
       className={cn(
         "h-8 w-8 p-0 transition-all duration-200 dark:text-white",
         active
-          ? "bg-[#ffffff] text-primary hover:bg-[#dcdaff]"
-          : "hover:bg-[#ffffff] hover:text-primary dark:text-white",
+          ? "bg-gray-100 text-primary hover:bg-gray-200 dark:bg-darkBorder dark:text-white"
+          : "hover:bg-gray-100 hover:text-primary dark:hover:bg-darkBorder dark:hover:text-white",
       )}
     >
       {IconNode}
@@ -629,9 +629,9 @@ export default function TextEditor({
   if (!mounted || !editor) return null;
 
   return (
-    <div className="w-full mx-auto bg-white rounded-md border border-gray-200 dark:border-[#2a3033] overflow-hidden text-editor mt-5">
+    <div className="w-full mx-auto bg-white dark:bg-darkBg rounded-md border border-gray-200 dark:border-darkBorder overflow-hidden text-editor">
       {/* Toolbar */}
-      <div className="z-40 flex flex-wrap items-center gap-1 p-3 bg-white dark:bg-[#0B1315] border-b border-gray-200 dark:border-[#2a3033] text-gray-700 dark:text-gray-200">
+      <div className="z-40 flex flex-wrap items-center gap-1 p-3 bg-white dark:bg-darkPrimary border-b border-gray-200 dark:border-darkBorder text-gray-700 dark:text-gray-200">
         {/* Undo / Redo */}
         <ToolbarButton
           icon={<Undo2Icon className="size-5" />}
@@ -645,7 +645,7 @@ export default function TextEditor({
           disabled={!canRedo}
           title="Redo (Ctrl+Y)"
         />
-        <div className="h-6 mx-1 w-px bg-[#edefff]" />
+        <div className="h-6 mx-1 w-px bg-[#edefff] dark:bg-darkBorder" />
 
         {/* Font Family */}
         <div className="relative" ref={fontFamilyMenuRef}>
@@ -654,8 +654,9 @@ export default function TextEditor({
             size="sm"
             onClick={() => setIsFontFamilyMenuOpen((v) => !v)}
             className={cn(
-              "h-8 px-2 text-sm min-w-[90px] hover:text-primary",
-              isFontFamilyMenuOpen && "bg-[#ffffff] text-primary",
+              "h-8 px-2 text-sm min-w-[90px] hover:text-primary dark:text-white dark:hover:text-primary",
+              isFontFamilyMenuOpen &&
+                "bg-gray-100 text-primary dark:bg-darkBorder",
             )}
             title="Font Family"
           >
@@ -663,13 +664,14 @@ export default function TextEditor({
             {activeFontFamily}
           </Button>
           {isFontFamilyMenuOpen && (
-            <div className="absolute top-12 left-0 z-50 bg-[#ffffff] rounded-lg shadow-lg border sideBar border-[#6b63fd5e] p-2 min-w-[200px] max-h-60 overflow-y-auto space-y-1">
+            <div className="absolute top-12 left-0 z-50 bg-white dark:bg-darkPrimary rounded-lg shadow-lg border sideBar border-border dark:border-darkBorder p-2 min-w-[200px] max-h-60 overflow-y-auto space-y-1">
               {fontFamilies.map((font) => (
                 <button
                   key={font.value}
                   className={cn(
-                    "w-full text-left px-3 py-2 mb-1 rounded text-sm hover:bg-primary hover:text-white flex flex-col gap-1 text-black",
-                    activeFontFamily === font.label && "bg-primary text-white",
+                    "w-full text-left px-3 py-2 mb-1 rounded text-sm hover:bg-primary hover:text-white flex flex-col gap-1 text-black dark:text-text5 dark:hover:bg-darkBorder",
+                    activeFontFamily === font.label &&
+                      "bg-primary text-white dark:bg-hover dark:bg-darkBorder dark:text-white",
                   )}
                   onClick={() => applyFontFamily(font.value, font.label)}
                   style={{ fontFamily: font.value }}
@@ -689,8 +691,9 @@ export default function TextEditor({
             size="sm"
             onClick={() => setIsFontSizeMenuOpen((v) => !v)}
             className={cn(
-              "h-8 px-2 text-sm min-w-[70px] hover:text-primary",
-              isFontSizeMenuOpen && "bg-[#ffffff] text-primary",
+              "h-8 px-2 text-sm min-w-[70px] hover:text-primary dark:text-white dark:hover:text-primary",
+              isFontSizeMenuOpen &&
+                "bg-gray-100 text-primary dark:bg-darkBorder",
             )}
             title="Font Size"
           >
@@ -698,13 +701,14 @@ export default function TextEditor({
             {activeFontSize}
           </Button>
           {isFontSizeMenuOpen && (
-            <div className="absolute top-12 left-0 z-50 bg-[#ffffff] rounded-lg shadow-lg border border-[#6b63fd5e] sideBar p-2 min-w-[120px] max-h-60 overflow-y-auto text-black space-y-1">
+            <div className="absolute top-12 left-0 z-50 bg-white dark:bg-darkPrimary rounded-lg shadow-lg border border-border dark:border-darkBorder sideBar p-2 min-w-[120px] max-h-60 overflow-y-auto text-black dark:text-white space-y-1">
               {fontSizes.map((size) => (
                 <button
                   key={size.value}
                   className={cn(
-                    "w-full text-left px-3 py-3 rounded text-sm hover:bg-primary hover:text-white",
-                    activeFontSize === size.value && "bg-primary text-white",
+                    "w-full text-left px-3 py-3 rounded text-sm hover:bg-primary hover:text-white dark:hover:bg-darkBorder dark:text-text5",
+                    activeFontSize === size.value &&
+                      "bg-primary text-white dark:bg-darkBorder",
                   )}
                   onClick={() => applyFontSize(size.value)}
                   style={{ fontSize: size.value }}
@@ -716,7 +720,7 @@ export default function TextEditor({
           )}
         </div>
 
-        <div className="h-6 mx-1 w-px bg-[#edefff]" />
+        <div className="h-6 mx-1 w-px bg-[#edefff] dark:bg-darkBorder" />
 
         {/* Inline formatting */}
         <ToolbarButton
@@ -750,7 +754,7 @@ export default function TextEditor({
           title="Code"
         />
 
-        <div className="h-6 mx-1 w-px bg-[#edefff]" />
+        <div className="h-6 mx-1 w-px bg-[#edefff] dark:bg-darkBorder" />
 
         {/* Colors */}
         <div className="relative" ref={colorMenuRef}>
@@ -760,14 +764,14 @@ export default function TextEditor({
             title="Text Color"
           />
           {isColorMenuOpen && (
-            <div className="absolute top-12 left-0 z-50 bg-[#ffffff] rounded-lg shadow-lg border border-[#6b63fd5e] p-3 w-64">
+            <div className="absolute top-12 left-0 z-50 bg-white dark:bg-darkPrimary rounded-lg shadow-lg border border-border dark:border-darkBorder p-3 w-64">
               <div className="mb-3">
                 <div className="flex justify-between items-center mb-2">
-                  <p className="text-xs font-medium text-gray-600">
+                  <p className="text-xs font-medium text-gray-600 dark:text-text5">
                     Text Color
                   </p>
                   <button
-                    className="text-xs text-blue-500 hover:text-blue-700"
+                    className="text-xs text-blue-500 hover:text-blue-700 dark:text-darkLight"
                     onClick={() => editor.chain().focus().unsetColor().run()}
                   >
                     Reset
@@ -795,9 +799,11 @@ export default function TextEditor({
               </div>
               <div className="pt-3 border-t border-gray-200">
                 <div className="flex justify-between items-center mb-2">
-                  <p className="text-xs font-medium text-gray-600">Highlight</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-text5">
+                    Highlight
+                  </p>
                   <button
-                    className="text-xs text-blue-500 hover:text-blue-700"
+                    className="text-xs text-blue-500 hover:text-blue-700 dark:text-darkLight"
                     onClick={() =>
                       editor.chain().focus().unsetHighlight().run()
                     }
@@ -829,7 +835,7 @@ export default function TextEditor({
           )}
         </div>
 
-        <div className="h-6 mx-1 w-px bg-[#edefff]" />
+        <div className="h-6 mx-1 w-px bg-[#edefff] dark:bg-darkBorder" />
 
         {/* Alignment */}
         <ToolbarButton
@@ -851,7 +857,7 @@ export default function TextEditor({
           title="Align Right"
         />
 
-        <div className="h-6 mx-1 w-px bg-[#edefff]" />
+        <div className="h-6 mx-1 w-px bg-[#edefff] dark:bg-darkBorder" />
 
         {/* Lists */}
         <ToolbarButton
@@ -867,7 +873,7 @@ export default function TextEditor({
           title="Numbered List"
         />
 
-        <div className="h-6 mx-1 w-px bg-[#edefff]" />
+        <div className="h-6 mx-1 w-px bg-[#edefff] dark:bg-darkBorder" />
 
         {/* Insert Image */}
         <ToolbarButton
@@ -885,15 +891,17 @@ export default function TextEditor({
             title="Insert Link"
           />
           {isLinkMenuOpen && (
-            <div className="absolute top-10 right-0 z-50 bg-[#ffffff] rounded-lg shadow-lg border border-[#6b63fd5e] p-3 w-72 text-black">
+            <div className="absolute top-10 right-0 z-50 bg-white dark:bg-darkPrimary rounded-lg shadow-lg border border-border dark:border-darkBorder p-3 w-72 text-black dark:text-white">
               <div className="flex flex-col gap-2">
                 {selectedText && (
-                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                  <div className="text-xs text-gray-500 dark:text-text5 bg-gray-50 dark:bg-darkBg p-2 rounded">
                     Selected:{" "}
                     <span className="font-medium">{selectedText}</span>
                   </div>
                 )}
-                <label className="text-xs font-medium text-gray-600">URL</label>
+                <label className="text-xs font-medium text-gray-600 dark:text-text5">
+                  URL
+                </label>
                 <div className="flex">
                   <input
                     ref={linkInputRef}
@@ -901,7 +909,7 @@ export default function TextEditor({
                     value={linkUrl}
                     onChange={(e) => setLinkUrl(e.target.value)}
                     placeholder="https://example.com"
-                    className="flex-1 px-2 py-1.5 text-sm border bg-transparent border-primary rounded-l focus:outline-none focus:border-blue-500"
+                    className="flex-1 px-2 py-1.5 text-sm border bg-transparent border-primary dark:border-darkBorder rounded-l focus:outline-none focus:border-blue-500"
                     onKeyDown={(e) => e.key === "Enter" && handleLinkInsert()}
                   />
                   <button
@@ -916,14 +924,14 @@ export default function TextEditor({
                   {editor.isActive("link") && (
                     <button
                       onClick={handleLinkRemove}
-                      className="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100"
+                      className="px-3 py-1.5 text-xs bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded hover:bg-red-100 dark:hover:bg-red-900/40"
                     >
                       Remove Link
                     </button>
                   )}
                   <button
                     onClick={() => setIsLinkMenuOpen(false)}
-                    className="px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 ml-auto"
+                    className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-darkBorder text-gray-600 dark:text-text5 rounded hover:bg-gray-200 dark:hover:bg-darkBorder/80 ml-auto"
                   >
                     Cancel
                   </button>
@@ -945,7 +953,7 @@ export default function TextEditor({
           title="Horizontal Rule"
         />
 
-        <div className="h-6 mx-1 w-px bg-[#edefff]" />
+        <div className="h-6 mx-1 w-px bg-[#edefff] dark:bg-darkBorder" />
 
         {/* Copy / Paste */}
         <ToolbarButton
@@ -996,7 +1004,7 @@ export default function TextEditor({
       />
 
       {/* Status Bar */}
-      <div className="flex justify-between items-center px-6 py-2 bg-[#e3e7fe] border-t border-[#b2bbefd8] text-sm text-gray-600 0">
+      <div className="flex justify-between items-center px-6 py-2 bg-[#f8fafc] dark:bg-darkPrimary border-t border-border dark:border-darkBorder text-sm text-gray-600 dark:text-text5">
         <div className="flex items-center gap-4">
           <span>Words: {characterCount.words}</span>
           <span>Characters: {characterCount.characters}</span>

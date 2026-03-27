@@ -33,38 +33,6 @@ export const MOCK_BLOG_CATEGORIES: BlogCategory[] = [
     status: "active",
     createdAt: "2024-03-04T10:00:00Z",
   },
-  {
-    id: "cat_1",
-    name: "Technology",
-    slug: "technology",
-    postCount: 15,
-    status: "active",
-    createdAt: "2024-03-01T10:00:00Z",
-  },
-  {
-    id: "cat_2",
-    name: "Business",
-    slug: "business",
-    postCount: 8,
-    status: "active",
-    createdAt: "2024-03-02T10:00:00Z",
-  },
-  {
-    id: "cat_3",
-    name: "Marketing",
-    slug: "marketing",
-    postCount: 5,
-    status: "inactive",
-    createdAt: "2024-03-03T10:00:00Z",
-  },
-  {
-    id: "cat_4",
-    name: "Design",
-    slug: "design",
-    postCount: 12,
-    status: "active",
-    createdAt: "2024-03-04T10:00:00Z",
-  },
 ];
 
 export const MOCK_BLOG_POSTS: BlogPost[] = [
