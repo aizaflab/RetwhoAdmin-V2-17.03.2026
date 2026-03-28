@@ -396,7 +396,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         id: "promotion-manage",
         title: "Promotion",
         type: "item",
-        path: "/promotion",
+        path: "/promotion/manage",
         requiredPermissions: [PERMISSIONS.PROMOTION_LIST],
       },
       {
