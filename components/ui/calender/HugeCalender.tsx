@@ -446,23 +446,23 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
 
       if (dateDesignStyle === "box") {
         if (isStart || isEnd) {
-          return `${shapeClass} bg-gray-400 text-white border border-gray-400 font-semibold`;
+          return `${shapeClass} bg-gray-400 dark:bg-darkBorder text-white border border-gray-400 dark:border-darkBorder font-semibold`;
         }
         if (inFullRange) {
-          return `${shapeClass} bg-gray-100 text-gray-900 border border-gray-300`;
+          return `${shapeClass} bg-gray-100 dark:bg-darkBorder text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-darkBorder`;
         }
         if (highlightToday && isTodayDate) {
-          return `${shapeClass} border border-gray-500 text-gray-600 bg-white font-semibold`;
+          return `${shapeClass} border border-gray-500 dark:border-darkBorder text-gray-600 dark:text-gray-200 bg-white dark:bg-darkBorder font-semibold`;
         }
-        return `${shapeClass} border border-gray-200 text-gray-700 hover:bg-gray-50`;
+        return `${shapeClass} border border-gray-200 dark:border-darkBorder text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-darkBorder`;
       }
 
       // minimal
       if (isStart || isEnd) {
-        return `${shapeClass} bg-gray-300 text-black`;
+        return `${shapeClass} bg-gray-300 dark:bg-darkBorder text-black`;
       }
       if (inFullRange) {
-        return `${shapeClass} bg-gray-100 dark:bg-gray-500/20 text-gray-900 dark:text-gray-100`;
+        return `${shapeClass} bg-gray-100 dark:bg-darkBorder text-gray-900 dark:text-gray-100`;
       }
       if (highlightToday && isTodayDate) {
         return `${shapeClass} text-gray-600 dark:text-gray-400 border font-semibold`;
@@ -698,7 +698,9 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
           {/* Days */}
           <div
             className={`grid grid-cols-7 gap-0 gap-y-0.5 ${
-              gridBox ? "border-t border-l border-border" : ""
+              gridBox
+                ? "border-t border-l border-border dark:border-darkBorder"
+                : ""
             }`}
           >
             {days.map((date, idx) => {
@@ -725,7 +727,8 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                   key={idx}
                   className={cn(
                     "flex items-center justify-center",
-                    gridBox && "border-b border-r border-border",
+                    gridBox &&
+                      "border-b border-r border-border dark:border-darkBorder",
                     variant === "professional" ? "h-8" : "h-10",
                   )}
                 >
@@ -761,10 +764,10 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
     const renderPopupContent = () => {
       if (variant === "professional") {
         return (
-          <div className="w-[354px] sm:w-[500px] lg:w-[600px] max-w-[95vw] bg-white dark:bg-[#1E1E1E] rounded-md border border-gray-200 dark:border-[#3A3A3A] shadow-md">
+          <div className="w-[354px] sm:w-[500px] lg:w-[600px] max-w-[95vw] bg-white dark:bg-darkPrimary rounded-md border border-gray-200 dark:border-darkBorder shadow-md">
             <div id={gridId} className="flex min-h-84">
               {/* Shortcuts */}
-              <div className="w-28 lg:w-32 shrink-0 py-3 border-r border-border dark:border-[#3A3A3A] relative">
+              <div className="w-28 lg:w-32 shrink-0 py-3 border-r border-border dark:border-darkBorder relative">
                 <div className="space-y-[3px] px-2 lg:px-3">
                   {QUICK_SHORTCUTS.map((shortcut) => {
                     const isCustom = shortcut.label === "Custom";
@@ -826,15 +829,15 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                   </div>
                 </div>
 
-                <div className="px-4 py-3 border-t border-gray-200 dark:border-[#3A3A3A] flex lg:flex-row flex-col items-center justify-between gap-3 lg:gap-0">
+                <div className="px-4 py-3 border-t border-gray-200 dark:border-darkBorder flex lg:flex-row flex-col items-center justify-between gap-3 lg:gap-0">
                   <div className="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-start">
-                    <div className="text-xs font-medium text-white bg-gray-400 dark:bg-[#3A3A3A] rounded px-3 py-1.5 whitespace-nowrap">
+                    <div className="text-xs font-medium text-white bg-gray-400 dark:bg-darkBorder rounded px-3 py-1.5 whitespace-nowrap">
                       {getDaysCount()} days
                     </div>
                     <button
                       type="button"
                       onClick={() => handleClear()}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-transparent border border-gray-300 dark:border-[#3A3A3A] rounded hover:bg-gray-50 dark:hover:bg-[#3A3A3A] transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-transparent border border-gray-300 dark:border-darkBorder rounded hover:bg-gray-50 dark:hover:bg-darkBorder transition-colors cursor-pointer"
                     >
                       Clear
                     </button>
@@ -847,7 +850,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                         handleClear();
                         closePopup();
                       }}
-                      className="flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-transparent border border-gray-300 dark:border-[#3A3A3A] rounded hover:bg-gray-50 dark:hover:bg-[#3A3A3A] transition-colors text-center"
+                      className="flex-1 lg:flex-none px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-transparent border border-gray-300 dark:border-darkBorder rounded hover:bg-gray-50 dark:hover:bg-darkBorder transition-colors text-center cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -857,7 +860,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                         closePopup();
                         inputRef.current?.focus();
                       }}
-                      className="flex-1 lg:flex-none px-4 py-1.5 text-xs font-medium text-white bg-primary hover:bg-green-600 rounded transition-colors text-center"
+                      className="flex-1 lg:flex-none px-4 py-1.5 text-xs font-medium text-white bg-primary hover:bg-green-600 rounded transition-colors text-center cursor-pointer"
                     >
                       Apply
                     </button>
@@ -895,7 +898,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
             }}
             type="text"
             className={cn(
-              "flex h-10 w-full rounded-md border border-border dark:border-[#3a3a3a] bg-background dark:bg-transparent px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              "flex h-10 w-full rounded-md border border-border dark:border-darkBorder bg-background dark:bg-transparent px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
               startIcon || (!startIcon && !readOnly && !disabled)
                 ? "pl-10"
                 : "pl-3",

@@ -23,9 +23,7 @@ export default function DashboardPage() {
     <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg  border-text4/30 dark:border-darkBorder/50">
       <div className="mx-auto space-y-5">
         <div className=" flex items-center justify-between">
-          <h1 className="sm:text-2xl text-xl font-medium text-black">
-            Dashboard
-          </h1>
+          <h1 className="sm:text-2xl text-xl font-medium ">Dashboard</h1>
           <HugeCalender
             value={inputRange}
             onChange={setInputRange}
