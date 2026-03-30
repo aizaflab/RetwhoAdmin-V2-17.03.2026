@@ -476,11 +476,11 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
     ) => (
       <div
         className={cn(
-          "flex items-center text-sm px-3 py-2 cursor-pointer rounded transition-colors",
+          "flex items-center justify-between text-sm px-3 py-2.5 cursor-pointer rounded w-full",
           isSelected
-            ? "bg-accent text-accent-foreground justify-between"
-            : "hover:bg-accent/50 text-foreground",
-          isHighlighted && !isSelected ? "bg-accent/30" : "",
+            ? "dark:bg-darkBorder bg-text4/40 dark:text-white text-black"
+            : "hover:bg-text4/30 dark:hover:bg-darkBorder/30 dark:text-text5",
+          isHighlighted && !isSelected ? "dark:bg-darkBorder bg-text5" : "",
         )}
       >
         <div className="flex items-center">
@@ -510,7 +510,7 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
         )}
       >
         {label && (
-          <label className="text-sm font-medium text-foreground">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
             {label}
             {(requiredSign || required) && (
               <span className="text-red-500 ml-1">*</span>
@@ -522,7 +522,7 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
           <button
             type="button"
             className={cn(
-              "flex sm:h-11 h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer transition-all",
+              "flex sm:h-11 h-10 w-full items-center justify-between rounded-md border border-border dark:border-darkBorder bg-background px-3 py-2 text-sm focus:outline-none focus:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer transition-all",
               startIcon ? "pl-10" : "",
               error ? "border-destructive" : "",
             )}
@@ -605,7 +605,7 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
                 transformOrigin: placement === "top" ? "top" : "bottom",
               }}
               className={cn(
-                "absolute z-9999 rounded-md border border-border bg-popover text-popover-foreground shadow-md p-1.5 min-w-[200px] max-w-[400px] transition duration-150 ease-in-out will-change-transform",
+                "absolute z-9999 rounded-md border border-border dark:border-darkBorder/80 dark:bg-darkPrimary bg-white shadow-md p-1.5 min-w-[200px] max-w-full transition duration-150 ease-in-out will-change-transform",
                 isVisible
                   ? "opacity-100 translate-y-0 scale-100"
                   : placement === "top"
@@ -624,7 +624,7 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
                     setHighlightedIndex(-1);
                   }}
                   onKeyDown={onSearchKeyDown}
-                  className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-muted-foreground/50 transition-all"
+                  className="w-full px-3 py-2.5 text-sm rounded-md border border-border dark:border-darkBorder dark:bg-darkPrimary bg-white text-foreground placeholder-muted-foreground focus:outline-none focus:border-muted-foreground/50 transition-all"
                 />
               </div>
 

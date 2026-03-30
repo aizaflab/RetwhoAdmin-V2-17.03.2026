@@ -67,7 +67,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-sm font-medium dark:font-[350] text-gray-700 dark:text-gray-100 cursor-pointer"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
           >
             {label}
             {requiredSign && <span className="text-red-500 ml-1">*</span>}

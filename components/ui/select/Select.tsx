@@ -470,7 +470,7 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
         )}
       >
         {label && (
-          <label className="text-sm font-medium dark:font-normal text-text6 dark:text-white">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
             {label}
             {(requiredSign || required) && (
               <span className="text-red-500 ml-1">*</span>
