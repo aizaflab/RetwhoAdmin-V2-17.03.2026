@@ -247,13 +247,13 @@ const Modal = forwardRef(function Modal(
 
   const variantClasses: Record<ModalVariant, string> = {
     default:
-      "bg-white text-slate-900 border-slate-200/60 shadow-xl dark:bg-[#121214] dark:text-zinc-100 dark:border-white/5",
+      "bg-white text-slate-900 border-slate-200/60 shadow-xl dark:bg-[#040614] dark:text-zinc-100 dark:border-darkBorder/70",
     destructive:
-      "bg-white text-slate-900 border-red-100 shadow-red-500/5 dark:bg-[#121214] dark:text-zinc-100 dark:border-red-900/20",
+      "bg-white text-slate-900 border-red-100 shadow-red-500/5 dark:bg-[#040614] dark:text-zinc-100 dark:border-red-900/20",
     warning:
-      "bg-white text-slate-900 border-amber-100 shadow-amber-500/5 dark:bg-[#121214] dark:text-zinc-100 dark:border-amber-900/20",
+      "bg-white text-slate-900 border-amber-100 shadow-amber-500/5 dark:bg-[#040614] dark:text-zinc-100 dark:border-amber-900/20",
     success:
-      "bg-white text-slate-900 border-emerald-100 shadow-emerald-500/5 dark:bg-[#121214] dark:text-zinc-100 dark:border-emerald-900/20",
+      "bg-white text-slate-900 border-emerald-100 shadow-emerald-500/5 dark:bg-[#040614] dark:text-zinc-100 dark:border-emerald-900/20",
   };
 
   // Render while visible (open OR playing exit animation)
@@ -263,7 +263,7 @@ const Modal = forwardRef(function Modal(
     <div
       data-modal-container="true"
       className={cn(
-        "fixed inset-0 flex items-center z-10000 justify-center p-1 bg-black/40 backdrop-blur-sm focus:outline-none ani3",
+        "fixed inset-0 flex items-center z-10000 justify-center p-1 bg-black/50 backdrop-blur-sm focus:outline-none ani3",
         animIn ? "opacity-100" : "opacity-0 pointer-events-none",
         overlayClassName,
       )}
@@ -307,7 +307,7 @@ const Modal = forwardRef(function Modal(
         {showCloseButton && (
           <button
             type="button"
-            className="absolute right-3 top-3 rounded-lg size-9 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-white/5 transition-all focus:outline-none z-10 cursor-pointer"
+            className="absolute right-3 top-4 rounded-lg size-9 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:text-zinc-500 dark:hover:text-zinc-100 hover:bg-slate-100 dark:hover:bg-darkBorder/50 transition-all focus:outline-none z-10 cursor-pointer"
             onClick={onClose}
             aria-label="Close"
           >
@@ -315,7 +315,7 @@ const Modal = forwardRef(function Modal(
           </button>
         )}
 
-        <div className="sm:p-6 p-3">
+        <div className="sm:p-5 p-3">
           {title && (
             <div className="mb-5 pr-8">
               <h2
@@ -341,6 +341,7 @@ const Modal = forwardRef(function Modal(
               !title ? "mt-0" : "",
               "max-h-[85vh] overflow-auto noBar text-slate-600 dark:text-zinc-300",
               "flex flex-col",
+              "border-t border-slate-100 dark:border-darkBorder/50 pt-3",
             )}
             style={{
               overflowY: "auto",
@@ -352,7 +353,7 @@ const Modal = forwardRef(function Modal(
           </div>
 
           {footer && (
-            <div className="mt-8 pt-5 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-3 font-medium">
+            <div className="mt-5 flex items-center justify-end gap-3 font-medium">
               {footer}
             </div>
           )}

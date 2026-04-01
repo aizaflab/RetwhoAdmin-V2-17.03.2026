@@ -6,10 +6,7 @@ import {
   MOCK_PROMOTIONS,
   MOCK_WHOLESALERS,
 } from "@/components/modules/promotion/_data/mock-promotion";
-import {
-  Promotion,
-  PromotionStatus,
-} from "@/components/modules/promotion/_types/promotion.types";
+import { Promotion } from "@/components/modules/promotion/_types/promotion.types";
 import { toast } from "sonner";
 
 export default function ManagePromotionPage() {
@@ -21,24 +18,13 @@ export default function ManagePromotionPage() {
     toast.success("Promotion deleted successfully");
   };
 
-  const handleUpdateStatus = (id: string, status: PromotionStatus) => {
-    // In real app, this would be an API call
-    setPromotions((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status } : p)),
-    );
-    toast.success(`Status updated to ${status}`);
-  };
-
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto min-h-screen">
-      <div className="mb-0">
-        <PromotionListTable
-          promotions={promotions}
-          wholesalers={MOCK_WHOLESALERS}
-          onDelete={handleDelete}
-          onUpdateStatus={handleUpdateStatus}
-        />
-      </div>
+    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
+      <PromotionListTable
+        promotions={promotions}
+        wholesalers={MOCK_WHOLESALERS}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }

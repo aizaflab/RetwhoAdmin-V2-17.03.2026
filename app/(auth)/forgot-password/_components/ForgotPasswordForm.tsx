@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRef, useState } from "react";
 import { Input, ThemeToggle } from "@/components/ui";
 import type { ForgotPasswordFormValues, ForgotPasswordStep } from "../_types";

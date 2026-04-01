@@ -109,7 +109,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       secondary:
         "bg-secondary text-black border border-border hover:bg-secondary/80 focus-visible:bg-secondary/80 dark:text-white dark:border-darkBorder dark:focus-visible:bg-secondary/80",
       outline:
-        "border border-border bg-white text-black hover:bg-[#F5F5F5] focus-visible:bg-[#F5F5F5] dark:border-darkBorder dark:bg-darkPrimary dark:text-white dark:hover:bg-secondary/80 dark:focus-visible:bg-secondary/80",
+        "border border-border bg-white text-black hover:bg-[#F5F5F5] focus-visible:bg-[#F5F5F5] dark:border-darkBorder dark:bg-darkPrimary dark:text-white dark:hover:bg-darkBorder/80 dark:focus-visible:bg-darkBorder/80",
       ghost:
         "text-black hover:bg-secondary focus-visible:bg-secondary border-transparent dark:text-white dark:hover:text-white dark:focus-visible:bg-secondary/80",
       destructive:

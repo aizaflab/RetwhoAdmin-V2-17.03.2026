@@ -15,16 +15,19 @@ import {
   DropdownLabel,
 } from "@/components/ui/dropdown/Dropdown";
 import {
-  Edit2,
   Trash2,
-  MoreVertical,
   Eye,
   Image as ImageIcon,
   Archive,
   Globe,
   FileEdit,
 } from "lucide-react";
-import { SearchIcon, PlusIcon } from "@/components/icons/Icons";
+import {
+  SearchIcon,
+  PlusIcon,
+  EditIcon,
+  MoreIcon,
+} from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button/Button";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -161,7 +164,7 @@ function BlogPostListTable({
               }}
               className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
             >
-              <Edit2 className="w-3.5 h-3.5" />
+              <EditIcon className="w-3.5 h-3.5" />
             </button>
           </SimpleTooltip>
 
@@ -178,7 +181,7 @@ function BlogPostListTable({
                   className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreVertical className="w-3.5 h-3.5" />
+                  <MoreIcon className="w-4 h-4" />
                 </button>
               </DropdownTrigger>
             </SimpleTooltip>

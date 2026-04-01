@@ -21,9 +21,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { Select } from "@/components/ui/select/Select";
-import { MultipleSearchSelect } from "@/components/ui/select/MultipleSearchSelect";
 import { SearchSelect } from "@/components/ui/select/SearchSelect";
-import { Calendar } from "@/components/ui/calender/Calender";
 import { HugeCalender } from "@/components/ui/calender/HugeCalender";
 
 interface PromotionFormProps {

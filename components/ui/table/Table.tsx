@@ -56,7 +56,7 @@ const Table = <T,>({
   rowClass,
   tableClassName,
   paginationClass = "",
-  headerColor = "bg-[#FFE8E4]",
+  headerColor = "",
   bordered = false,
 }: TableProps<T>) => {
   const renderCellContent = (row: T, rowIndex: number, column: Column<T>) => {
@@ -67,7 +67,7 @@ const Table = <T,>({
   // Render table header
   const renderTableHeader = () => (
     <thead
-      className={`${headerColor} dark:bg-[#3A3A3A] text-muted-foreground border-b border-border/50 dark:border-darkBorder/50`}
+      className={`${headerColor} bg-gray-50/80 dark:bg-darkPrimary/50 text-muted-foreground border-b border-border/50 dark:border-darkBorder/50`}
     >
       <tr>
         {columns.map((column) => (

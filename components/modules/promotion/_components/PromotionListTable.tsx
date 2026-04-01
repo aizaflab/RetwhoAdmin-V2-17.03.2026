@@ -8,7 +8,7 @@ import {
   AdvertisementType,
 } from "../_types/promotion.types";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
-import { Input, SimpleSelect } from "@/components/ui";
+import { Input } from "@/components/ui";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
 import {
@@ -17,28 +17,28 @@ import {
   DropdownMenu,
   DropdownItem,
   DropdownSeparator,
-  DropdownLabel,
 } from "@/components/ui/dropdown/Dropdown";
 import {
-  Edit2,
   Trash2,
-  MoreVertical,
   Eye,
   Image as ImageIcon,
   Video,
   Headphones,
   FileText,
-  CheckCircle2,
-  XCircle,
-  Clock,
   ExternalLink,
 } from "lucide-react";
-import { SearchIcon, PlusIcon } from "@/components/icons/Icons";
+import {
+  SearchIcon,
+  PlusIcon,
+  EditIcon,
+  MoreIcon,
+} from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button/Button";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import Image from "next/image";
 import PromotionViewDrawer from "./PromotionViewDrawer";
+import { Select } from "@/components/ui/select/Select";
 
 interface PromotionListTableProps {
   promotions: Promotion[];
@@ -73,6 +73,7 @@ function PromotionListTable({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const [viewingPromotion, setViewingPromotion] = useState<Promotion | null>(
     null,
@@ -199,23 +200,28 @@ function PromotionListTable({
           <SimpleTooltip content="Edit" position="top">
             <button
               onClick={() => router.push(`/promotion/edit/${row.id}`)}
-              className="center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-[#0284c7] hover:text-[#0284c7] transition-all"
+              className="center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-[#0284c7] hover:text-[#0284c7] transition-all cursor-pointer"
             >
-              <Edit2 className="w-3.5 h-3.5" />
+              <EditIcon className="w-3.5 h-3.5" />
             </button>
           </SimpleTooltip>
 
-          <Dropdown>
-            <DropdownTrigger asChild showChevron={false}>
-              <button className="center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
-                <MoreVertical className="w-3.5 h-3.5" />
-              </button>
-            </DropdownTrigger>
-
-            <DropdownMenu
-              align="right"
-              className="min-w-[180px] p-1.5 rounded-xl shadow-xl border-border/50"
+          <Dropdown
+            onOpenChange={(isOpen) => setOpenDropdownId(isOpen ? row.id : null)}
+          >
+            <SimpleTooltip
+              content="More"
+              position="top"
+              disabled={openDropdownId === row.id}
             >
+              <DropdownTrigger asChild showChevron={false}>
+                <button className="center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer">
+                  <MoreIcon className="w-4 h-4" />
+                </button>
+              </DropdownTrigger>
+            </SimpleTooltip>
+
+            <DropdownMenu align="end" className="min-w-[180px] p-1.5 ">
               <DropdownItem
                 icon={<Eye className="w-4 h-4" />}
                 onClick={() => setViewingPromotion(row)}
@@ -231,36 +237,6 @@ function PromotionListTable({
               >
                 Open Media Link
               </DropdownItem>
-
-              {onUpdateStatus && (
-                <>
-                  <DropdownSeparator className="my-1.5" />
-                  <DropdownLabel className="text-[10px] items-center gap-1.5 uppercase font-bold tracking-widest text-gray-400 py-2 pl-2 flex">
-                    Change Status
-                  </DropdownLabel>
-                  <DropdownItem
-                    icon={<CheckCircle2 className="w-3.5 h-3.5" />}
-                    onClick={() => onUpdateStatus(row.id, "active")}
-                    className="text-emerald-600 dark:text-emerald-400 text-xs py-2.5 rounded-lg cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                  >
-                    Set as Active
-                  </DropdownItem>
-                  <DropdownItem
-                    icon={<XCircle className="w-3.5 h-3.5" />}
-                    onClick={() => onUpdateStatus(row.id, "inactive")}
-                    className="text-slate-500 dark:text-slate-400 text-xs py-2.5 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/20"
-                  >
-                    Set as Inactive
-                  </DropdownItem>
-                  <DropdownItem
-                    icon={<Clock className="w-3.5 h-3.5" />}
-                    onClick={() => onUpdateStatus(row.id, "scheduled")}
-                    className="text-blue-500 dark:text-blue-400 text-xs py-2.5 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                  >
-                    Set as Scheduled
-                  </DropdownItem>
-                </>
-              )}
 
               <DropdownSeparator className="my-1.5" />
               <DropdownItem
@@ -290,15 +266,10 @@ function PromotionListTable({
   return (
     <div className="space-y-5">
       {/* Header & Toolbar */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white dark:bg-darkBg p-4 rounded-2xl border border-border/50 dark:border-darkBorder shadow-sm">
-        <div>
-          <h1 className="text-xl font-bold text-black dark:text-white">
-            Promotions Management
-          </h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Manage and track all wholesaler advertisements
-          </p>
-        </div>
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+          Promotions Management
+        </h1>
 
         <div className="flex items-center gap-3 w-full lg:w-auto flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
@@ -308,46 +279,47 @@ function PromotionListTable({
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search title, wholesaler..."
               startIcon={<SearchIcon className="w-4 h-4 text-gray-400" />}
-              className="h-10 rounded-xl bg-gray-50 dark:bg-darkPrimary/20 border-transparent focus:bg-white dark:focus:bg-darkBg transition-all"
+              className="h-10 dark:border-darkBorder dark:focus:border-primary"
             />
           </div>
 
           <div className="w-32">
-            <SimpleSelect
+            <Select
               options={typeOptions}
               value={typeFilter}
-              onChange={(val) => setTypeFilter(val)}
-              className="h-10 rounded-xl bg-gray-50 dark:bg-darkPrimary/20 border-transparent"
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className=" dark:border-darkBorder dark:focus:border-primary"
+              fieldClass="h-10!"
             />
           </div>
 
           <div className="w-32">
-            <SimpleSelect
+            <Select
               options={statusOptions}
               value={statusFilter}
-              onChange={(val) => setStatusFilter(val)}
-              className="h-10 rounded-xl bg-gray-50 dark:bg-darkPrimary/20 border-transparent"
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className=" w-full"
+              fieldClass="h-10!"
             />
           </div>
 
           <Button
             onClick={() => router.push("/promotion/add")}
-            className="px-5 h-10 bg-[#0284c7] hover:bg-[#0284c7]/90 text-white rounded-xl shadow-md shadow-blue-500/10"
+            className="h-10"
           >
-            <PlusIcon className="size-4 mr-1.5" />
-            Add Promotion
+            <PlusIcon className="size-4" />
+            Add New
           </Button>
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="bg-white dark:bg-darkBg rounded-2xl border border-border/50 dark:border-darkBorder overflow-hidden shadow-sm">
+      <div>
         <Table<Promotion>
           data={filtered}
           columns={columns}
           pagination={false}
           emptyMessage="No promotions found matching your criteria"
-          headerColor="bg-gray-50/50 dark:bg-white/5"
           tableClassName="min-w-full"
         />
       </div>

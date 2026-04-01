@@ -137,9 +137,7 @@ export default function BlogCategoryListTable({
     <div>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-5">
-        <h1 className="sm:text-2xl text-xl font-medium text-black">
-          Categories
-        </h1>
+        <h1 className="sm:text-2xl text-xl font-medium ">Categories</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative w-full sm:w-auto min-w-[200px] flex-1">
             <Input

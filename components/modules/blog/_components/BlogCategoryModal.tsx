@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BlogCategory } from "../_types/blog.types";
-
-import { Input } from "@/components/ui";
+import { Input, Modal } from "@/components/ui";
 import { Select } from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
-import { Modal } from "@/components/ui/modal/Modal";
 
 interface BlogCategoryModalProps {
   category: BlogCategory | null;
@@ -19,10 +17,8 @@ export default function BlogCategoryModal({
   onClose,
   onSave,
 }: BlogCategoryModalProps) {
-  const [visible, setVisible] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Derive formData from category prop, avoid setState in effect
   const initialFormData = category
     ? {
         name: category.name,
@@ -35,22 +31,30 @@ export default function BlogCategoryModal({
         status: "active" as "active" | "inactive",
       };
   const [formData, setFormData] = useState(initialFormData);
+  const [prevCategory, setPrevCategory] = useState(category);
 
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 300);
-  };
+  // Adjust state during render when category prop changes
+  if (category !== prevCategory) {
+    setPrevCategory(category);
+    setFormData(
+      category
+        ? {
+            name: category.name,
+            slug: category.slug,
+            status: category.status,
+          }
+        : {
+            name: "",
+            slug: "",
+            status: "active",
+          },
+    );
+  }
 
   const handleNameChange = (val: string) => {
     setFormData((prev) => ({
       ...prev,
       name: val,
-      // Auto-generate slug from name if creating
       slug: !category
         ? val
             .toLowerCase()
@@ -85,12 +89,31 @@ export default function BlogCategoryModal({
 
   return (
     <Modal
-      open={visible}
-      onClose={handleClose}
+      open
+      onClose={onClose}
       title={category ? "Edit Category" : "Add Category"}
-      className="max-w-md "
+      size="medium"
+      footer={
+        <div className="flex gap-3 w-full">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 h-10"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" className="flex-1 h-10">
+            {category ? "Save Changes" : "Create Category"}
+          </Button>
+        </div>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 ">
+      <form
+        id="blog-category-form"
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
         <Input
           label="Category Name"
           placeholder="e.g. Technology"
@@ -98,6 +121,7 @@ export default function BlogCategoryModal({
           onValueChange={handleNameChange}
           error={errors.name}
           requiredSign
+          className="dark:border-darkBorder dark:focus:border-primary"
         />
 
         <Input
@@ -111,40 +135,24 @@ export default function BlogCategoryModal({
           error={errors.slug}
           requiredSign
           helperText="URL-friendly string. Will auto-generate if left empty during typing."
+          className="dark:border-darkBorder dark:focus:border-primary"
         />
 
-        <div className="space-y-1.5">
-          <Select
-            label="Status"
-            options={[
-              { label: "Active", value: "active" },
-              { label: "Inactive", value: "inactive" },
-            ]}
-            value={formData.status}
-            onValueChange={(val) =>
-              setFormData((prev) => ({
-                ...prev,
-                status: val as "active" | "inactive",
-              }))
-            }
-            className=" w-full bg-transparent border-border dark:border-[#424242]"
-          />
-        </div>
-
-        <div className="flex gap-3 mt-5">
-          <Button
-            onClick={handleClose}
-            type="button"
-            className="flex-1 h-10"
-            variant="outline"
-          >
-            Cancel
-          </Button>
-
-          <Button type="submit" className="flex-1 h-10">
-            {category ? "Save Changes" : "Create Category"}
-          </Button>
-        </div>
+        <Select
+          label="Status"
+          options={[
+            { label: "Active", value: "active" },
+            { label: "Inactive", value: "inactive" },
+          ]}
+          value={formData.status}
+          onValueChange={(val) =>
+            setFormData((prev) => ({
+              ...prev,
+              status: val as "active" | "inactive",
+            }))
+          }
+          className="w-full dark:border-darkBorder dark:focus:border-primary"
+        />
       </form>
     </Modal>
   );

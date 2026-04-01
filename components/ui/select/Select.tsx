@@ -528,10 +528,10 @@ const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 {endIcon}
               </span>
             ) : (
-              <span className="flex items-center text-gray-500">
+              <span className="flex items-center text-gray-500 dark:text-gray-300">
                 <CaretUpOutlineIcon
                   className={cn(
-                    "ani3 size-7",
+                    "ani3 size-6",
                     isSelectOpen ? "rotate-0" : "rotate-180",
                   )}
                 />
