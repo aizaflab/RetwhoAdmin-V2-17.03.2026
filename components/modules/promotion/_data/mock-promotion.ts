@@ -96,15 +96,34 @@ export const MOCK_PROMOTIONS: Promotion[] = [
     wholesalerName: "Superior Trade Ltd.",
     shortDescription:
       "Prepare for the upcoming festival with our exclusive collections. Pre-order now.",
-    mediaUrl:
-      "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
+    mediaUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     bannerImage:
-      "https://images.unsplash.com/photo-1540317580114-ed68bf731bd1?q=80&w=2070&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=2070&auto=format&fit=crop",
     startDate: "2026-04-10T00:00:00.000Z",
     endDate: "2026-04-20T23:59:59.000Z",
     targetAudience: "all",
     priority: 1,
     createdAt: "2026-03-28T16:00:00.000Z",
     updatedAt: "2026-03-28T16:00:00.000Z",
+  },
+  {
+    id: "prm_1",
+    title: "Summer Sales Extravaganza",
+    status: "active",
+    adType: "video",
+    wholesalerId: "ws_1",
+    wholesalerName: "Global Supply Co.",
+    shortDescription:
+      "Get up to 50% off on all summer collections. Premium quality guaranteed.",
+    mediaUrl:
+      "https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4",
+    bannerImage:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop",
+    startDate: "2026-04-01T00:00:00.000Z",
+    endDate: "2026-04-30T23:59:59.000Z",
+    targetAudience: "all",
+    priority: 1,
+    createdAt: "2026-03-20T10:00:00.000Z",
+    updatedAt: "2026-03-20T10:00:00.000Z",
   },
 ];

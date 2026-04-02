@@ -58,17 +58,7 @@ const STATUS_STYLES: Record<PromotionStatus, string> = {
     "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 border-rose-100 dark:border-rose-900/50",
 };
 
-const TYPE_ICONS: Record<AdvertisementType, React.ReactNode> = {
-  video: <Video className="w-3.5 h-3.5" />,
-  audio: <Headphones className="w-3.5 h-3.5" />,
-  pdf: <FileText className="w-3.5 h-3.5" />,
-};
-
-function PromotionListTable({
-  promotions,
-  onDelete,
-  onUpdateStatus,
-}: PromotionListTableProps) {
+function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -81,6 +71,9 @@ function PromotionListTable({
   const [promotionToDelete, setPromotionToDelete] = useState<Promotion | null>(
     null,
   );
+
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const statusOptions = [
     { value: "all", label: "All Status" },
@@ -103,7 +96,7 @@ function PromotionListTable({
       header: "Promotion & Wholesaler",
       cell: (value, row) => (
         <div className="flex items-center gap-3">
-          <div className="relative w-12 h-12 rounded-xl bg-gray-100 dark:bg-darkBorder overflow-hidden shrink-0 border border-border/50">
+          <div className="relative size-11 rounded-lg bg-gray-100 dark:bg-darkBorder overflow-hidden shrink-0">
             {row.bannerImage ? (
               <Image
                 src={row.bannerImage}
@@ -117,17 +110,19 @@ function PromotionListTable({
               </div>
             )}
           </div>
-          <div className="max-w-[200px] sm:max-w-xs">
+          <div className="max-w-50 sm:max-w-xs">
             <p className="text-sm font-semibold text-black dark:text-white truncate">
               {row.title}
             </p>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-50 text-[#0284c7] dark:bg-blue-900/20 dark:text-blue-400">
-                {row.wholesalerName}
-              </span>
-              <span className="flex items-center gap-1 text-[10px] text-gray-500 uppercase font-bold tracking-wider">
-                {TYPE_ICONS[row.adType]}
-                {row.adType}
+              <span className="flex items-center gap-2">
+                <span className="text-[11px] opacity-50">
+                  {row.wholesalerName}
+                </span>
+                <span className="flex items-center gap-1 text-[11px] font-medium  text-primary dark:text-darkLight shadow-sm">
+                  <div className="size-1 rounded-full bg-primary dark:bg-darkLight"></div>
+                  <span className="ml-0.5">{row.adType}</span>
+                </span>
               </span>
             </div>
           </div>
@@ -139,7 +134,7 @@ function PromotionListTable({
       header: "Target",
       className: "hidden lg:table-cell",
       cell: (value, row) => (
-        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-md capitalize">
+        <span className="inline-flex items-center min-w-17.5 justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 dark:bg-darkBorder/30 dark:text-indigo-300 border border-indigo-100 dark:border-darkBorder capitalize shadow-sm">
           {row.targetAudience}
         </span>
       ),
@@ -149,7 +144,7 @@ function PromotionListTable({
       header: "Priority",
       className: "text-center hidden sm:table-cell",
       cell: (value, row) => (
-        <div className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-50 dark:bg-white/5 text-xs font-bold text-gray-500 border border-border/30">
+        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-xs font-semibold text-yellow-600 dark:text-yellow-300 border border-yellow-100 dark:border-yellow-800/50 shadow-sm">
           {row.priority}
         </div>
       ),
@@ -185,7 +180,7 @@ function PromotionListTable({
       className: "text-center",
       cell: (value, row) => (
         <span
-          className={`inline-flex items-center text-[10px] font-bold px-2 py-1 rounded-md capitalize border ${STATUS_STYLES[row.status]}`}
+          className={`inline-flex items-center justify-center w-20 text-[10px] font-semibold px-2 py-1 rounded-full capitalize border ${STATUS_STYLES[row.status]}`}
         >
           {row.status}
         </span>
@@ -221,7 +216,7 @@ function PromotionListTable({
               </DropdownTrigger>
             </SimpleTooltip>
 
-            <DropdownMenu align="end" className="min-w-[180px] p-1.5 ">
+            <DropdownMenu align="end" className="min-w-45 p-1.5 ">
               <DropdownItem
                 icon={<Eye className="w-4 h-4" />}
                 onClick={() => setViewingPromotion(row)}
@@ -272,7 +267,7 @@ function PromotionListTable({
         </h1>
 
         <div className="flex items-center gap-3 w-full lg:w-auto flex-wrap">
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-50">
             <Input
               type="text"
               value={search}
@@ -318,9 +313,13 @@ function PromotionListTable({
         <Table<Promotion>
           data={filtered}
           columns={columns}
-          pagination={false}
+          pagination={true}
+          totalData={filtered.length}
+          page={page}
+          setPage={setPage}
+          limit={limit}
+          setLimit={setLimit}
           emptyMessage="No promotions found matching your criteria"
-          tableClassName="min-w-full"
         />
       </div>
 

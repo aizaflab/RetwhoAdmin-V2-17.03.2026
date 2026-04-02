@@ -39,27 +39,18 @@ export default function EditPromotionPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-[1200px] mx-auto min-h-screen">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-black dark:text-white">
-            Edit Promotion Details
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Update configuration for:{" "}
-            <span className="font-bold text-[#0284c7]">{promotion.title}</span>
-          </p>
-        </div>
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-            Editing ID: {id}
+    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+          Edit Promotion
+        </h1>
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full dark:bg-darkLight bg-primary animate-pulse" />
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+            Edit Promotion Entry
           </span>
-          <div
-            className={`h-1.5 w-12 rounded-full ${promotion.status === "active" ? "bg-emerald-500" : "bg-rose-500"}`}
-          />
         </div>
       </div>
-
       <div className="bg-transparent">
         <PromotionForm
           initialData={promotion}

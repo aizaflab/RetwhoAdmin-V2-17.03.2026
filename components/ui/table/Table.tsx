@@ -155,7 +155,7 @@ const Table = <T,>({
   return (
     <div className={cn("w-full", className)}>
       {/* Table */}
-      <div className="w-full border border-border/50 dark:border-darkBorder/50 rounded-md overflow-x-auto">
+      <div className="w-full border border-border/50 dark:border-darkBorder/50 rounded-md overflow-x-auto ">
         <table
           className={cn(
             "w-full",
@@ -170,7 +170,7 @@ const Table = <T,>({
 
       {/* Pagination */}
       {pagination && setPage && setLimit && (
-        <div className={`mt-4 ${paginationClass}`}>
+        <div className={`mt-5 ${paginationClass}`}>
           <Pagination
             totalItems={totalData ?? 0}
             pageSize={limit ?? 10}
