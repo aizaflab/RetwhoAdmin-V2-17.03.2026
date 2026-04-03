@@ -5,7 +5,6 @@ import {
   Promotion,
   Wholesaler,
   PromotionStatus,
-  AdvertisementType,
 } from "../_types/promotion.types";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
 import { Input } from "@/components/ui";
@@ -18,20 +17,16 @@ import {
   DropdownItem,
   DropdownSeparator,
 } from "@/components/ui/dropdown/Dropdown";
-import {
-  Trash2,
-  Eye,
-  Image as ImageIcon,
-  Video,
-  Headphones,
-  FileText,
-  ExternalLink,
-} from "lucide-react";
+
 import {
   SearchIcon,
   PlusIcon,
   EditIcon,
   MoreIcon,
+  EyeIcon,
+  LinkIcon,
+  DeleteIcon,
+  ImageIcon,
 } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button/Button";
 import { useRouter } from "next/navigation";
@@ -119,7 +114,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
                 <span className="text-[11px] opacity-50">
                   {row.wholesalerName}
                 </span>
-                <span className="flex items-center gap-1 text-[11px] font-medium  text-primary dark:text-darkLight shadow-sm">
+                <span className="flex items-center gap-1 text-[11px] font-medium  text-primary dark:text-darkLight ">
                   <div className="size-1 rounded-full bg-primary dark:bg-darkLight"></div>
                   <span className="ml-0.5">{row.adType}</span>
                 </span>
@@ -134,7 +129,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       header: "Target",
       className: "hidden lg:table-cell",
       cell: (value, row) => (
-        <span className="inline-flex items-center min-w-17.5 justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 dark:bg-darkBorder/30 dark:text-indigo-300 border border-indigo-100 dark:border-darkBorder capitalize shadow-sm">
+        <span className="inline-flex items-center  justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 dark:bg-darkBorder/30 dark:text-indigo-300 border border-indigo-100 dark:border-darkBorder capitalize ">
           {row.targetAudience}
         </span>
       ),
@@ -144,7 +139,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       header: "Priority",
       className: "text-center hidden sm:table-cell",
       cell: (value, row) => (
-        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-xs font-semibold text-yellow-600 dark:text-yellow-300 border border-yellow-100 dark:border-yellow-800/50 shadow-sm">
+        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-xs font-semibold text-yellow-600 dark:text-yellow-300 border border-yellow-100 dark:border-yellow-800/50 ">
           {row.priority}
         </div>
       ),
@@ -216,29 +211,29 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
               </DropdownTrigger>
             </SimpleTooltip>
 
-            <DropdownMenu align="end" className="min-w-45 p-1.5 ">
+            <DropdownMenu className="min-w-40 p-1 " align="right">
               <DropdownItem
-                icon={<Eye className="w-4 h-4" />}
+                icon={<EyeIcon className="w-4 h-4" />}
                 onClick={() => setViewingPromotion(row)}
-                className="text-xs py-2.5 rounded-lg cursor-pointer transition-colors"
+                className="text-xs py-2.5 rounded-md cursor-pointer transition-colors font-medium"
               >
                 View Details
               </DropdownItem>
 
               <DropdownItem
-                icon={<ExternalLink className="w-4 h-4" />}
+                icon={<LinkIcon className="w-4 h-4" />}
                 onClick={() => window.open(row.mediaUrl, "_blank")}
-                className="text-xs py-2.5 rounded-lg cursor-pointer transition-colors"
+                className="text-xs py-2.5 rounded-md cursor-pointer transition-colors font-medium"
               >
                 Open Media Link
               </DropdownItem>
 
               <DropdownSeparator className="my-1.5" />
               <DropdownItem
-                icon={<Trash2 className="size-3.5" />}
+                icon={<DeleteIcon className="size-3.5" />}
                 destructive
                 onClick={() => setPromotionToDelete(row)}
-                className="text-xs py-2.5 rounded-lg cursor-pointer"
+                className="text-xs py-2.5 rounded-md cursor-pointer"
               >
                 Delete Promotion
               </DropdownItem>
@@ -263,7 +258,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       {/* Header & Toolbar */}
       <div className="mb-5 flex items-center justify-between">
         <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
-          Promotions Management
+          Manage Promotion
         </h1>
 
         <div className="flex items-center gap-3 w-full lg:w-auto flex-wrap">

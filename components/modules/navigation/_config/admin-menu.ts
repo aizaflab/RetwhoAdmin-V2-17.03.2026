@@ -393,18 +393,18 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     order: 11,
     children: [
       {
-        id: "promotion-manage",
-        title: "Promotion",
-        type: "item",
-        path: "/promotion/manage",
-        requiredPermissions: [PERMISSIONS.PROMOTION_LIST],
-      },
-      {
         id: "promotion-add",
         title: "Add Promotion",
         type: "item",
         path: "/promotion/add",
         requiredPermissions: [PERMISSIONS.PROMOTION_CREATE],
+      },
+      {
+        id: "promotion-manage",
+        title: "Manage Promotion",
+        type: "item",
+        path: "/promotion/manage",
+        requiredPermissions: [PERMISSIONS.PROMOTION_LIST],
       },
     ],
   },

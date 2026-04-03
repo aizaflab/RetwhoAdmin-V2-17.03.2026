@@ -445,10 +445,6 @@ function calculatePosition(
       position: "absolute",
       top: `${top}px`,
       left: `${left}px`,
-      minWidth:
-        finalSide === "top" || finalSide === "bottom"
-          ? `${trigger.width}px`
-          : "auto",
     },
     effectiveSide: finalSide,
   };
@@ -479,49 +475,55 @@ export function DropdownMenu({
     side as DropdownSide,
   );
 
-  // Handle animation timing and positioning
   useEffect(() => {
     let isActive = true;
-    let timer: NodeJS.Timeout | undefined;
+    let timer: NodeJS.Timeout;
 
     if (isOpen) {
       requestAnimationFrame(() => {
-        if (!isActive) return;
-        setShouldRender(true);
+        if (isActive) setShouldRender(true);
       });
 
-      // We need to wait for the next frame after shouldRender is true
-      // so that menuRef.current is populated by React
-      const checkAndPosition = () => {
+      const updatePosition = () => {
         if (!isActive) return;
 
         if (triggerRef.current && menuRef.current) {
+          // If the menu hasn't painted properly yet, wait another frame
+          if (menuRef.current.offsetWidth === 0) {
+            requestAnimationFrame(updatePosition);
+            return;
+          }
+
           const { style, effectiveSide: realSide } = calculatePosition(
-            triggerRef.current!,
-            menuRef.current!,
+            triggerRef.current,
+            menuRef.current,
             side as DropdownSide,
             align as DropdownAlign,
             offset,
           );
+
           setPositionStyle(style);
           setEffectiveSide(realSide);
-          setIsVisible(true);
+
+          // Use another frame to ensure position is applied before showing
+          requestAnimationFrame(() => {
+            if (isActive) setIsVisible(true);
+          });
         } else {
-          // If not yet available, try again in next frame
-          requestAnimationFrame(checkAndPosition);
+          requestAnimationFrame(updatePosition);
         }
       };
 
-      requestAnimationFrame(checkAndPosition);
+      // Slight delay to ensure React finishes DOM insertion before measuring
+      requestAnimationFrame(updatePosition);
     } else {
       requestAnimationFrame(() => {
-        if (!isActive) return;
-        setIsVisible(false);
+        if (isActive) setIsVisible(false);
       });
       timer = setTimeout(() => {
         if (!isActive) return;
         setShouldRender(false);
-        setPositionStyle({});
+        setPositionStyle({}); // Reset position immediately when fully hidden
       }, 150);
     }
 

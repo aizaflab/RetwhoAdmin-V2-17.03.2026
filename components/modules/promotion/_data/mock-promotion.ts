@@ -126,4 +126,23 @@ export const MOCK_PROMOTIONS: Promotion[] = [
     createdAt: "2026-03-20T10:00:00.000Z",
     updatedAt: "2026-03-20T10:00:00.000Z",
   },
+  {
+    id: "prm_3",
+    title: "Vendor Agreement & Terms 2026",
+    status: "active",
+    adType: "pdf",
+    wholesalerId: "ws_3",
+    wholesalerName: "Elite Wholesalers",
+    shortDescription:
+      "Official documentation for vendor agreement and terms for the upcoming fiscal year.",
+    mediaUrl: "https://www.africau.edu/images/default/sample.pdf",
+    bannerImage:
+      "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=2070&auto=format&fit=crop",
+    startDate: "2026-01-01T00:00:00.000Z",
+    endDate: "2026-12-31T23:59:59.000Z",
+    targetAudience: "retailers",
+    priority: 5,
+    createdAt: "2026-01-02T09:15:00.000Z",
+    updatedAt: "2026-01-02T09:15:00.000Z",
+  },
 ];
