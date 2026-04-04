@@ -7,6 +7,10 @@ import { useState } from "react";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { HugeCalender, DateRange } from "@/components/ui/calender/HugeCalender";
+import { Select } from "@/components/ui/select/Select";
+import { Input } from "@/components/ui";
+import { Textarea } from "@/components/ui/textarea/Textarea";
 
 type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
@@ -36,6 +40,13 @@ export default function RoleFormEditor({
       (initialRole?.permissions ?? []).map((p) => p.key as PermissionKey),
     ),
   );
+  const [dateRange, setDateRange] = useState<DateRange>({
+    start: null,
+    end: null,
+  });
+  const [commission, setCommission] = useState("");
+  const [rewardRole, setRewardRole] = useState("");
+
   const [errors, setErrors] = useState<{ name?: string }>({});
   const [saving, setSaving] = useState(false);
 
@@ -91,96 +102,88 @@ export default function RoleFormEditor({
         {/* Left — Role Details */}
         <div className="lg:col-span-1 space-y-5">
           <div className="rounded-xl border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-5 space-y-5">
-            <h3 className="text-sm font-semibold text-black dark:text-white border-b border-border/50 dark:border-darkBorder/30 pb-3">
-              Role Details
-            </h3>
-
             {/* Name */}
             <div>
-              <label className="block text-xs font-semibold text-text6 dark:text-text5 mb-1.5">
-                Role Name <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
+              <Input
+                label="Role Name"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
                   if (errors.name) setErrors({});
                 }}
                 placeholder="e.g. Marketing Lead"
-                className={`w-full px-3 py-2.5 text-sm rounded-lg border bg-white dark:bg-darkPrimary text-black dark:text-white placeholder:text-text5 outline-none transition-all duration-200 focus:ring-2 focus:ring-primary/30 ${
-                  errors.name
-                    ? "border-rose-400 dark:border-rose-500"
-                    : "border-border dark:border-darkBorder focus:border-primary"
-                }`}
+                className="h-10 dark:border-darkBorder focus:dark:border-primary"
+                error={errors.name}
               />
-              {errors.name && (
-                <p className="text-xs text-rose-500 mt-1">{errors.name}</p>
-              )}
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-xs font-semibold text-text6 dark:text-text5 mb-1.5">
-                Description
-              </label>
-              <textarea
+              <Textarea
+                label="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe the role's purpose..."
-                rows={4}
-                className="w-full px-3 py-2.5 text-sm rounded-lg border border-border dark:border-darkBorder bg-white dark:bg-darkPrimary text-black dark:text-white placeholder:text-text5 outline-none transition-all duration-200 focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"
+                rows={5}
               />
             </div>
 
             {/* Status */}
             <div>
-              <label className="block text-xs font-semibold text-text6 dark:text-text5 mb-1.5">
-                Status
-              </label>
-              <div className="flex gap-2">
-                {(["active", "inactive", "draft"] as RoleStatus[]).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setStatus(s)}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold border transition-all duration-150 capitalize ${
-                      status === s
-                        ? s === "active"
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-400 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-700"
-                          : s === "draft"
-                            ? "bg-amber-50 text-amber-600 border-amber-400 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-700"
-                            : "bg-rose-50 text-rose-600 border-rose-400 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-700"
-                        : "border-border dark:border-darkBorder text-text6 dark:text-text5 bg-white dark:bg-darkBg hover:border-primary/40"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+              <Select
+                label="Status"
+                value={status}
+                onValueChange={(value) => setStatus(value as RoleStatus)}
+                placeholder="Select Status"
+                fullWidth
+                fieldClass="h-10"
+                className="w-full"
+                options={[
+                  { value: "active", label: "Active" },
+                  { value: "inactive", label: "Inactive" },
+                  { value: "draft", label: "Draft" },
+                ]}
+              />
             </div>
 
-            {/* Summary */}
-            <div className="rounded-lg bg-gray-50 dark:bg-darkPrimary p-3 border border-border/40 dark:border-darkBorder/30">
-              <p className="text-xs font-semibold text-text5 uppercase tracking-wider mb-2">
-                Summary
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-text6 dark:text-text5">
-                  Selected Permissions
-                </span>
-                <span className="text-sm font-bold text-primary dark:text-blue-400">
-                  {selected.size}
-                </span>
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-text6 dark:text-text5">
-                  Total Available
-                </span>
-                <span className="text-xs text-text5">
-                  {Object.values(PERMISSIONS).length}
-                </span>
-              </div>
+            {/* Date */}
+            <div>
+              <HugeCalender
+                label="Select Date"
+                value={dateRange}
+                onChange={setDateRange}
+                fullWidth
+              />
+            </div>
+
+            {/* Commission (%) */}
+            <div>
+              <Input
+                label="Refer Commission (%)"
+                type="number"
+                value={commission}
+                onChange={(e) => setCommission(e.target.value)}
+                placeholder="e.g. 5"
+                className="h-10 dark:border-darkBorder focus:dark:border-primary"
+              />
+            </div>
+
+            {/* Commission Reward Role */}
+            <div>
+              <Select
+                label="Commission Reward Role"
+                value={rewardRole}
+                onValueChange={setRewardRole}
+                placeholder="Select a role"
+                fullWidth
+                fieldClass="h-10"
+                className="w-full"
+                options={[
+                  { value: "wholeseller", label: "Wholeseller" },
+                  { value: "retailer", label: "Retailer" },
+                  { value: "consumer", label: "Consumer" },
+                ]}
+              />
             </div>
           </div>
 

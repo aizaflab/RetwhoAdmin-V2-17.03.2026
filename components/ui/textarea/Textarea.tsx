@@ -144,11 +144,12 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     };
 
     const variantClasses = {
-      default: "border-input bg-background ring-offset-background",
+      default:
+        "border-border dark:border-darkBorder bg-background ring-offset-background",
       filled:
         "border-transparent bg-muted/50 hover:bg-muted/70 focus:bg-background focus:border-primary",
       outline:
-        "border-2 border-input bg-transparent hover:border-accent-foreground/20 focus:border-primary",
+        "border-2 border-border dark:border-darkBorder bg-transparent hover:border-accent-foreground/20 focus:border-primary",
       ghost:
         "border-transparent bg-transparent hover:bg-muted/50 focus:bg-background shadow-none",
     };
@@ -170,8 +171,9 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           <label
             htmlFor={inputId}
             className={cn(
-              "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-              error ? "text-red-500" : "text-foreground",
+              "peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm font-medium  cursor-pointer",
+              "text-gray-700 dark:text-gray-300",
+              error && "text-red-500",
             )}
           >
             {label}
@@ -194,7 +196,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             id={inputId}
             ref={innerRef}
             className={cn(
-              "flex w-full rounded-md border text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200",
+              "flex w-full rounded-md border text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus:border-gray-400 dark:focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200 dark:border-darkBorder",
               sizeClasses[size],
               variantClasses[variant],
               startIcon && "pl-9",

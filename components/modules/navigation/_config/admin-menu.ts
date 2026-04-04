@@ -564,18 +564,11 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     order: 16,
     children: [
       {
-        id: "hiring-job-category",
-        title: "Job Category",
+        id: "hiring-category",
+        title: "Hiring Category",
         type: "item",
-        path: "/hiring/job-category",
+        path: "/hiring/category",
         requiredPermissions: [PERMISSIONS.JOB_CATEGORY_LIST],
-      },
-      {
-        id: "hiring-service-category",
-        title: "Service Category",
-        type: "item",
-        path: "/hiring/service-category",
-        requiredPermissions: [PERMISSIONS.SERVICE_CATEGORY_LIST],
       },
       {
         id: "hiring-add",
@@ -589,6 +582,13 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         title: "Manage Hiring",
         type: "item",
         path: "/hiring/manage",
+        requiredPermissions: [PERMISSIONS.HIRING_LIST],
+      },
+      {
+        id: "hiring-applications",
+        title: "Applications",
+        type: "item",
+        path: "/hiring/applications",
         requiredPermissions: [PERMISSIONS.HIRING_LIST],
       },
     ],

@@ -6,7 +6,6 @@ import {
   PromotionStatus,
 } from "../_types/promotion.types";
 import {
-  X,
   Video,
   Headphones,
   FileText,
