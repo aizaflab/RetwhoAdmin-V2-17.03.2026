@@ -20,6 +20,8 @@ import ApplicationViewDrawer from "./ApplicationViewDrawer";
 interface ApplicationListTableProps {
   applications: JobApplication[];
   onStatusChange?: (id: string, status: JobApplication["status"]) => void;
+  title?: string;
+  subtitle?: React.ReactNode;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -36,6 +38,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function ApplicationListTable({
   applications,
   onStatusChange,
+  title = "Applications",
 }: ApplicationListTableProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -191,11 +194,8 @@ export default function ApplicationListTable({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
-            Applications
+            {title}
           </h1>
-          <p className="text-xs text-text5 mt-0.5">
-            {filtered.length} candidate{filtered.length !== 1 ? "s" : ""}
-          </p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
           <div className="relative flex-1 min-w-44 sm:w-56">
@@ -205,7 +205,7 @@ export default function ApplicationListTable({
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search applicant or role..."
               startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg"
+              className="h-10 w-full dark:border-darkBorder dark:focus:border-primary/50"
             />
           </div>
           <div className="w-32">
@@ -213,7 +213,7 @@ export default function ApplicationListTable({
               options={statusOptions}
               value={statusFilter}
               onChange={setStatusFilter}
-              className="h-10 rounded-md bg-white dark:bg-darkBg"
+              className="h-10 rounded-md"
             />
           </div>
         </div>

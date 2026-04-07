@@ -219,23 +219,25 @@ export function NotificationNav() {
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Notification Icon Button */}
-      <button
-        aria-label="Notifications"
-        className={cn(
-          "relative size-8 rounded-[11px] center cursor-pointer",
-          "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
-          "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-primary/50",
-          "transition-all duration-200",
-          "text-gray-700 dark:text-white",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        )}
-        onClick={() => setOpenDropdown(!openDropdown)}
-      >
-        <Bell className="h-5 w-5 group-hover:animate-[wiggle_1s_ease-in-out_infinite]" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white dark:ring-slate-900 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
-        )}
-      </button>
+      <div>
+        <button
+          aria-label="Notifications"
+          className={cn(
+            "relative size-9 rounded-[11px] center cursor-pointer",
+            "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
+            "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-primary/50",
+            "transition-all duration-200",
+            "text-gray-700 dark:text-white",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+          )}
+          onClick={() => setOpenDropdown(!openDropdown)}
+        >
+          <Bell className="h-5 w-5 group-hover:animate-[wiggle_1s_ease-in-out_infinite]" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white dark:ring-slate-900 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
+          )}
+        </button>
+      </div>
 
       {/* Dropdown Panel */}
 

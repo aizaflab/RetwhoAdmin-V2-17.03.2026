@@ -69,6 +69,24 @@ export const MOCK_HIRING_CATEGORIES: HiringCategory[] = [
     status: "inactive",
     createdAt: "2025-03-01T10:00:00Z",
   },
+  {
+    id: "hcat_8",
+    name: "Cleaning & Maintenance",
+    slug: "cleaning-maintenance",
+    type: "service",
+    postCount: 9,
+    status: "active",
+    createdAt: "2025-02-15T10:00:00Z",
+  },
+  {
+    id: "hcat_9",
+    name: "Cleaning & Maintenance",
+    slug: "cleaning-maintenance",
+    type: "service",
+    postCount: 9,
+    status: "active",
+    createdAt: "2025-02-15T10:00:00Z",
+  },
 ];
 
 // ─── Hiring Posts ─────────────────────────────────────────────────────────────
@@ -78,9 +96,9 @@ export const MOCK_HIRING_POSTS: HiringPost[] = [
     title: "Senior Full-Stack Developer",
     companyName: "TechVentures Ltd.",
     companyLogo:
-      "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=80&h=80&fit=crop",
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=400&fit=crop",
     bannerImage:
-      "https://images.unsplash.com/photo-1573495628136-22e97736b365?w=800&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=400&fit=crop",
     categoryId: "hcat_1",
     address: "123 Tech Park, Gulshan-2",
     city: "Dhaka",
@@ -92,10 +110,18 @@ export const MOCK_HIRING_POSTS: HiringPost[] = [
     currency: "BDT",
     description:
       "<p>We are looking for an experienced Full-Stack Developer to join our growing team. You will build scalable web apps using React and Node.js.</p>",
-    requirements:
-      "<ul><li>5+ years of experience with React & Node.js</li><li>Proficiency in TypeScript</li><li>Experience with PostgreSQL or MongoDB</li><li>Strong understanding of REST APIs</li></ul>",
-    benefits:
-      "<ul><li>Competitive salary</li><li>Annual bonus</li><li>Remote work flexibility</li><li>Health insurance</li></ul>",
+    requirements: [
+      "5+ years of experience with React & Node.js",
+      "Proficiency in TypeScript",
+      "Experience with PostgreSQL or MongoDB",
+      "Strong understanding of REST APIs",
+    ],
+    benefits: [
+      "Competitive salary",
+      "Annual bonus",
+      "Remote work flexibility",
+      "Health insurance",
+    ],
     skills: ["React", "Node.js", "TypeScript", "PostgreSQL"],
     experience: "5+ years",
     education: "Bachelor's in CSE or equivalent",
@@ -126,10 +152,16 @@ export const MOCK_HIRING_POSTS: HiringPost[] = [
     currency: "BDT",
     description:
       "<p>Join our design team to craft beautiful, user-centric interfaces for our suite of products.</p>",
-    requirements:
-      "<ul><li>3+ years in UI/UX design</li><li>Proficient in Figma & Adobe Creative Suite</li><li>Portfolio showcasing past work</li></ul>",
-    benefits:
-      "<ul><li>Creative work environment</li><li>Flexible schedule</li><li>Professional development budget</li></ul>",
+    requirements: [
+      "3+ years in UI/UX design",
+      "Proficient in Figma & Adobe Creative Suite",
+      "Portfolio showcasing past work",
+    ],
+    benefits: [
+      "Creative work environment",
+      "Flexible schedule",
+      "Professional development budget",
+    ],
     skills: ["Figma", "Adobe XD", "Prototyping", "User Research"],
     experience: "3-5 years",
     education: "Bachelor's in Design or Fine Arts",
@@ -158,10 +190,17 @@ export const MOCK_HIRING_POSTS: HiringPost[] = [
     currency: "BDT",
     description:
       "<p>We're seeking a passionate Digital Marketing Specialist to drive our client campaigns across all channels.</p>",
-    requirements:
-      "<ul><li>2+ years in digital marketing</li><li>Experience with Google Ads & Meta Ads</li><li>SEO & content strategy knowledge</li><li>Analytics and reporting skills</li></ul>",
-    benefits:
-      "<ul><li>Performance bonuses</li><li>Training certifications</li><li>Casual work culture</li></ul>",
+    requirements: [
+      "2+ years in digital marketing",
+      "Experience with Google Ads & Meta Ads",
+      "SEO & content strategy knowledge",
+      "Analytics and reporting skills",
+    ],
+    benefits: [
+      "Performance bonuses",
+      "Training certifications",
+      "Casual work culture",
+    ],
     skills: ["SEO", "Google Ads", "Meta Ads", "Analytics", "Content Strategy"],
     experience: "2-4 years",
     education: "Bachelor's in Marketing or Business",
@@ -190,10 +229,18 @@ export const MOCK_HIRING_POSTS: HiringPost[] = [
     currency: "BDT",
     description:
       "<p>We need reliable delivery riders to cover our expanding service area in Dhaka. Flexible hours, bike provided.</p>",
-    requirements:
-      "<ul><li>Valid driving license</li><li>Own smartphone</li><li>Knowledge of Dhaka roads</li><li>Physically fit</li></ul>",
-    benefits:
-      "<ul><li>Flexible working hours</li><li>Fuel allowance</li><li>Performance bonuses</li><li>Insurance coverage</li></ul>",
+    requirements: [
+      "Valid driving license",
+      "Own smartphone",
+      "Knowledge of Dhaka roads",
+      "Physically fit",
+    ],
+    benefits: [
+      "Flexible working hours",
+      "Fuel allowance",
+      "Performance bonuses",
+      "Insurance coverage",
+    ],
     skills: ["Navigation", "Time Management", "Customer Service"],
     experience: "No prior experience needed",
     education: "SSC minimum",
@@ -222,10 +269,17 @@ export const MOCK_HIRING_POSTS: HiringPost[] = [
     currency: "BDT",
     description:
       "<p>Seeking a talented React Native developer to build and maintain world-class mobile applications for iOS and Android.</p>",
-    requirements:
-      "<ul><li>4+ years React Native development</li><li>Published apps on App Store or Play Store</li><li>Knowledge of native modules</li></ul>",
-    benefits:
-      "<ul><li>100% remote work</li><li>Competitive salary</li><li>Equipment allowance</li><li>Unlimited PTO</li></ul>",
+    requirements: [
+      "4+ years React Native development",
+      "Published apps on App Store or Play Store",
+      "Knowledge of native modules",
+    ],
+    benefits: [
+      "100% remote work",
+      "Competitive salary",
+      "Equipment allowance",
+      "Unlimited PTO",
+    ],
     skills: ["React Native", "iOS", "Android", "Redux", "REST APIs"],
     experience: "4+ years",
     education: "BSc in Computer Science or equivalent",
@@ -254,10 +308,12 @@ export const MOCK_HIRING_POSTS: HiringPost[] = [
     currency: "BDT",
     description:
       "<p>We provide reliable office cleaning services and are looking for dedicated cleaning staff for corporate clients.</p>",
-    requirements:
-      "<ul><li>Experience in commercial cleaning</li><li>Attention to detail</li><li>Ability to work early hours</li></ul>",
-    benefits:
-      "<ul><li>Stable contract</li><li>Uniform provided</li><li>End-of-year bonus</li></ul>",
+    requirements: [
+      "Experience in commercial cleaning",
+      "Attention to detail",
+      "Ability to work early hours",
+    ],
+    benefits: ["Stable contract", "Uniform provided", "End-of-year bonus"],
     skills: ["Cleaning", "Reliability", "Punctuality"],
     experience: "1+ year preferred",
     education: "No formal education required",
@@ -267,6 +323,46 @@ export const MOCK_HIRING_POSTS: HiringPost[] = [
     applicationCount: 19,
     createdAt: "2026-02-15T10:00:00Z",
     updatedAt: "2026-02-20T10:00:00Z",
+  },
+  {
+    id: "hire_7",
+    title: "UI/UX Product Designer",
+    companyName: "PixelCraft Studio",
+    companyLogo:
+      "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=80&h=80&fit=crop",
+    bannerImage:
+      "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop",
+    categoryId: "hcat_2",
+    address: "45 Creative Lane, Dhanmondi",
+    city: "Dhaka",
+    country: "Bangladesh",
+    jobType: "full-time",
+    salaryMin: 60000,
+    salaryMax: 90000,
+    salaryType: "monthly",
+    currency: "BDT",
+    description:
+      "<p>Join our design team to craft beautiful, user-centric interfaces for our suite of products.</p>",
+    requirements: [
+      "3+ years in UI/UX design",
+      "Proficient in Figma & Adobe Creative Suite",
+      "Portfolio showcasing past work",
+    ],
+    benefits: [
+      "Creative work environment",
+      "Flexible schedule",
+      "Professional development budget",
+    ],
+    skills: ["Figma", "Adobe XD", "Prototyping", "User Research"],
+    experience: "3-5 years",
+    education: "Bachelor's in Design or Fine Arts",
+    openings: 1,
+    deadline: "2026-04-30T00:00:00Z",
+    status: "active",
+    views: 890,
+    applicationCount: 21,
+    createdAt: "2026-03-18T10:00:00Z",
+    updatedAt: "2026-03-25T10:00:00Z",
   },
 ];
 
@@ -402,5 +498,20 @@ export const MOCK_JOB_APPLICATIONS: JobApplication[] = [
     status: "shortlisted",
     appliedAt: "2026-03-24T05:30:00Z",
     updatedAt: "2026-03-27T11:00:00Z",
+  },
+  {
+    id: "app_8",
+    hiringId: "hire_4",
+    hiringTitle: "Professional Box Rider",
+    companyName: "SwiftDrop Logistics",
+    applicantName: "Alam Mia",
+    applicantEmail: "alam.mia@yahoo.com",
+    applicantPhone: "+880 1523-789012",
+    applicantLocation: "Mirpur, Dhaka",
+    coverLetter:
+      "I am interested in the delivery rider position. I have a valid driving license and good knowledge of Dhaka roads...",
+    status: "pending",
+    appliedAt: "2026-03-28T07:00:00Z",
+    updatedAt: "2026-03-28T07:00:00Z",
   },
 ];

@@ -18,7 +18,7 @@ export default function Header() {
           <button
             onClick={() => setIsMobileOpen(!isMobileOpen)}
             className={cn(
-              "relative size-8 rounded-[11px] center cursor-pointer md:hidden",
+              "relative size-9 rounded-[11px] center cursor-pointer md:hidden",
               "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
               "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-primary/50",
               "transition-all duration-200",
@@ -26,7 +26,7 @@ export default function Header() {
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
             )}
           >
-            <Menu className="size-[18px]" />
+            <Menu className="size-5" />
           </button>
         </div>
 

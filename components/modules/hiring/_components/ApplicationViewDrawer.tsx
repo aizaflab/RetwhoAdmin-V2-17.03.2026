@@ -69,7 +69,7 @@ export default function ApplicationViewDrawer({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-white/10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-primary/10 center text-primary overflow-hidden">
               {application.applicantPhoto ? (
                 <Image
                   src={application.applicantPhoto}
@@ -101,9 +101,9 @@ export default function ApplicationViewDrawer({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5 custom-scrollbar space-y-6">
+        <div className="flex-1 overflow-y-auto p-5 custom-scrollbar space-y-5">
           {/* Status & Role Info */}
-          <div className="bg-gray-50 dark:bg-darkBorder/20 rounded-xl p-4 border border-gray-100 dark:border-white/5 space-y-4">
+          <div className="bg-gray-50 dark:bg-darkBorder/20 rounded-lg p-4 border border-gray-100 dark:border-white/5 space-y-4">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
@@ -206,7 +206,7 @@ export default function ApplicationViewDrawer({
                   href={application.resumeUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 group hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-md bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 group hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <Download className="w-4 h-4 text-red-500" />
@@ -217,32 +217,34 @@ export default function ApplicationViewDrawer({
                   <ExternalLink className="w-3.5 h-3.5 text-red-400 group-hover:text-red-600 transition-colors" />
                 </a>
               )}
-              {application.portfolioUrl && (
-                <a
-                  href={application.portfolioUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-darkBorder/20 border border-gray-100 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                >
-                  <span className="text-sm font-medium text-text4">
-                    Portfolio Website
-                  </span>
-                  <ExternalLink className="w-3.5 h-3.5 text-text5" />
-                </a>
-              )}
-              {application.linkedInUrl && (
-                <a
-                  href={application.linkedInUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                >
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
-                    LinkedIn Profile
-                  </span>
-                  <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
-                </a>
-              )}
+              <div className="flex items-center gap-3">
+                {application.portfolioUrl && (
+                  <a
+                    href={application.portfolioUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-1 items-center justify-between p-3 rounded-md bg-gray-50 dark:bg-darkBorder/20 border border-gray-100 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-text4">
+                      Portfolio Website
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-text5" />
+                  </a>
+                )}
+                {application.linkedInUrl && (
+                  <a
+                    href={application.linkedInUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-1 items-center justify-between p-3 rounded-md bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                      LinkedIn Profile
+                    </span>
+                    <ExternalLink className="w-3.5 h-3.5 text-blue-400" />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
@@ -251,7 +253,7 @@ export default function ApplicationViewDrawer({
             <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-widest border-b border-gray-100 dark:border-white/5 pb-2">
               Cover Letter / Message
             </h3>
-            <div className="bg-gray-50 dark:bg-darkBorder/20 p-4 rounded-xl border border-gray-100 dark:border-white/5">
+            <div className="bg-gray-50 dark:bg-darkBorder/20 p-4 rounded-lg border border-gray-100 dark:border-white/5">
               <p className="text-sm text-text4 leading-relaxed whitespace-pre-wrap italic">
                 &quot;{application.coverLetter}&quot;
               </p>
@@ -260,10 +262,10 @@ export default function ApplicationViewDrawer({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-gray-100 dark:border-white/10 bg-gray-50 dark:bg-darkBorder/20 shrink-0">
+        <div className="p-4  bg-gray-50 dark:bg-darkBorder/20 shrink-0">
           <div className="flex gap-2">
             <Button
-              className="flex-1 bg-white dark:bg-darkBg text-black dark:text-white border-border dark:border-darkBorder"
+              className="flex-1 bg-white dark:bg-transparent text-black dark:text-white border-border dark:border-darkBorder"
               variant="outline"
               onClick={() => {
                 onStatusChange?.(application.id, "rejected");

@@ -20,7 +20,7 @@ export function ThemeToggle() {
     <button
       onClick={cycleTheme}
       className={cn(
-        "relative size-8 rounded-[11px] center cursor-pointer",
+        "relative size-9 rounded-[11px] center cursor-pointer",
         "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
         "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-primary/50",
         "transition-all duration-200",

@@ -187,7 +187,7 @@ export default function HiringPostListTable({
       header: "Deadline",
       className: "hidden xl:table-cell",
       cell: (_, row) => (
-        <span className="text-xs text-text5">
+        <span className="text-xs text-text6 dark:text-text5">
           {row.deadline
             ? format(new Date(row.deadline), "dd MMM yyyy")
             : "Ongoing"}
@@ -362,10 +362,10 @@ export default function HiringPostListTable({
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search title, company..."
               startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80"
+              className="h-10 w-full  dark:border-darkBorder/80  dark:focus:border-darkLight/80"
             />
           </div>
-          <div className="w-36">
+          <div className="w-44">
             <Select
               options={categoryOptions}
               value={categoryFilter}

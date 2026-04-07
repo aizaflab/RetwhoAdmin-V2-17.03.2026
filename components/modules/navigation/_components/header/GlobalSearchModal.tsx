@@ -55,7 +55,7 @@ export function GlobalSearchModal() {
           onClick={() => setIsOpen(true)}
           className={cn(
             // Base / Mobile styles (matches other header icons)
-            "relative size-8 rounded-[11px] flex items-center justify-center cursor-pointer transition-all duration-200 outline-none",
+            "relative size-9 rounded-[11px] flex items-center justify-center cursor-pointer transition-all duration-200 outline-none",
             "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
             "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-darkBorder",
 

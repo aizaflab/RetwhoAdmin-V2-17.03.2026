@@ -45,8 +45,8 @@ export interface HiringPost {
   salaryType: SalaryType;
   currency: string;
   description: string; // rich text / HTML
-  requirements: string; // rich text / HTML
-  benefits: string; // rich text / HTML
+  requirements: string[]; // list items
+  benefits: string[]; // list items
   skills: string[]; // tags
   experience: string; // e.g. "2-4 years"
   education: string; // e.g. "Bachelor's"

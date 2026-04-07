@@ -119,7 +119,6 @@ export default function HiringCategoryModal({
             setFormData((prev) => ({ ...prev, type: val as CategoryType }))
           }
           className="w-full"
-          fieldClass="h-10!"
         />
 
         <Select
@@ -136,7 +135,6 @@ export default function HiringCategoryModal({
             }))
           }
           className="w-full"
-          fieldClass="h-10!"
         />
       </form>
     </Modal>
