@@ -1,0 +1,210 @@
+import {
+  SupportResource,
+  SupportArticle,
+  SupportChatbotQnA,
+  SupportLearningVideo,
+} from "../_types/support.types";
+
+// ─── Resources ───────────────────────────────────────────────────────────────
+export const MOCK_SUPPORT_RESOURCES: SupportResource[] = [
+  {
+    id: "res_1",
+    name: "Getting Started",
+    slug: "getting-started",
+    description: "Everything you need to know to start using the platform.",
+    icon: "🚀",
+    status: "active",
+    articleCount: 12,
+    createdAt: "2024-01-10T08:00:00Z",
+  },
+  {
+    id: "res_2",
+    name: "Account & Billing",
+    slug: "account-billing",
+    description: "Manage your account, subscription, and billing details.",
+    icon: "💳",
+    status: "active",
+    articleCount: 8,
+    createdAt: "2024-01-12T09:00:00Z",
+  },
+  {
+    id: "res_3",
+    name: "Orders & Delivery",
+    slug: "orders-delivery",
+    description: "Track orders, delivery status, and dispute resolution.",
+    icon: "📦",
+    status: "active",
+    articleCount: 15,
+    createdAt: "2024-01-15T10:00:00Z",
+  },
+  {
+    id: "res_4",
+    name: "Technical Support",
+    slug: "technical-support",
+    description: "Troubleshoot technical issues and API integrations.",
+    icon: "🛠️",
+    status: "inactive",
+    articleCount: 5,
+    createdAt: "2024-02-01T08:00:00Z",
+  },
+];
+
+// ─── Articles ─────────────────────────────────────────────────────────────────
+export const MOCK_SUPPORT_ARTICLES: SupportArticle[] = [
+  {
+    id: "art_1",
+    title: "How to Create Your First Order",
+    slug: "how-to-create-first-order",
+    resourceId: "res_1",
+    excerpt: "Step-by-step guide to placing your first order on the platform.",
+    content:
+      "<p>Creating your first order is simple. Follow these steps...</p>",
+    tags: ["order", "beginner", "tutorial"],
+    status: "published",
+    views: 1240,
+    helpful: 98,
+    createdAt: "2024-02-10T08:00:00Z",
+    updatedAt: "2024-03-01T10:00:00Z",
+  },
+  {
+    id: "art_2",
+    title: "Understanding Your Invoice",
+    slug: "understanding-your-invoice",
+    resourceId: "res_2",
+    excerpt: "Learn how to read and manage your monthly invoices.",
+    content:
+      "<p>Your invoice summarizes all charges incurred in the billing period...</p>",
+    tags: ["billing", "invoice", "payment"],
+    status: "published",
+    views: 870,
+    helpful: 76,
+    createdAt: "2024-02-15T09:30:00Z",
+    updatedAt: "2024-02-28T11:00:00Z",
+  },
+  {
+    id: "art_3",
+    title: "Tracking Your Delivery",
+    slug: "tracking-your-delivery",
+    resourceId: "res_3",
+    excerpt: "Real-time tracking guide for all your shipments.",
+    content: "<p>You can track your delivery from the Orders section...</p>",
+    tags: ["delivery", "tracking", "shipment"],
+    status: "published",
+    views: 2100,
+    helpful: 192,
+    createdAt: "2024-03-01T07:00:00Z",
+    updatedAt: "2024-03-10T09:00:00Z",
+  },
+  {
+    id: "art_4",
+    title: "API Integration Guide",
+    slug: "api-integration-guide",
+    resourceId: "res_4",
+    excerpt: "Complete reference for integrating with our REST API.",
+    content: "<p>Our REST API allows you to automate your workflows...</p>",
+    tags: ["api", "developer", "integration"],
+    status: "draft",
+    views: 0,
+    helpful: 0,
+    createdAt: "2024-03-05T14:00:00Z",
+    updatedAt: "2024-03-05T14:00:00Z",
+  },
+];
+
+// ─── Chatbot QnA ─────────────────────────────────────────────────────────────
+export const MOCK_CHATBOT_QNA: SupportChatbotQnA[] = [
+  {
+    id: "qna_1",
+    question: "How do I reset my password?",
+    answer:
+      "You can reset your password by clicking 'Forgot Password' on the login page. A reset link will be sent to your email.",
+    resourceId: "res_1",
+    keywords: ["password", "reset", "forgot", "login"],
+    priority: 1,
+    isActive: true,
+    createdAt: "2024-01-20T08:00:00Z",
+    updatedAt: "2024-02-01T10:00:00Z",
+  },
+  {
+    id: "qna_2",
+    question: "What payment methods are accepted?",
+    answer:
+      "We accept Visa, Mastercard, American Express, and bank transfers. Crypto payments are not currently supported.",
+    resourceId: "res_2",
+    keywords: ["payment", "visa", "mastercard", "bank", "credit card"],
+    priority: 2,
+    isActive: true,
+    createdAt: "2024-01-22T09:00:00Z",
+    updatedAt: "2024-02-05T11:00:00Z",
+  },
+  {
+    id: "qna_3",
+    question: "How long does delivery take?",
+    answer:
+      "Standard delivery takes 3–5 business days. Express delivery is available for next-day fulfillment.",
+    resourceId: "res_3",
+    keywords: ["delivery", "shipping", "days", "express"],
+    priority: 3,
+    isActive: true,
+    createdAt: "2024-01-25T10:00:00Z",
+    updatedAt: "2024-02-10T12:00:00Z",
+  },
+  {
+    id: "qna_4",
+    question: "Can I cancel my order?",
+    answer:
+      "Orders can be cancelled within 1 hour of placement. After that, please contact support for assistance.",
+    resourceId: "res_3",
+    keywords: ["cancel", "order", "refund"],
+    priority: 4,
+    isActive: false,
+    createdAt: "2024-02-01T08:00:00Z",
+    updatedAt: "2024-02-15T09:00:00Z",
+  },
+];
+
+// ─── Learning Videos ──────────────────────────────────────────────────────────
+export const MOCK_LEARNING_VIDEOS: SupportLearningVideo[] = [
+  {
+    id: "vid_1",
+    title: "Platform Overview — Getting Started in 5 Minutes",
+    description:
+      "A quick walkthrough of all major features for new users joining the platform.",
+    resourceId: "res_1",
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    thumbnailUrl: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+    duration: "5:12",
+    tags: ["intro", "beginner", "overview"],
+    status: "published",
+    views: 3420,
+    createdAt: "2024-01-30T08:00:00Z",
+  },
+  {
+    id: "vid_2",
+    title: "Managing Your Billing & Subscription",
+    description:
+      "Learn how to update payment methods, download invoices, and manage your plan.",
+    resourceId: "res_2",
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    thumbnailUrl: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+    duration: "8:45",
+    tags: ["billing", "subscription", "payment"],
+    status: "published",
+    views: 1560,
+    createdAt: "2024-02-05T09:00:00Z",
+  },
+  {
+    id: "vid_3",
+    title: "Order Management Deep Dive",
+    description:
+      "Advanced order tracking, dispute resolution, and bulk order management.",
+    resourceId: "res_3",
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    thumbnailUrl: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+    duration: "14:20",
+    tags: ["orders", "advanced", "tracking"],
+    status: "draft",
+    views: 0,
+    createdAt: "2024-03-10T10:00:00Z",
+  },
+];
