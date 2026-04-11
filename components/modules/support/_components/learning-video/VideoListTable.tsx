@@ -90,7 +90,7 @@ export default function VideoListTable({
 
   const resourceOptions = [
     { value: "all", label: "All Resources" },
-    ...resources.map((r) => ({ value: r.id, label: `${r.icon} ${r.name}` })),
+    ...resources.map((r) => ({ value: r.id, label: `${r.name}` })),
   ];
   const statusOptions = [
     { value: "all", label: "All Status" },
@@ -136,7 +136,7 @@ export default function VideoListTable({
               <div className="flex items-center gap-2 mt-0.5">
                 {res && (
                   <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary dark:text-blue-400">
-                    {res.icon} {res.name}
+                    {res.name}
                   </span>
                 )}
                 {row.duration && (

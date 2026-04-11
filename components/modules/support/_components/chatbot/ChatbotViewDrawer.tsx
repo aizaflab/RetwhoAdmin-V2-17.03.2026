@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SupportChatbotQnA, SupportResource } from "../../_types/support.types";
-import { X, MessageCircle } from "lucide-react";
+import { X, MessageCircle, DoorClosed, ListOrdered, Hash } from "lucide-react";
 import { format } from "date-fns";
 
 interface ChatbotViewDrawerProps {
@@ -89,20 +89,22 @@ export default function ChatbotViewDrawer({
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
           {/* Meta row */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
-              <span className="text-xl">{resource?.icon ?? "📄"}</span>
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+              <DoorClosed className="w-4 h-4 text-primary dark:text-blue-400" />
               <p className="text-xs font-semibold text-black dark:text-white text-center truncate w-full">
                 {resource?.name ?? "—"}
               </p>
               <span className="text-[10px] text-text5">Resource</span>
             </div>
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+              <ListOrdered className="w-4 h-4 text-emerald-500" />
               <span className="text-sm font-bold text-black dark:text-white">
                 #{qna.priority}
               </span>
               <span className="text-[10px] text-text5">Priority</span>
             </div>
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+              <Hash className="w-4 h-4 text-amber-500" />
               <span className="text-sm font-bold text-black dark:text-white">
                 {qna.keywords.length}
               </span>
@@ -149,7 +151,7 @@ export default function ChatbotViewDrawer({
           )}
 
           {/* Dates */}
-          <div className="px-4 py-4 rounded-xl border border-border/50 dark:border-darkBorder/40 bg-gray-50 dark:bg-darkPrimary/20">
+          <div className="px-4 py-4 rounded-lg border border-border/50 dark:border-darkBorder/40 bg-gray-50 dark:bg-darkPrimary/20">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-[11px] font-medium text-text5 uppercase block mb-1">

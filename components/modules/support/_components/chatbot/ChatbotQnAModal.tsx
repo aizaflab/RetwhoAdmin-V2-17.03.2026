@@ -6,6 +6,7 @@ import { Input, Modal } from "@/components/ui";
 import { Select } from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
 import { X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea/Textarea";
 
 interface ChatbotQnAModalProps {
   qna: SupportChatbotQnA | null;
@@ -87,7 +88,7 @@ export default function ChatbotQnAModal({
 
   const resourceOptions = resources.map((r) => ({
     value: r.id,
-    label: `${r.icon} ${r.name}`,
+    label: `${r.name}`,
   }));
 
   return (
@@ -141,10 +142,10 @@ export default function ChatbotQnAModal({
 
         {/* Question */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
-            Question <span className="text-red-500">*</span>
-          </label>
-          <textarea
+          <Textarea
+            label="Question"
+            required
+            requiredSign
             rows={2}
             value={formData.question}
             onChange={(e) => {
@@ -152,23 +153,16 @@ export default function ChatbotQnAModal({
               if (errors.question) setErrors((p) => ({ ...p, question: "" }));
             }}
             placeholder="e.g. How do I reset my password?"
-            className={`w-full rounded-md border p-3 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 placeholder:text-gray-400 dark:text-white resize-none transition-colors ${
-              errors.question
-                ? "border-red-500"
-                : "border-border dark:border-darkBorder dark:focus:border-primary"
-            }`}
+            error={errors.question}
           />
-          {errors.question && (
-            <p className="text-xs text-red-500">{errors.question}</p>
-          )}
         </div>
 
         {/* Answer */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
-            Answer <span className="text-red-500">*</span>
-          </label>
-          <textarea
+          <Textarea
+            label="Answer"
+            required
+            requiredSign
             rows={5}
             value={formData.answer}
             onChange={(e) => {
@@ -176,25 +170,17 @@ export default function ChatbotQnAModal({
               if (errors.answer) setErrors((p) => ({ ...p, answer: "" }));
             }}
             placeholder="Provide a clear, helpful answer..."
-            className={`w-full rounded-md border p-3 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 placeholder:text-gray-400 dark:text-white resize-y transition-colors ${
-              errors.answer
-                ? "border-red-500"
-                : "border-border dark:border-darkBorder dark:focus:border-primary"
-            }`}
+            error={errors.answer}
           />
-          {errors.answer && (
-            <p className="text-xs text-red-500">{errors.answer}</p>
-          )}
         </div>
 
         {/* Keywords */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
-            Keywords{" "}
-            <span className="text-text5 font-normal">(for matching)</span>
-          </label>
-          <div className="flex gap-2">
-            <input
+          <div className="flex items-end gap-3">
+            <Input
+              label="Keywords"
+              required
+              requiredSign
               type="text"
               value={kwInput}
               onChange={(e) => setKwInput(e.target.value)}
@@ -205,17 +191,19 @@ export default function ChatbotQnAModal({
                 }
               }}
               placeholder="Type keyword & press Enter"
-              className="flex-1 rounded-md border border-border dark:border-darkBorder px-3 py-2 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 dark:focus:border-primary placeholder:text-gray-400 dark:text-white"
+              fullWidth
+              className="dark:border-darkBorder dark:focus:border-darkLight/50"
             />
             <Button
               type="button"
               variant="outline"
-              className="h-10 px-4 text-sm"
+              className="h-11 px-4 text-sm"
               onClick={addKeyword}
             >
               Add
             </Button>
           </div>
+
           {formData.keywords.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-1">
               {formData.keywords.map((kw) => (
@@ -227,7 +215,7 @@ export default function ChatbotQnAModal({
                   <button
                     type="button"
                     onClick={() => removeKeyword(kw)}
-                    className="hover:text-rose-500 transition-colors"
+                    className="hover:text-rose-500 transition-colors cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -238,7 +226,7 @@ export default function ChatbotQnAModal({
         </div>
 
         {/* Active toggle */}
-        <div className="flex items-center justify-between p-3 rounded-xl border border-border/60 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/20">
+        <div className="flex items-center justify-between p-3 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/20">
           <div>
             <p className="text-sm font-medium text-black dark:text-white">
               Active Status

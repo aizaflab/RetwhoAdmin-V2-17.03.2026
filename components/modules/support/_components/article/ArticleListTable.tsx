@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 import { SupportArticle, SupportResource } from "../../_types/support.types";
 import { Input, SimpleSelect } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
@@ -15,7 +16,6 @@ import {
   DropdownItem,
   DropdownSeparator,
 } from "@/components/ui/dropdown/Dropdown";
-import ArticleModal from "./ArticleModal";
 import ArticleViewDrawer from "./ArticleViewDrawer";
 import {
   PlusIcon,
@@ -42,12 +42,11 @@ export default function ArticleListTable({
   articles: initialArticles,
   resources,
 }: ArticleListTableProps) {
+  const router = useRouter();
   const [articles, setArticles] = useState<SupportArticle[]>(initialArticles);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [resourceFilter, setResourceFilter] = useState("all");
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editing, setEditing] = useState<SupportArticle | null>(null);
   const [viewing, setViewing] = useState<SupportArticle | null>(null);
   const [deleting, setDeleting] = useState<SupportArticle | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
@@ -63,18 +62,6 @@ export default function ArticleListTable({
       resourceFilter === "all" || a.resourceId === resourceFilter;
     return matchSearch && matchStatus && matchResource;
   });
-
-  const handleSave = (data: Partial<SupportArticle>) => {
-    setArticles((prev) => {
-      const exists = prev.find((a) => a.id === data.id);
-      if (exists) {
-        return prev.map((a) => (a.id === data.id ? { ...a, ...data } : a));
-      }
-      return [data as SupportArticle, ...prev];
-    });
-    setIsAddOpen(false);
-    setEditing(null);
-  };
 
   const handleDelete = (row: SupportArticle | null) => {
     if (!row) return;
@@ -95,7 +82,7 @@ export default function ArticleListTable({
 
   const resourceOptions = [
     { value: "all", label: "All Resources" },
-    ...resources.map((r) => ({ value: r.id, label: `${r.icon} ${r.name}` })),
+    ...resources.map((r) => ({ value: r.id, label: `${r.name}` })),
   ];
 
   const statusOptions = [
@@ -112,20 +99,15 @@ export default function ArticleListTable({
       cell: (_v, row) => {
         const res = resources.find((r) => r.id === row.resourceId);
         return (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/5 dark:bg-primary/15 shrink-0 text-xl">
-              {res?.icon ?? "📄"}
-            </div>
-            <div className="max-w-xs">
-              <p className="text-sm font-semibold text-black dark:text-white truncate">
-                {row.title}
-              </p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary dark:text-blue-400">
-                  {res?.name ?? "Unknown"}
-                </span>
-                <span className="text-xs text-text5 truncate">/{row.slug}</span>
-              </div>
+          <div className="max-w-60">
+            <p className="text-sm font-semibold text-black dark:text-white truncate">
+              {row.title}
+            </p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary dark:text-blue-400">
+                {res?.name ?? "Unknown"}
+              </span>
+              <span className="text-xs text-text5 truncate">/{row.slug}</span>
             </div>
           </div>
         );
@@ -174,7 +156,7 @@ export default function ArticleListTable({
       ),
     },
     {
-      id: "id" as keyof SupportArticle,
+      id: "actions" as keyof SupportArticle,
       header: "Actions",
       className: "justify-end text-right",
       cell: (_v, row) => (
@@ -183,7 +165,7 @@ export default function ArticleListTable({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setEditing(row);
+                router.push(`/support/article/edit/${row.id}`);
               }}
               className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
             >
@@ -319,7 +301,7 @@ export default function ArticleListTable({
           </div>
 
           <Button
-            onClick={() => setIsAddOpen(true)}
+            onClick={() => router.push("/support/article/add")}
             className="px-3.5 h-10 w-full sm:w-auto justify-center"
           >
             <PlusIcon className="size-4.5" />
@@ -343,27 +325,16 @@ export default function ArticleListTable({
         headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
         tableClassName="min-w-full"
       />
-
-      {/* Add / Edit Modal */}
-      {(isAddOpen || editing) && (
-        <ArticleModal
-          article={editing}
-          resources={resources}
-          onClose={() => {
-            setIsAddOpen(false);
-            setEditing(null);
-          }}
-          onSave={handleSave}
-        />
-      )}
-
       {/* View Drawer */}
       {viewing && (
         <ArticleViewDrawer
           article={viewing}
           resource={resources.find((r) => r.id === viewing.resourceId)}
           onClose={() => setViewing(null)}
-          onEdit={() => setEditing(viewing)}
+          onEdit={() => {
+            setViewing(null);
+            router.push(`/support/article/edit/${viewing.id}`);
+          }}
         />
       )}
 

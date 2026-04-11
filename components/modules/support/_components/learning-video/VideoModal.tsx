@@ -9,6 +9,7 @@ import { Input, Modal } from "@/components/ui";
 import { Select } from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
 import { X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea/Textarea";
 
 interface VideoModalProps {
   video: SupportLearningVideo | null;
@@ -92,7 +93,7 @@ export default function VideoModal({
 
   const resourceOptions = resources.map((r) => ({
     value: r.id,
-    label: `${r.icon} ${r.name}`,
+    label: r.name,
   }));
 
   return (
@@ -200,10 +201,10 @@ export default function VideoModal({
 
         {/* Description */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
+          <Textarea
+            label="Description"
+            required
+            requiredSign
             rows={3}
             value={formData.description}
             onChange={(e) => {
@@ -212,24 +213,16 @@ export default function VideoModal({
                 setErrors((p) => ({ ...p, description: "" }));
             }}
             placeholder="What will viewers learn from this video?"
-            className={`w-full rounded-md border p-3 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 placeholder:text-gray-400 dark:text-white resize-none transition-colors ${
-              errors.description
-                ? "border-red-500"
-                : "border-border dark:border-darkBorder dark:focus:border-primary"
-            }`}
+            error={errors.description}
+            className="dark:border-darkBorder dark:focus:border-primary"
           />
-          {errors.description && (
-            <p className="text-xs text-red-500">{errors.description}</p>
-          )}
         </div>
 
         {/* Tags */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
-            Tags
-          </label>
-          <div className="flex gap-2">
-            <input
+          <div className="flex items-end gap-2">
+            <Input
+              label="Tags"
               type="text"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
@@ -240,12 +233,13 @@ export default function VideoModal({
                 }
               }}
               placeholder="Type tag & press Enter"
-              className="flex-1 rounded-md border border-border dark:border-darkBorder px-3 py-2 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 dark:focus:border-primary placeholder:text-gray-400 dark:text-white"
+              fullWidth
+              className="dark:border-darkBorder dark:focus:border-primary"
             />
             <Button
               type="button"
               variant="outline"
-              className="h-10 px-4 text-sm"
+              className="h-11 px-4 text-sm"
               onClick={addTag}
             >
               Add

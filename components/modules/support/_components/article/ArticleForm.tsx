@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { SupportArticle, SupportResource } from "../../_types/support.types";
-import { Input, Modal } from "@/components/ui";
+import { Input } from "@/components/ui";
 import { Select } from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
+import TextEditor from "@/components/ui/editor/TextEditor";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
-interface ArticleModalProps {
-  article: SupportArticle | null;
+interface ArticleFormProps {
+  initialData?: SupportArticle | null;
   resources: SupportResource[];
-  onClose: () => void;
   onSave: (data: Partial<SupportArticle>) => void;
 }
 
@@ -27,35 +28,25 @@ const STATUS_OPTIONS = [
   { value: "archived", label: "Archived" },
 ];
 
-export default function ArticleModal({
-  article,
+export default function ArticleForm({
+  initialData,
   resources,
-  onClose,
   onSave,
-}: ArticleModalProps) {
-  const blank = {
-    title: "",
-    slug: "",
-    resourceId: resources[0]?.id ?? "",
-    excerpt: "",
-    content: "",
-    tags: [] as string[],
-    status: "draft" as const,
-  };
+}: ArticleFormProps) {
+  const router = useRouter();
 
-  const [formData, setFormData] = useState(
-    article
-      ? {
-          title: article.title,
-          slug: article.slug,
-          resourceId: article.resourceId,
-          excerpt: article.excerpt,
-          content: article.content,
-          tags: article.tags,
-          status: article.status,
-        }
-      : blank,
-  );
+  const [formData, setFormData] = useState({
+    title: initialData?.title ?? "",
+    slug: initialData?.slug ?? "",
+    resourceId: initialData?.resourceId ?? resources[0]?.id ?? "",
+    excerpt: initialData?.excerpt ?? "",
+    content: initialData?.content ?? "",
+    tags: initialData?.tags ?? ([] as string[]),
+    status: (initialData?.status ?? "draft") as
+      | "published"
+      | "draft"
+      | "archived",
+  });
 
   const [tagInput, setTagInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -64,7 +55,7 @@ export default function ArticleModal({
     setFormData((p) => ({
       ...p,
       title: val,
-      slug: !article ? toSlug(val) : p.slug,
+      slug: !initialData ? toSlug(val) : p.slug,
     }));
     if (errors.title) setErrors((p) => ({ ...p, title: "" }));
   };
@@ -95,11 +86,11 @@ export default function ArticleModal({
     ev.preventDefault();
     if (!validate()) return;
     onSave({
-      id: article?.id ?? `art_${Date.now()}`,
+      id: initialData?.id ?? `art_${Date.now()}`,
       ...formData,
-      views: article?.views ?? 0,
-      helpful: article?.helpful ?? 0,
-      createdAt: article?.createdAt ?? new Date().toISOString(),
+      views: initialData?.views ?? 0,
+      helpful: initialData?.helpful ?? 0,
+      createdAt: initialData?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
   };
@@ -110,28 +101,9 @@ export default function ArticleModal({
   }));
 
   return (
-    <Modal
-      open
-      onClose={onClose}
-      title={article ? "Edit Article" : "Add Article"}
-      size="large"
-      footer={
-        <div className="flex gap-3 w-full">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1 h-10"
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" form="article-form" className="flex-1 h-10">
-            {article ? "Save Changes" : "Create Article"}
-          </Button>
-        </div>
-      }
-    >
-      <form id="article-form" onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Main Info Card */}
+      <div className="bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder space-y-4">
         {/* Title */}
         <Input
           label="Article Title"
@@ -140,6 +112,7 @@ export default function ArticleModal({
           onValueChange={handleTitleChange}
           error={errors.title}
           requiredSign
+          fullWidth
           className="dark:border-darkBorder dark:focus:border-primary"
         />
 
@@ -155,6 +128,7 @@ export default function ArticleModal({
           error={errors.slug}
           requiredSign
           helperText="Auto-generated from title."
+          fullWidth
           className="dark:border-darkBorder dark:focus:border-primary"
         />
 
@@ -211,22 +185,6 @@ export default function ArticleModal({
           )}
         </div>
 
-        {/* Content */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
-            Content
-          </label>
-          <textarea
-            rows={6}
-            value={formData.content}
-            onChange={(e) =>
-              setFormData((p) => ({ ...p, content: e.target.value }))
-            }
-            placeholder="Full article content (supports HTML)..."
-            className="w-full rounded-md border border-border dark:border-darkBorder p-3 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 dark:focus:border-primary placeholder:text-gray-400 dark:text-white resize-y transition-colors"
-          />
-        </div>
-
         {/* Tags */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
@@ -275,7 +233,34 @@ export default function ArticleModal({
             </div>
           )}
         </div>
-      </form>
-    </Modal>
+      </div>
+
+      {/* Content Editor Card */}
+      <div className="bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder">
+        <label className="text-sm font-medium text-[#344054] dark:text-gray-100 block mb-3">
+          Content
+        </label>
+        <TextEditor
+          value={formData.content}
+          onChange={(val) => setFormData((p) => ({ ...p, content: val }))}
+          placeholder="Start writing your article..."
+        />
+      </div>
+
+      {/* Footer Buttons */}
+      <div className="flex items-center justify-end gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="px-7 text-gray-500"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" className="px-8">
+          {initialData ? "Save Changes" : "Create Article"}
+        </Button>
+      </div>
+    </form>
   );
 }

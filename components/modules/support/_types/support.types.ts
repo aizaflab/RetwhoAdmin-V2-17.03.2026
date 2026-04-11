@@ -4,7 +4,6 @@ export interface SupportResource {
   name: string;
   slug: string;
   description: string;
-  icon: string; // emoji or icon key
   status: "active" | "inactive";
   articleCount: number;
   createdAt: string;

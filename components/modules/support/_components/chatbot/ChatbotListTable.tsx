@@ -89,7 +89,7 @@ export default function ChatbotListTable({
 
   const resourceOptions = [
     { value: "all", label: "All Resources" },
-    ...resources.map((r) => ({ value: r.id, label: `${r.icon} ${r.name}` })),
+    ...resources.map((r) => ({ value: r.id, label: `${r.name}` })),
   ];
   const activeOptions = [
     { value: "all", label: "All Status" },
@@ -113,7 +113,7 @@ export default function ChatbotListTable({
             </p>
             {res && (
               <span className="mt-1 inline-block text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary dark:text-blue-400">
-                {res.icon} {res.name}
+                {res.name}
               </span>
             )}
           </div>
@@ -135,11 +135,11 @@ export default function ChatbotListTable({
       header: "Keywords",
       className: "hidden md:table-cell",
       cell: (_v, row) => (
-        <div className="flex flex-wrap gap-1 max-w-36">
+        <div className="flex  gap-1 max-w-36">
           {row.keywords.slice(0, 3).map((kw) => (
             <span
               key={kw}
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-darkBorder/50 text-text5"
+              className="text-[10px] capitalize font-medium px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-darkBorder/50 text-text5"
             >
               {kw}
             </span>
@@ -172,7 +172,7 @@ export default function ChatbotListTable({
             e.stopPropagation();
             handleToggleActive(row.id);
           }}
-          className={`inline-flex items-center gap-1. text-xs font-semibold px-2.5 py-1 rounded-full transition-colors cursor-pointer ${
+          className={`inline-flex items-center gap-1. text-xs font-semibold w-18 center py-1 rounded-full transition-colors cursor-pointer ${
             row.isActive
               ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400"
               : "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400"
@@ -183,7 +183,7 @@ export default function ChatbotListTable({
       ),
     },
     {
-      id: "id" as keyof SupportChatbotQnA,
+      id: "actions" as keyof SupportChatbotQnA,
       header: "Actions",
       className: "justify-end text-right",
       cell: (_v, row) => (

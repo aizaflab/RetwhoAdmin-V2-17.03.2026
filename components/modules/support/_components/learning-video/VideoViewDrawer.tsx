@@ -5,7 +5,14 @@ import {
   SupportLearningVideo,
   SupportResource,
 } from "../../_types/support.types";
-import { X, PlayCircle, Eye, Clock, ExternalLink } from "lucide-react";
+import {
+  X,
+  PlayCircle,
+  Eye,
+  Clock,
+  ExternalLink,
+  DoorClosed,
+} from "lucide-react";
 import { format } from "date-fns";
 
 interface VideoViewDrawerProps {
@@ -67,7 +74,7 @@ export default function VideoViewDrawer({
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-border/50 dark:border-darkBorder/30 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/30 shrink-0">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/30 shrink-0">
               <PlayCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
             </div>
             <div>
@@ -93,7 +100,7 @@ export default function VideoViewDrawer({
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
           {/* Thumbnail */}
-          <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-darkBorder group">
+          <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-darkBorder group">
             {video.thumbnailUrl ? (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -121,22 +128,22 @@ export default function VideoViewDrawer({
 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
               <Eye className="w-4 h-4 text-primary dark:text-blue-400" />
               <p className="text-sm font-bold text-black dark:text-white">
                 {video.views.toLocaleString()}
               </p>
               <span className="text-[10px] text-text5">Views</span>
             </div>
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
               <Clock className="w-4 h-4 text-amber-500" />
               <p className="text-sm font-bold text-black dark:text-white">
                 {video.duration || "—"}
               </p>
               <span className="text-[10px] text-text5">Duration</span>
             </div>
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
-              <span className="text-lg">{resource?.icon ?? "📄"}</span>
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+              <DoorClosed className="w-4 h-4 text-purple-500" />
               <p className="text-xs font-semibold text-black dark:text-white text-center truncate w-full">
                 {resource?.name ?? "—"}
               </p>
@@ -149,7 +156,7 @@ export default function VideoViewDrawer({
             <h3 className="text-xs font-semibold text-text5 uppercase tracking-wider mb-2">
               Description
             </h3>
-            <p className="text-sm text-black dark:text-white bg-gray-50 dark:bg-darkPrimary/20 px-4 py-3 rounded-xl border border-border/50 dark:border-darkBorder/40">
+            <p className="text-sm text-black dark:text-white bg-gray-50 dark:bg-darkPrimary/20 px-4 py-3 rounded-lg border border-border/50 dark:border-darkBorder/40">
               {video.description || "—"}
             </p>
           </div>
@@ -164,7 +171,7 @@ export default function VideoViewDrawer({
                 href={video.videoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-primary dark:text-blue-400 hover:underline bg-primary/5 dark:bg-primary/10 px-4 py-3 rounded-xl border border-primary/20 dark:border-primary/20 truncate"
+                className="flex items-center gap-2 text-sm text-primary dark:text-blue-400 hover:underline bg-primary/5 dark:bg-primary/10 px-4 py-3 rounded-lg border border-primary/20 dark:border-primary/20 truncate"
               >
                 <ExternalLink className="w-4 h-4 shrink-0" />
                 <span className="truncate">{video.videoUrl}</span>
@@ -192,7 +199,7 @@ export default function VideoViewDrawer({
           )}
 
           {/* Date */}
-          <div className="px-4 py-4 rounded-xl border border-border/50 dark:border-darkBorder/40 bg-gray-50 dark:bg-darkPrimary/20">
+          <div className="px-4 py-4 rounded-lg border border-border/50 dark:border-darkBorder/40 bg-gray-50 dark:bg-darkPrimary/20">
             <span className="text-[11px] font-medium text-text5 uppercase block mb-1">
               Added On
             </span>

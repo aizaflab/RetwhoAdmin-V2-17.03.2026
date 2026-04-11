@@ -13,19 +13,6 @@ interface ResourceModalProps {
   onSave: (data: Partial<SupportResource>) => void;
 }
 
-const ICON_OPTIONS = [
-  { value: "🚀", label: "🚀 Rocket — Getting Started" },
-  { value: "💳", label: "💳 Card — Billing" },
-  { value: "📦", label: "📦 Box — Orders" },
-  { value: "🛠️", label: "🛠️ Tools — Technical" },
-  { value: "📚", label: "📚 Books — Learning" },
-  { value: "🔒", label: "🔒 Lock — Security" },
-  { value: "📊", label: "📊 Chart — Analytics" },
-  { value: "🤝", label: "🤝 Handshake — Partnership" },
-  { value: "💡", label: "💡 Bulb — Tips" },
-  { value: "🌐", label: "🌐 Globe — General" },
-];
-
 const STATUS_OPTIONS = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
@@ -57,7 +44,6 @@ export default function ResourceModal({
           name: resource.name,
           slug: resource.slug,
           description: resource.description,
-          icon: resource.icon,
           status: resource.status,
         }
       : blank,
@@ -91,7 +77,6 @@ export default function ResourceModal({
       name: formData.name,
       slug: formData.slug,
       description: formData.description,
-      icon: formData.icon,
       status: formData.status,
       articleCount: resource?.articleCount ?? 0,
       createdAt: resource?.createdAt ?? new Date().toISOString(),
@@ -121,15 +106,6 @@ export default function ResourceModal({
       }
     >
       <form id="resource-form" onSubmit={handleSubmit} className="space-y-4">
-        {/* Icon */}
-        <Select
-          label="Icon"
-          options={ICON_OPTIONS}
-          value={formData.icon}
-          onValueChange={(val) => setFormData((p) => ({ ...p, icon: val }))}
-          className="w-full dark:border-darkBorder dark:focus:border-primary"
-        />
-
         {/* Name */}
         <Input
           label="Resource Name"

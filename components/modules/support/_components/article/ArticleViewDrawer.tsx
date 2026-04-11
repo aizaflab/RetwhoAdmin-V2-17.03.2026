@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SupportArticle, SupportResource } from "../../_types/support.types";
-import { X, FileText, ThumbsUp, Eye } from "lucide-react";
+import { X, FileText, ThumbsUp, Eye, DoorClosed } from "lucide-react";
 import { format } from "date-fns";
 
 interface ArticleViewDrawerProps {
@@ -68,7 +68,7 @@ export default function ArticleViewDrawer({
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-5 pb-4 border-b border-border/50 dark:border-darkBorder/30 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/20 shrink-0">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 shrink-0">
               <FileText className="w-5 h-5 text-primary dark:text-blue-400" />
             </div>
             <div>
@@ -92,26 +92,26 @@ export default function ArticleViewDrawer({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
               <Eye className="w-4 h-4 text-primary dark:text-blue-400" />
               <p className="text-sm font-bold text-black dark:text-white">
                 {article.views.toLocaleString()}
               </p>
               <span className="text-[10px] text-text5">Views</span>
             </div>
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
               <ThumbsUp className="w-4 h-4 text-emerald-500" />
               <p className="text-sm font-bold text-black dark:text-white">
                 {article.helpful}
               </p>
               <span className="text-[10px] text-text5">Helpful</span>
             </div>
-            <div className="p-3 rounded-xl border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
-              <span className="text-lg">{resource?.icon ?? "📄"}</span>
-              <p className="text-xs font-semibold text-black dark:text-white text-center truncate w-full text-center">
+            <div className="p-3 rounded-lg border border-border/50 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/30 flex flex-col items-center gap-1">
+              <DoorClosed className="w-4 h-4 text-primary dark:text-blue-400" />
+              <p className="text-xs font-semibold text-black dark:text-white  truncate w-full text-center">
                 {resource?.name ?? "—"}
               </p>
               <span className="text-[10px] text-text5">Resource</span>
@@ -119,7 +119,7 @@ export default function ArticleViewDrawer({
           </div>
 
           {/* Meta */}
-          <div className="px-4 py-4 rounded-xl border border-border/50 dark:border-darkBorder/40 bg-gray-50 dark:bg-darkPrimary/20 space-y-3">
+          <div className="px-4 py-4 rounded-lg border border-border/50 dark:border-darkBorder/40 bg-gray-50 dark:bg-darkPrimary/20 space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-[11px] font-medium text-text5 uppercase block mb-1">
@@ -153,7 +153,7 @@ export default function ArticleViewDrawer({
             <h3 className="text-xs font-semibold text-text5 uppercase tracking-wider mb-2">
               Excerpt
             </h3>
-            <p className="text-sm text-black dark:text-white bg-gray-50 dark:bg-darkPrimary/20 px-4 py-3 rounded-xl border border-border/50 dark:border-darkBorder/40">
+            <p className="text-sm text-black dark:text-white bg-gray-50 dark:bg-darkPrimary/20 px-4 py-3 rounded-lg border border-border/50 dark:border-darkBorder/40">
               {article.excerpt || "—"}
             </p>
           </div>
@@ -183,7 +183,7 @@ export default function ArticleViewDrawer({
               Content Preview
             </h3>
             <div
-              className="px-4 py-4 rounded-xl border border-border/50 dark:border-darkBorder/40 bg-gray-50 dark:bg-darkPrimary/20 prose dark:prose-invert text-sm max-w-none"
+              className="px-4 py-4 rounded-lg border border-border/50 dark:border-darkBorder/40 bg-gray-50 dark:bg-darkPrimary/20 prose dark:prose-invert text-sm max-w-none"
               dangerouslySetInnerHTML={{
                 __html: article.content || "<p>No content yet.</p>",
               }}

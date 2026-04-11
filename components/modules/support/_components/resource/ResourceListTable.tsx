@@ -71,16 +71,11 @@ export default function ResourceListTable({
       id: "name",
       header: "Resource",
       cell: (_v, row) => (
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/5 dark:bg-primary/15 shrink-0 text-xl">
-            {row.icon}
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-black dark:text-white">
-              {row.name}
-            </p>
-            <p className="text-[10px] text-text5">/{row.slug}</p>
-          </div>
+        <div>
+          <p className="text-sm font-semibold text-black dark:text-white">
+            {row.name}
+          </p>
+          <p className="text-[10px] text-text5">/{row.slug}</p>
         </div>
       ),
     },
@@ -119,15 +114,15 @@ export default function ResourceListTable({
       header: "Status",
       className: "text-center",
       cell: (_v, row) => (
-        <span
-          className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_STYLES[row.status]}`}
+        <div
+          className={`text-xs  font-semibold w-18 center py-1 rounded-full capitalize ${STATUS_STYLES[row.status]}`}
         >
           {row.status}
-        </span>
+        </div>
       ),
     },
     {
-      id: "id" as keyof SupportResource,
+      id: "actions" as keyof SupportResource,
       header: "Actions",
       className: "justify-end text-right",
       cell: (_v, row) => (

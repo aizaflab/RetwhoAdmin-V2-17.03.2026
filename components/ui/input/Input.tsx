@@ -39,9 +39,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref,
   ) => {
-    const [inputValue, setInputValue] = useState<string>(
-      (value as string) || (defaultValue as string) || "",
+    const isControlled = value !== undefined;
+    const [uncontrolledValue, setUncontrolledValue] = useState<string>(
+      (defaultValue as string) || "",
     );
+
+    const inputValue = isControlled ? (value as string) : uncontrolledValue;
 
     const uniqueId = useId();
     const inputId =
@@ -50,7 +53,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
-      setInputValue(newValue);
+      if (!isControlled) {
+        setUncontrolledValue(newValue);
+      }
       onChange?.(e);
       onValueChange?.(newValue);
     };
