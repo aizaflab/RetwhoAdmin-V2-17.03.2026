@@ -17,9 +17,14 @@ export const PERMISSIONS = {
   WHOLESALER_LIST: "users.wholesaler.list",
   RETAILER_LIST: "users.retailer.list",
   RESTAURANT_LIST: "users.restaurant.list",
+  INACTIVE_STORE_LIST: "users.inactive_store.list",
   CONSUMER_LIST: "users.consumer.list",
   LOGIN_HISTORY_LIST: "users.login_history.list",
   INACTIVE_ACCOUNT_LIST: "users.inactive_account.list",
+  EMPLOYEE_LIST: "users.employee.list",
+  EMPLOYEE_CREATE: "users.employee.create",
+  USER_LIST: "users.user.list",
+  USER_INACTIVE_LIST: "users.inactive_user.list",
 
   CONNECT_REQUEST_LIST: "connect.connection_request.list",
   CONNECT_REQUEST_CREATE: "connect.connection_request.create",
@@ -30,6 +35,7 @@ export const PERMISSIONS = {
 
   REPORT_LIST: "reports.report.list",
   ETIMESHEET_LIST: "reports.e_timesheet.list",
+  EMPLOYEE_REPORT_LIST: "reports.employee_report.list",
 
   STOCK_LIST: "stock.stock.list",
   STOCK_UPDATE: "stock.stock.update",
@@ -45,6 +51,7 @@ export const PERMISSIONS = {
   CONTACT_REQUEST_LIST: "settings.contact_request.list",
   WEB_SUBSCRIBER_LIST: "settings.web_subscriber.list",
   VERIFICATION_LIST: "settings.verification.list",
+  ADMIN_SETTINGS_VIEW: "settings.admin_settings.view",
 
   PROMOTION_LIST: "promotion.promotion.list",
   PROMOTION_CREATE: "promotion.promotion.create",

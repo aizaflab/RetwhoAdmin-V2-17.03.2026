@@ -75,7 +75,7 @@ export default function DashboardActivity() {
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-5">
       {/* Recent Orders */}
       <div className="lg:col-span-2 rounded-xl border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-3 sm:p-5 sm:pb-2 overflow-hidden flex flex-col">
         <div className="flex justify-between items-center mb-5">

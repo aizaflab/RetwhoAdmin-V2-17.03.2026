@@ -187,16 +187,16 @@ export default function Sidebar() {
                   return (
                     <div
                       key={item.id}
-                      className={`mt-3 mb-1 flex items-center transition-all ${collapsed ? "justify-center" : "px-3 gap-3"}`}
+                      className={`my-3 flex items-center transition-all ${collapsed ? "justify-center" : "px-3 gap-3"}`}
                       title={collapsed ? item.title : undefined}
                     >
                       {collapsed ? (
-                        <span className="text-[10px] font-bold text-text5 dark:text-black/70 tracking-widest">
+                        <span className="text-[10px] font-bold text-text5 dark:text-white/50 tracking-widest">
                           •••
                         </span>
                       ) : (
                         <>
-                          <span className="text-[11px] font-medium text-text5 dark:text-text5/70 uppercase tracking-widest whitespace-nowrap truncate">
+                          <span className="text-[11px] font-medium text-text5 dark:text-text5/50 uppercase tracking-widest whitespace-nowrap truncate">
                             {item.title}
                           </span>
                           <div className="h-px flex-1 bg-linear-to-r from-slate-200 to-transparent dark:from-slate-700/50 mt-0.5"></div>

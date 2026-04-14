@@ -146,7 +146,7 @@ export default function BlogCategoryListTable({
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search category..."
               startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80 dark:focus:border-darkBorder"
+              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80 dark:focus:border-darkLight/50"
             />
           </div>
 
