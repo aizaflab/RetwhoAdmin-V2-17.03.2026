@@ -133,10 +133,10 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         requiredPermissions: [PERMISSIONS.EMPLOYEE_CREATE],
       },
       {
-        id: "employee-list",
-        title: "Employee List",
+        id: "employee-manage",
+        title: "Manage Employee",
         type: "item",
-        path: "/employee/list",
+        path: "/employee/manage",
         requiredPermissions: [PERMISSIONS.EMPLOYEE_LIST],
       },
     ],
