@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import {
   Bell,
   PackageCheck,
@@ -408,9 +409,13 @@ export function NotificationNav() {
         {/* Footer */}
         {filteredNotifications.length > 0 && (
           <div className="p-3 border-t border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md">
-            <button className="w-full cursor-pointer py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-linear-to-r hover:from-slate-800 hover:to-slate-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 hover:border-transparent rounded-md transition-all duration-300">
+            <Link
+              href="/notifications"
+              onClick={() => setOpenDropdown(false)}
+              className="w-full block text-center cursor-pointer py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-linear-to-r hover:from-slate-800 hover:to-slate-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 hover:border-transparent rounded-md transition-all duration-300"
+            >
               View All Notifications
-            </button>
+            </Link>
           </div>
         )}
       </div>

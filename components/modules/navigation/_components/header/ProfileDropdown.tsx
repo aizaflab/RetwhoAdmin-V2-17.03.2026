@@ -55,7 +55,7 @@ export function ProfileDropdown() {
 
         <div className="p-1.5 space-y-0.5">
           <Link
-            href="/profile"
+            href="/settings"
             className="flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-text6 dark:text-text4 hover:bg-gray-mid dark:hover:bg-darkPrimary"
           >
             <User className="h-4 w-4 text-text5" />

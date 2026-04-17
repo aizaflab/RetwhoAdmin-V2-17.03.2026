@@ -94,7 +94,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               startIcon && "pl-10",
               endIcon && "pr-10",
               error && "border-red-500 ",
-              disabled && "bg-gray-100 dark:bg-[#474747] cursor-not-allowed",
+              disabled && " cursor-not-allowed",
               className,
             )}
             value={inputValue}

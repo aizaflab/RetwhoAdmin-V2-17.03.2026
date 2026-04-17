@@ -178,7 +178,7 @@ export default function ProductListTable({
               >
                 View Details
               </DropdownItem>
-              <div className="h-[1px] w-full bg-border dark:bg-darkBorder my-1" />
+              <div className="h-px w-full bg-border dark:bg-darkBorder my-1" />
               <DropdownItem
                 icon={<Trash2 className="size-4" />}
                 destructive
