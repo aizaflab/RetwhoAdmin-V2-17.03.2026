@@ -1,128 +1,40 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-  useCallback,
-} from "react";
-import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
+import { Provider as ReduxProvider } from "react-redux";
+import { SessionProvider, useSession, signOut } from "next-auth/react";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  profileImage?: {
-    url: string;
-    publicId: string;
-  };
-}
+import { store } from "@/featured/store";
 
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (accessToken: string, refreshToken: string, user: User) => void;
-  logout: () => void;
-  updateUser: (user: User) => void;
-  getAccessToken: () => string | null;
-  getRefreshToken: () => string | null;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
+/**
+ * Wraps the app in the next-auth session and the Redux store. The session
+ * cookie is httpOnly and encrypted, so tokens are never readable from JS —
+ * `useAuth()` reads them through the session endpoint instead.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-
-  // Initialize auth state from cookies
-  useEffect(() => {
-    const initAuth = () => {
-      const accessToken = Cookies.get("accessToken");
-      const userStr = localStorage.getItem("user");
-
-      if (accessToken && userStr) {
-        try {
-          const userData = JSON.parse(userStr);
-          setUser(userData);
-        } catch (error) {
-          console.error("Failed to parse user data:", error);
-          Cookies.remove("accessToken");
-          Cookies.remove("refreshToken");
-          localStorage.removeItem("user");
-        }
-      }
-      setIsLoading(false);
-    };
-
-    initAuth();
-  }, []);
-
-  const login = useCallback(
-    (accessToken: string, refreshToken: string, userData: User) => {
-      // Store tokens in httpOnly-like cookies (secure in production)
-      Cookies.set("accessToken", accessToken, {
-        expires: 1 / 96, // 15 minutes
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
-      });
-      Cookies.set("refreshToken", refreshToken, {
-        expires: 30, // 30 days
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
-      });
-
-      // Store user in localStorage
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-    },
-    [],
+  return (
+    <SessionProvider
+      // Re-run the jwt callback every 10 minutes so an expiring access token
+      // is rotated before a request needs it.
+      refetchInterval={10 * 60}
+      refetchOnWindowFocus
+    >
+      <ReduxProvider store={store}>{children}</ReduxProvider>
+    </SessionProvider>
   );
-
-  const logout = useCallback(() => {
-    Cookies.remove("accessToken");
-    Cookies.remove("refreshToken");
-    localStorage.removeItem("user");
-    setUser(null);
-    router.push("/");
-  }, [router]);
-
-  const updateUser = useCallback((userData: User) => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-  }, []);
-
-  const getAccessToken = useCallback(() => {
-    return Cookies.get("accessToken") || null;
-  }, []);
-
-  const getRefreshToken = useCallback(() => {
-    return Cookies.get("refreshToken") || null;
-  }, []);
-
-  const value = {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-    login,
-    logout,
-    updateUser,
-    getAccessToken,
-    getRefreshToken,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * Thin wrapper over useSession() that keeps the shape the app already expects.
+ */
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const { data: session, status } = useSession();
+
+  return {
+    user: session?.user ?? null,
+    isLoading: status === "loading",
+    isAuthenticated: status === "authenticated" && !session?.error,
+    accessToken: session?.accessToken ?? null,
+    logout: () => signOut({ callbackUrl: "/login" }),
+  };
 }

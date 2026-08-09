@@ -1,9 +1,15 @@
 "use client";
 
+import { toast } from "sonner";
 import { useRef, useState } from "react";
 import { Input, ThemeToggle } from "@/components/ui";
-import type { ForgotPasswordFormValues, ForgotPasswordStep } from "../_types";
 import { Button } from "@/components/ui/button/Button";
+import { useForgotPasswordMutation } from "@/featured/auth/authApiSlice";
+import type {
+  ForgotPasswordFormErrors,
+  ForgotPasswordFormValues,
+  ForgotPasswordStep,
+} from "../_types";
 
 const OTP_LENGTH = 6;
 
@@ -51,22 +57,60 @@ function ShieldIcon() {
 export default function ForgotPasswordForm() {
   const [values, setValues] =
     useState<ForgotPasswordFormValues>(INITIAL_VALUES);
+  const [errors, setErrors] = useState<ForgotPasswordFormErrors>({});
   const [step, setStep] = useState<ForgotPasswordStep>("email");
   const [isLoading, setIsLoading] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setValues((prev) => ({ ...prev, email: e.target.value }));
+  const [forgotPassword, { isLoading: isSendingCode }] =
+    useForgotPasswordMutation();
+
+  function validateEmail(): boolean {
+    const nextErrors: ForgotPasswordFormErrors = {};
+
+    if (!values.email) {
+      nextErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(values.email)) {
+      nextErrors.email = "Enter a valid email address";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   }
 
-  function handleEmailSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setValues((prev) => ({ ...prev, email: e.target.value }));
+    setErrors((prev) => ({ ...prev, email: undefined }));
+  }
+
+  /** Shared by the initial submit and the "Resend code" button. */
+  async function sendCode(): Promise<boolean> {
+    try {
+      await forgotPassword({ email: values.email }).unwrap();
+      toast.success(`Verification code sent to ${values.email}`);
+      return true;
+    } catch (error) {
+      const message =
+        (error as { data?: { message?: string } })?.data?.message ||
+        "Could not send the verification code. Please try again.";
+      setErrors({ email: message });
+      toast.error(message);
+      return false;
+    }
+  }
+
+  async function handleEmailSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setIsLoading(true);
-    // TODO: call API to send OTP
-    setTimeout(() => {
-      setIsLoading(false);
+    if (!validateEmail()) return;
+
+    if (await sendCode()) {
+      setValues((prev) => ({ ...prev, otp: Array(OTP_LENGTH).fill("") }));
       setStep("otp");
-    }, 1000);
+    }
+  }
+
+  async function handleResend() {
+    await sendCode();
   }
 
   function handleOtpChange(index: number, value: string) {
@@ -135,7 +179,7 @@ export default function ForgotPasswordForm() {
             </div>
 
             {/* Form */}
-            <form className="space-y-5" onSubmit={handleEmailSubmit}>
+            <form className="space-y-5" onSubmit={handleEmailSubmit} noValidate>
               <Input
                 label="Email address"
                 name="email"
@@ -143,17 +187,18 @@ export default function ForgotPasswordForm() {
                 inputMode="email"
                 value={values.email}
                 onChange={handleEmailChange}
+                error={errors.email}
                 placeholder="you@example.com"
                 fullWidth
               />
 
               <Button
-                onClick={() => setStep("email")}
+                type="submit"
                 className="w-full h-11"
-                loading={isLoading}
-                disabled={isLoading || !values.email}
+                loading={isSendingCode}
+                disabled={isSendingCode || !values.email}
               >
-                {isLoading ? "Sending code..." : "Send Verification Code"}
+                {isSendingCode ? "Sending code..." : "Send Verification Code"}
               </Button>
             </form>
           </>
@@ -206,8 +251,7 @@ export default function ForgotPasswordForm() {
               </div>
 
               <Button
-                type="button"
-                onClick={() => setStep("email")}
+                type="submit"
                 loading={isLoading}
                 disabled={isLoading || values.otp.some((d) => !d)}
                 className="w-full h-11"
@@ -220,10 +264,11 @@ export default function ForgotPasswordForm() {
                 Didn&apos;t receive a code?{" "}
                 <button
                   type="button"
-                  onClick={() => setStep("email")}
-                  className="font-medium transition-colors cursor-pointer text-primary dark:text-darkLight hover:text-black dark:hover:text-white"
+                  onClick={handleResend}
+                  disabled={isSendingCode}
+                  className="font-medium transition-colors cursor-pointer text-primary dark:text-darkLight hover:text-black dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Resend code
+                  {isSendingCode ? "Sending..." : "Resend code"}
                 </button>
               </p>
             </form>

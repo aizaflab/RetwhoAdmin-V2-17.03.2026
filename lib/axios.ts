@@ -5,11 +5,11 @@ import axios, {
   AxiosResponse,
   InternalAxiosRequestConfig,
 } from "axios";
-import Cookies from "js-cookie";
+import { getSession, signOut } from "next-auth/react";
 import { toast } from "sonner";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api/v1";
 
 // Create axios instance
 const axiosInstance: AxiosInstance = axios.create({
@@ -31,11 +31,12 @@ const generateRequestId = () => {
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // Add access token to headers
-    const accessToken = Cookies.get("accessToken");
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+  async (config: InternalAxiosRequestConfig) => {
+    // The session endpoint runs next-auth's jwt callback, so this token is
+    // already refreshed when it was close to expiring.
+    const session = await getSession();
+    if (session?.accessToken) {
+      config.headers.Authorization = `Bearer ${session.accessToken}`;
     }
 
     // Add request ID for tracking
@@ -55,23 +56,6 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response interceptor with retry logic
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
-}> = [];
-
-const processQueue = (error: AxiosError | null) => {
-  failedQueue.forEach((promise) => {
-    if (error) {
-      promise.reject(error);
-    } else {
-      promise.resolve();
-    }
-  });
-  failedQueue = [];
-};
-
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
     // Remove abort controller after successful response
@@ -111,72 +95,28 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Handle 401 Unauthorized - Token refresh
+    // Handle 401 Unauthorized. Token refresh is owned by next-auth's jwt
+    // callback, so a 401 that reaches here means the session is unusable.
     if (
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry
     ) {
-      if (isRefreshing) {
-        // Queue subsequent requests while refreshing
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(() => axiosInstance(originalRequest))
-          .catch((err) => Promise.reject(err));
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
 
-      try {
-        const refreshToken = Cookies.get("refreshToken");
-        if (!refreshToken) {
-          throw new Error("No refresh token available");
-        }
+      const session = await getSession();
 
-        // Call refresh endpoint
-        const response = await axios.post(`${BASE_URL}/auth/refresh-token`, {
-          refreshToken,
-        });
-
-        const { accessToken, refreshToken: newRefreshToken } =
-          response.data.data;
-
-        // Update tokens
-        Cookies.set("accessToken", accessToken, {
-          expires: 1 / 96, // 15 minutes
-          sameSite: "strict",
-          secure: process.env.NODE_ENV === "production",
-        });
-        Cookies.set("refreshToken", newRefreshToken, {
-          expires: 30, // 30 days
-          sameSite: "strict",
-          secure: process.env.NODE_ENV === "production",
-        });
-
-        // Update original request header
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-        // Process queued requests
-        processQueue(null);
-
+      // The session endpoint may have just rotated the access token — retry
+      // once with the new one before giving up.
+      if (session?.accessToken && !session.error) {
+        originalRequest.headers.Authorization = `Bearer ${session.accessToken}`;
         return axiosInstance(originalRequest);
-      } catch (refreshError) {
-        processQueue(error);
-
-        // Clear auth data and redirect to login
-        Cookies.remove("accessToken");
-        Cookies.remove("refreshToken");
-        localStorage.removeItem("user");
-
-        toast.error("Session expired. Please login again.");
-        window.location.href = "/login";
-
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
+
+      toast.error("Session expired. Please login again.");
+      await signOut({ callbackUrl: "/login" });
+
+      return Promise.reject(error);
     }
 
     // Handle other errors

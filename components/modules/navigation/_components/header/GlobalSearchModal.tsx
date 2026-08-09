@@ -67,7 +67,7 @@ export function GlobalSearchModal() {
           )}
         >
           {/* Mobile Icon */}
-          <Search className="size-[18px] sm:hidden group-hover:text-primary transition-colors" />
+          <Search className="size-z sm:hidden group-hover:text-primary transition-colors" />
 
           {/* Desktop Search Icon */}
           <div className="absolute inset-y-0 left-0 pl-3 hidden sm:flex items-center pointer-events-none">

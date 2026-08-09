@@ -2,72 +2,135 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  /* Commom */
-  --color-white: #ffffff;
-  --color-black: #000000;
-  --color-text4: #d1d5dc;
-  --color-text5: #99a1af;
-  --color-text6: #4a5565;
+/* ── slate (neutral graphite) ─────────────────────────────────────────────── */
+:root,
+[data-theme="slate"] {
+  --background: oklch(97% 0 0);
+  --foreground: oklch(0.21 0.006 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.006 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.006 260);
+  --primary: oklch(0.55 0.2 258);
+  --primary-foreground: oklch(0.98 0.002 260);
+  --secondary: oklch(0.95 0.004 260);
+  --secondary-foreground: oklch(0.25 0.008 260);
+  --muted: oklch(0.96 0.003 260);
+  --muted-foreground: oklch(0.52 0.008 260);
+  --accent: oklch(0.93 0.005 260);
+  --accent-foreground: oklch(0.3 0.01 260);
+  --destructive: oklch(0.58 0.222 27);
+  --destructive-foreground: oklch(0.98 0.002 260);
+  --success: oklch(0.6 0.16 150);
+  --warning: oklch(0.8 0.15 80);
+  --info: oklch(0.6 0.15 240);
+  --border: oklch(0.91 0.004 260);
+  --input: oklch(0.91 0.004 260);
+  --ring: oklch(0.45 0.01 260);
+  --chart-1: oklch(0.45 0.02 260);
+  --chart-2: oklch(0.55 0.02 230);
+  --chart-3: oklch(0.65 0.02 280);
+  --chart-4: oklch(0.4 0.02 200);
+  --chart-5: oklch(0.7 0.02 300);
+  --reverse: oklch(0.21 0.006 260);
+}
 
-  /* dark Color */
-  --color-darkBg: #01030e;
-  --color-darkPrimary: #080a1b;
-  --color-darkBorder: #151c41;
-  --color-darkLight: #16a5f1;
+.dark,
+[data-theme="slate"].dark {
+  --background: oklch(0.18 0.004 260);
+  --foreground: oklch(0.96 0.003 260);
+  --card: oklch(0.22 0.005 260);
+  --card-foreground: oklch(0.96 0.003 260);
+  --popover: oklch(0.22 0.005 260);
+  --popover-foreground: oklch(0.96 0.003 260);
+  --primary: oklch(0.55 0.2 258);
+  --primary-foreground: oklch(0.2 0.006 260);
+  --secondary: oklch(0.27 0.006 260);
+  --secondary-foreground: oklch(0.96 0.003 260);
+  --muted: oklch(0.25 0.005 260);
+  --muted-foreground: oklch(0.68 0.008 260);
+  --accent: oklch(0.3 0.008 260);
+  --accent-foreground: oklch(0.96 0.003 260);
+  --destructive: oklch(0.62 0.21 25);
+  --destructive-foreground: oklch(0.98 0.003 260);
+  --success: oklch(0.66 0.16 150);
+  --warning: oklch(0.74 0.15 80);
+  --info: oklch(0.64 0.15 240);
+  --border: oklch(0.28 0.006 260);
+  --input: oklch(0.3 0.006 260);
+  --ring: oklch(0.7 0.01 260);
+  --chart-1: oklch(0.7 0.02 260);
+  --chart-2: oklch(0.6 0.02 230);
+  --chart-3: oklch(0.55 0.02 280);
+  --chart-4: oklch(0.75 0.02 200);
+  --chart-5: oklch(0.5 0.02 300);
+  --reverse: oklch(0.96 0.003 260);
+}
 
-  /* white color */
-  --color-lightBg: #f8f8f8;
-  --color-primary: #036aa1;
-  --color-border: #e0e0e0;
-  --color-gray-mid: #f8fafc;
-  --color-gray-light: #f5f5f5;
+/* ============================================================================
+   EXPOSE SEMANTIC COLOR TOKENS TO TAILWIND
+   `inline` keeps the var() reference in utilities so they re-resolve per theme.
+   ============================================================================ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-reverse: var(--reverse);
 
-  /* old color */
-  --color-white: #ffffff;
-  --color-black: #000000;
-  --color-dark: #1a1a1a;
-  --color-gray-medium: #808080;
-  --color-gray-dark: #333333;
-  --color-bg: #ffffff;
-  --color-bg-dark: #1a1a1a;
-  --color-border-dark: #404040;
+  /* Back-compat aliases for existing components */
+  --color-gray-light: var(--muted);
+  --color-gray-medium: var(--muted-foreground);
+  --color-gray-dark: var(--secondary);
+  --color-border-dark: var(--border);
+}
 
-  /* Category colors */
-  --color-cat-indigo: #818cf8;
-  --color-cat-indigo-dark: #4f46e5;
-  --color-cat-indigo-light: #e0e7ff;
+* {
+  scroll-behavior: smooth;
+}
 
-  --color-cat-amber: #fbbf24;
-  --color-cat-amber-dark: #d97706;
-  --color-cat-amber-light: #fef3c7;
-
-  --color-cat-cyan: #22d3ee;
-  --color-cat-cyan-dark: #0891b2;
-  --color-cat-cyan-light: #cffafe;
-
-  --color-cat-emerald: #34d399;
-  --color-cat-emerald-dark: #059669;
-  --color-cat-emerald-light: #d1fae5;
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  view-transition-name: root;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  background: #ffffff;
-  color: white;
-  overflow-x: hidden;
-}
-
-html,
-body {
-  width: 100%;
-  color: black;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-base, normal);
+  will-change: scroll-position;
 }
 
 .dark body {
-  background: #01030e;
-  color: white;
+  background: var(--background);
+  color: var(--foreground);
 }
 
 .poppins {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/components/providers";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, ComponentType } from "react";
 
@@ -14,21 +14,24 @@ export function withRole<P extends object>(
   options: WithRoleOptions,
 ) {
   return function RoleProtectedRoute(props: P) {
-    const { user, isAuthenticated, isLoading } = useAuth();
+    const { data: session, status } = useSession();
     const router = useRouter();
     const { allowedRoles, redirectTo = "/" } = options;
 
-    useEffect(() => {
-      if (!isLoading) {
-        if (!isAuthenticated) {
-          router.push("/login");
-        } else if (user && !allowedRoles.includes(user.role)) {
-          router.push(redirectTo);
-        }
-      }
-    }, [isAuthenticated, isLoading, user, router, allowedRoles, redirectTo]);
+    const role = session?.user?.role;
+    const hasRole = Boolean(role && allowedRoles.includes(role));
 
-    if (isLoading) {
+    useEffect(() => {
+      if (status === "loading") return;
+
+      if (status === "unauthenticated") {
+        router.replace("/login");
+      } else if (!hasRole) {
+        router.replace(redirectTo);
+      }
+    }, [status, hasRole, router, redirectTo]);
+
+    if (status === "loading") {
       return (
         <div className="flex h-screen items-center justify-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-zinc-300 border-t-zinc-900 dark:border-zinc-700 dark:border-t-zinc-100"></div>
@@ -36,7 +39,7 @@ export function withRole<P extends object>(
       );
     }
 
-    if (!isAuthenticated || (user && !allowedRoles.includes(user.role))) {
+    if (status === "unauthenticated" || !hasRole) {
       return null;
     }
 

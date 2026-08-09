@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { toast } from "sonner";
 import { useState } from "react";
 import { UserIcon } from "lucide-react";
-import type { LoginFormValues } from "../_types";
+import { signIn } from "next-auth/react";
 import { Input, ThemeToggle } from "@/components/ui";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button/Button";
 import { EyeIcon, EyeOffIcon } from "@/components/icons/Icons";
+import type { LoginFormErrors, LoginFormValues } from "../_types";
 
 const INITIAL_VALUES: LoginFormValues = {
   email: "",
@@ -14,38 +17,86 @@ const INITIAL_VALUES: LoginFormValues = {
 };
 
 export default function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Set by middleware when an unauthenticated user hits a protected route.
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const [values, setValues] = useState<LoginFormValues>(INITIAL_VALUES);
+  const [errors, setErrors] = useState<LoginFormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  function validate(): boolean {
+    const nextErrors: LoginFormErrors = {};
+
+    if (!values.email) {
+      nextErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(values.email)) {
+      nextErrors.email = "Enter a valid email address";
+    }
+
+    if (!values.password) {
+      nextErrors.password = "Password is required";
+    } else if (values.password.length < 6) {
+      nextErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   }
 
-  function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+    setValues((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
+  }
+
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
-    // TODO: wire up auth action
+    if (!validate()) return;
+
+    setIsLoading(true);
+
+    // redirect:false so a failed login stays on the page and we can show the
+    // backend's message instead of bouncing to next-auth's error page.
+    const result = await signIn("credentials", {
+      redirect: false,
+      email: values.email,
+      password: values.password,
+    });
+
+    if (!result || result.error) {
+      setIsLoading(false);
+      toast.error(result?.error || "Unable to sign in. Please try again.");
+      return;
+    }
+
+    toast.success("Signed in successfully");
+    router.replace(callbackUrl);
+    // Pull the freshly set session cookie into server components.
+    router.refresh();
   }
 
   return (
     <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative overflow-hidden isolate">
       <div className="w-full max-w-sm relative z-10">
         {/* Avatar icon */}
-        <div className="w-12 h-12 rounded-xl center mb-6 mx-auto border bg-black/5 dark:bg-darkPrimary/70  border-border/50 dark:border-darkBorder text-black dark:text-white ">
+        <div className="w-12 h-12 rounded-xl center mb-4 mx-auto border bg-primary/5 border-primary/50 text-primary">
           <UserIcon />
         </div>
 
         {/* Heading */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold mb-2 dark:text-white text-black">
+        <div className="text-center mb-10">
+          <h1 className="text-2xl font-semibold text-foreground">
             Welcome back
           </h1>
-          <p className="text-sm text-black/40 dark:text-white/40">
+          <p className="text-sm text-muted-foreground">
             Sign in to your account to continue
           </p>
         </div>
 
         {/* Form */}
-        <form className="space-y-5 z-100" onSubmit={handleSubmit}>
+        <form className="space-y-5 z-100" onSubmit={handleSubmit} noValidate>
           <Input
             label="Email address"
             name="email"
@@ -53,6 +104,7 @@ export default function LoginForm() {
             inputMode="email"
             value={values.email}
             onChange={handleChange}
+            error={errors.email}
             placeholder="you@example.com"
             fullWidth
           />
@@ -63,13 +115,14 @@ export default function LoginForm() {
             type={showPassword ? "text" : "password"}
             value={values.password}
             onChange={handleChange}
+            error={errors.password}
             placeholder="Enter your password"
             fullWidth
             endIcon={
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="transition-colors cursor-pointer text-black/50 dark:text-white/50 hover:text-primary dark:hover:text-darkLight "
+                className="transition-colors cursor-pointer text-foreground hover:text-primary"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -80,14 +133,19 @@ export default function LoginForm() {
           <div className="flex justify-end">
             <Link
               href="/forgot-password"
-              className="text-sm transition-colors text-primary dark:text-darkLight hover:text-black dark:hover:text-white"
+              className="text-sm transition-colors hover:text-primary text-foreground"
             >
               Forgot password?
             </Link>
           </div>
 
-          <Button type="submit" className="w-full h-11">
-            Sign in
+          <Button
+            type="submit"
+            className="w-full h-11"
+            loading={isLoading}
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
       </div>

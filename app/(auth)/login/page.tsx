@@ -1,11 +1,14 @@
-import { LoginBackground, LoginSidebar, LoginForm } from "./_components";
+import { Suspense } from "react";
+import { LoginSidebar, LoginForm } from "./_components";
 
 export default function LoginPage() {
   return (
-    <main className="fixed inset-0 h-dvh flex overflow-hidden bg-lightBg dark:bg-darkBg">
-      <LoginBackground />
+    <main className="fixed inset-0 h-dvh flex overflow-hidden">
       <LoginSidebar />
-      <LoginForm />
+      {/* LoginForm reads ?callbackUrl via useSearchParams. */}
+      <Suspense fallback={<div className="flex-1" />}>
+        <LoginForm />
+      </Suspense>
     </main>
   );
 }

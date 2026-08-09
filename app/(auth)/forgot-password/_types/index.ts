@@ -9,6 +9,10 @@ export type ForgotPasswordFormValues = {
   otp: string[];
 };
 
+export type ForgotPasswordFormErrors = Partial<
+  Record<keyof ForgotPasswordFormValues, string>
+>;
+
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
 export type ForgotPasswordStepItem = {
