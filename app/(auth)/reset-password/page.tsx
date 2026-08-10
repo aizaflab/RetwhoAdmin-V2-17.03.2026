@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {
   ResetPasswordBackground,
   ResetPasswordSidebar,
@@ -9,7 +10,10 @@ export default function ResetPasswordPage() {
     <main className="h-screen flex relative overflow-hidden bg-lightBg dark:bg-darkBg">
       <ResetPasswordBackground />
       <ResetPasswordSidebar />
-      <ResetPasswordForm />
+      {/* ResetPasswordForm reads ?token via useSearchParams. */}
+      <Suspense fallback={<div className="flex-1" />}>
+        <ResetPasswordForm />
+      </Suspense>
     </main>
   );
 }

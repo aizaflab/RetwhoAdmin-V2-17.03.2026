@@ -2,9 +2,10 @@
 
 import type { ReactNode } from "react";
 import { Provider as ReduxProvider } from "react-redux";
-import { SessionProvider, useSession, signOut } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 
 import { store } from "@/featured/store";
+import { useLogout } from "@/hooks/useLogout";
 
 /**
  * Wraps the app in the next-auth session and the Redux store. The session
@@ -29,12 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  */
 export function useAuth() {
   const { data: session, status } = useSession();
+  const { handleLogout, isSigningOut } = useLogout();
 
   return {
     user: session?.user ?? null,
     isLoading: status === "loading",
     isAuthenticated: status === "authenticated" && !session?.error,
     accessToken: session?.accessToken ?? null,
-    logout: () => signOut({ callbackUrl: "/login" }),
+    // Revokes the refresh token server-side before clearing the session.
+    logout: handleLogout,
+    isSigningOut,
   };
 }

@@ -6,25 +6,38 @@ import { apiSlice } from "../api/apiSlice";
 // tokens with no session attached.
 const authApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // POST : Forgot Password
+    // POST : Forgot Password — emails a reset link. Body: { email }
     forgotPassword: builder.mutation({
       query: (data) => ({
-        url: `/auth/reset-password-request`,
+        url: `/admin/employees/auth/forgot-password`,
         method: "POST",
         body: data,
       }),
     }),
 
-    // POST : Reset Password
+    // POST : Reset Password — the token comes from the emailed link's ?token=
+    // query param. Body: { token, newPassword, confirmPassword }
     resetPassword: builder.mutation({
       query: (data) => ({
-        url: `/auth/reset-password-confirm`,
+        url: `/admin/employees/auth/reset-password`,
         method: "POST",
         body: data,
+      }),
+    }),
+
+    // POST : Logout — revokes the refresh token on the server. The access
+    // token is attached by prepareHeaders, so no body is needed.
+    logout: builder.mutation({
+      query: () => ({
+        url: `/admin/employees/auth/logout`,
+        method: "POST",
       }),
     }),
   }),
 });
 
-export const { useForgotPasswordMutation, useResetPasswordMutation } =
-  authApiSlice;
+export const {
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+  useLogoutMutation,
+} = authApiSlice;

@@ -1,17 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import { Input, ThemeToggle } from "@/components/ui";
-import type { ResetPasswordFormValues } from "../_types";
+import type {
+  ResetPasswordFormErrors,
+  ResetPasswordFormValues,
+} from "../_types";
 import { EyeIcon, EyeOffIcon, KeyIcon } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button/Button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useResetPasswordMutation } from "@/featured/auth/authApiSlice";
+import { getPasswordError } from "@/lib/validation/password";
 
 const INITIAL_VALUES: ResetPasswordFormValues = {
   password: "",
   confirmPassword: "",
 };
+
+// How long the success screen stays up before we send the user to sign in.
+const REDIRECT_DELAY_MS = 4000;
 
 type StrengthInfo = {
   score: number; // 0–4
@@ -54,36 +63,122 @@ function getStrength(password: string): StrengthInfo {
   return map[Math.max(0, score - 1)] ?? map[0];
 }
 
+/** Shape the backend uses for zod failures: 400 + a details array. */
+type ApiError = {
+  data?: {
+    message?: string;
+    error?: { details?: { path?: string; message?: string }[] };
+  };
+};
+
+/**
+ * Turn a rejected request into per-field errors. The backend reports zod
+ * failures as `body.newPassword` / `body.confirmPassword`, so those land under
+ * the right input instead of showing a bare "Validation error".
+ */
+function toFormErrors(err: unknown): ResetPasswordFormErrors {
+  const data = (err as ApiError)?.data;
+  const details = data?.error?.details ?? [];
+  const nextErrors: ResetPasswordFormErrors = {};
+
+  for (const detail of details) {
+    if (!detail?.message) continue;
+    if (detail.path?.endsWith("newPassword")) {
+      nextErrors.password ??= detail.message;
+    } else if (detail.path?.endsWith("confirmPassword")) {
+      nextErrors.confirmPassword ??= detail.message;
+    }
+  }
+
+  // Nothing field-specific — fall back to the top-level message. An expired
+  // reset token is the most likely cause.
+  if (!nextErrors.password && !nextErrors.confirmPassword) {
+    nextErrors.form =
+      data?.message ||
+      "Could not reset your password. The link may have expired.";
+  }
+
+  return nextErrors;
+}
+
 export default function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Signed, short-lived token from the emailed reset link.
+  const token = searchParams.get("token") ?? "";
+
   const [values, setValues] = useState<ResetPasswordFormValues>(INITIAL_VALUES);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<ResetPasswordFormErrors>({});
   const [success, setSuccess] = useState(false);
 
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
+
   const strength = getStrength(values.password);
-  const passwordsMatch =
-    values.confirmPassword === "" || values.password === values.confirmPassword;
-  const isValid =
-    values.password.length >= 8 && values.password === values.confirmPassword;
+
+  // Send the user to sign in once they have had a moment to read the
+  // confirmation.
+  useEffect(() => {
+    if (!success) return;
+    const timer = setTimeout(() => router.replace("/login"), REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [success, router]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setValues((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setValues((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined, form: undefined }));
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  /** Fills in the per-field errors shown under each input. */
+  function validate(): boolean {
+    const nextErrors: ResetPasswordFormErrors = {};
+
+    const passwordError = getPasswordError(values.password);
+    if (passwordError) nextErrors.password = passwordError;
+
+    if (!values.confirmPassword) {
+      nextErrors.confirmPassword = "Please confirm your password";
+    } else if (values.password !== values.confirmPassword) {
+      nextErrors.confirmPassword = "Passwords do not match";
+    }
+
+    if (!token) {
+      nextErrors.form =
+        "Reset link is invalid or has expired. Request a new one.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!isValid) return;
-    setIsLoading(true);
-    // TODO: call API to reset password
-    setTimeout(() => {
-      setIsLoading(false);
+    if (!validate()) return;
+
+    try {
+      await resetPassword({
+        token,
+        newPassword: values.password,
+        confirmPassword: values.confirmPassword,
+      }).unwrap();
+
+      toast.success("Password reset successfully");
       setSuccess(true);
-    }, 1000);
+    } catch (err) {
+      const nextErrors = toFormErrors(err);
+      setErrors(nextErrors);
+      toast.error(
+        nextErrors.form ??
+          nextErrors.password ??
+          nextErrors.confirmPassword ??
+          "Could not reset your password.",
+      );
+    }
   }
 
-  if (!success) {
+  if (success) {
     return (
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative overflow-hidden isolate">
         <div className="w-full max-w-sm relative z-10 text-center">
@@ -106,11 +201,14 @@ export default function ResetPasswordForm() {
             Password Reset!
           </h1>
           <p className=" text-sm mb-8 text-black/40 dark:text-white/40">
-            Your password has been updated successfully. You can now sign in
-            with your new credentials.
+            Your password has been updated successfully. Taking you to the sign
+            in page — or continue below.
           </p>
 
-          <Button onClick={() => router.push("/login")} className="w-full h-11">
+          <Button
+            onClick={() => router.replace("/login")}
+            className="w-full h-11"
+          >
             Back to Sign In
           </Button>
         </div>
@@ -134,6 +232,15 @@ export default function ResetPasswordForm() {
           <h1 className="text-2xl font-semibold mb-2 dark:text-white text-black">
             Reset Password
           </h1>
+          {!token && (
+            <p className="text-sm text-red-500 dark:text-red-400">
+              This reset link is missing its token.{" "}
+              <Link href="/forgot-password" className="underline">
+                Request a new link
+              </Link>
+              .
+            </p>
+          )}
           <p className="text-sm text-black/40 dark:text-white/40">
             Choose a strong new password for your account.
           </p>
@@ -149,6 +256,7 @@ export default function ResetPasswordForm() {
               type={showPassword ? "text" : "password"}
               value={values.password}
               onChange={handleChange}
+              error={errors.password}
               placeholder="Enter new password"
               fullWidth
               endIcon={
@@ -183,6 +291,15 @@ export default function ResetPasswordForm() {
                 </p>
               </div>
             )}
+
+            {/* One-line summary of the policy. The full breakdown only shows
+                up as an inline error once the user submits. */}
+            {!errors.password && (
+              <p className="text-xs text-text5">
+                Use 8+ characters with an uppercase letter, a lowercase letter,
+                a number and a symbol (@ $ ! % * ? &).
+              </p>
+            )}
           </div>
 
           {/* Confirm password */}
@@ -193,6 +310,7 @@ export default function ResetPasswordForm() {
               type={showConfirm ? "text" : "password"}
               value={values.confirmPassword}
               onChange={handleChange}
+              error={errors.confirmPassword}
               placeholder="Re-enter new password"
               fullWidth
               endIcon={
@@ -206,78 +324,23 @@ export default function ResetPasswordForm() {
                 </button>
               }
             />
-            {!passwordsMatch && (
-              <p className="text-xs text-red-400 mt-1">
-                Passwords do not match.
-              </p>
-            )}
           </div>
 
-          {/* Password rules */}
-          <ul className="space-y-1.5">
-            {[
-              {
-                label: "At least 8 characters",
-                met: values.password.length >= 8,
-              },
-              {
-                label: "Uppercase & lowercase letters",
-                met:
-                  /[A-Z]/.test(values.password) &&
-                  /[a-z]/.test(values.password),
-              },
-              { label: "At least one number", met: /\d/.test(values.password) },
-              {
-                label: "Passwords match",
-                met:
-                  values.password !== "" &&
-                  values.password === values.confirmPassword,
-              },
-            ].map(({ label, met }) => (
-              <li key={label} className="flex items-center gap-2 text-xs">
-                <span
-                  className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${
-                    met
-                      ? "bg-emerald-400/20 text-emerald-400"
-                      : "bg-gray-200 dark:bg-[#2a2d3a] text-gray-400"
-                  }`}
-                >
-                  {met ? (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                      className="w-2 h-2"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  ) : (
-                    <span className="w-1 h-1 rounded-full bg-current" />
-                  )}
-                </span>
-                <span
-                  className={
-                    met ? "dark:text-white/40 text-text6" : "text-text5"
-                  }
-                >
-                  {label}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {errors.form && (
+            <p className="text-xs text-red-500 dark:text-red-400">
+              {errors.form}
+            </p>
+          )}
 
+          {/* Deliberately not disabled on invalid input: clicking submit is
+              what surfaces the inline errors. */}
           <Button
             type="submit"
-            disabled={isLoading || !isValid}
+            loading={isLoading}
+            disabled={isLoading}
             className="w-full h-11"
           >
             {isLoading ? "Resetting password..." : "Reset Password"}
-            Sign in
           </Button>
         </form>
 

@@ -3,8 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-// Fallback lifetime used when the backend does not report one (15 minutes).
+// Last-resort lifetime, used only when neither the access token itself nor the
+// response body says when it expires (15 minutes).
 const DEFAULT_ACCESS_TOKEN_TTL = 15 * 60;
+
+// Refresh this long before the real expiry so a token can never go stale
+// mid-flight between the session callback and the request that uses it.
+const EXPIRY_SKEW_MS = 60 * 1000;
 
 /**
  * The backend wraps its payload as { data: {...} } on some endpoints and
@@ -14,13 +19,84 @@ function unwrap(payload) {
   return payload?.data ?? payload ?? {};
 }
 
+/**
+ * Read the `exp` claim straight out of the access token. This is the only
+ * source that is always right — the refresh endpoint returns just
+ * `{ accessToken }` with no lifetime field, and the real lifetime is set by
+ * the backend, not by anything we can hardcode here.
+ *
+ * Signature verification is the backend's job; we only need the timestamp, and
+ * a forged one would be rejected on the next API call anyway.
+ */
+function decodeTokenExpiry(accessToken) {
+  try {
+    const payload = accessToken?.split(".")[1];
+    if (!payload) return null;
+
+    const json = Buffer.from(payload, "base64url").toString("utf8");
+    const exp = Number(JSON.parse(json).exp);
+
+    return Number.isFinite(exp) && exp > 0 ? exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve when the access token expires, most trustworthy source first:
+ * the token's own `exp` claim, then an explicit lifetime in the body, then
+ * the fallback.
+ */
 function toExpiryMs(body) {
+  const fromToken = decodeTokenExpiry(body.accessToken);
+  if (fromToken) return fromToken;
+
   const expiresIn = Number(body.expiresIn ?? body.accessTokenExpiresIn);
   const ttl =
     Number.isFinite(expiresIn) && expiresIn > 0
       ? expiresIn
       : DEFAULT_ACCESS_TOKEN_TTL;
+
   return Date.now() + ttl * 1000;
+}
+
+/**
+ * In-flight refreshes, keyed by the refresh token being spent.
+ *
+ * The jwt callback runs on every /api/auth/session hit, and the app fires
+ * those concurrently (RTK Query's prepareHeaders, the axios interceptor, the
+ * 10-minute SessionProvider poll). Without this, an expired token would kick
+ * off several parallel refreshes — and if the backend rotates refresh tokens,
+ * whichever call landed second would be spending an already-consumed token and
+ * would log the user out.
+ */
+const refreshPromises = new Map();
+
+async function requestRefreshedToken(token) {
+  const res = await fetch(`${BACKEND_URL}/admin/employees/auth/refresh-token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    // The endpoint documents an empty body, but sending the refresh token is
+    // what makes this work from the server, where the backend's own cookie
+    // is not available.
+    body: JSON.stringify({ refreshToken: token.refreshToken }),
+  });
+
+  const body = unwrap(await res.json().catch(() => ({})));
+
+  if (!res.ok || !body.accessToken) {
+    throw new Error(body.message || "Failed to refresh access token");
+  }
+
+  return {
+    ...token,
+    accessToken: body.accessToken,
+    // Backends that rotate refresh tokens return a new one; keep the old
+    // one when they don't (this one currently returns only accessToken).
+    refreshToken: body.refreshToken ?? token.refreshToken,
+    accessTokenExpires: toExpiryMs(body),
+    error: undefined,
+  };
 }
 
 /**
@@ -33,30 +109,27 @@ async function refreshAccessToken(token) {
       throw new Error("No refresh token available");
     }
 
-    const res = await fetch(`${BACKEND_URL}/auth/refresh-token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken: token.refreshToken }),
-    });
+    const key = token.refreshToken;
+    let pending = refreshPromises.get(key);
 
-    const body = unwrap(await res.json());
-
-    if (!res.ok || !body.accessToken) {
-      throw new Error(body.message || "Failed to refresh access token");
+    if (!pending) {
+      pending = requestRefreshedToken(token).finally(() => {
+        refreshPromises.delete(key);
+      });
+      refreshPromises.set(key, pending);
     }
 
-    return {
-      ...token,
-      accessToken: body.accessToken,
-      // Backends that rotate refresh tokens return a new one; keep the old
-      // one when they don't.
-      refreshToken: body.refreshToken ?? token.refreshToken,
-      accessTokenExpires: toExpiryMs(body),
-      error: undefined,
-    };
+    return await pending;
   } catch (error) {
     console.error("Refresh token error:", error);
-    return { ...token, error: "RefreshAccessTokenError" };
+    // Drop the tokens: they are unusable, and keeping them around only invites
+    // retry loops against an endpoint that has already refused them.
+    return {
+      ...token,
+      accessToken: undefined,
+      refreshToken: undefined,
+      error: "RefreshAccessTokenError",
+    };
   }
 }
 
@@ -78,7 +151,7 @@ export const authOptions = {
           throw new Error("Email and password are required");
         }
 
-        const res = await fetch(`${BACKEND_URL}/auth/login`, {
+        const res = await fetch(`${BACKEND_URL}/admin/employees/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -123,8 +196,15 @@ export const authOptions = {
         };
       }
 
-      // Access token still valid — reuse it.
-      if (Date.now() < (token.accessTokenExpires ?? 0)) {
+      // A refresh has already failed for this session — there is nothing left
+      // to try, so stop hitting the backend and let the client sign out.
+      if (token.error === "RefreshAccessTokenError") {
+        return token;
+      }
+
+      // Access token still valid — reuse it. The skew rotates it slightly
+      // early rather than handing out one that expires in flight.
+      if (Date.now() + EXPIRY_SKEW_MS < (token.accessTokenExpires ?? 0)) {
         return token;
       }
 

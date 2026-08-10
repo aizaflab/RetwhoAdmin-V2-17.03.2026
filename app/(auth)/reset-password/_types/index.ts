@@ -7,6 +7,13 @@ export type ResetPasswordFormValues = {
   confirmPassword: string;
 };
 
+export type ResetPasswordFormErrors = Partial<
+  Record<keyof ResetPasswordFormValues, string>
+> & {
+  /** Errors that belong to the request rather than a single field. */
+  form?: string;
+};
+
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
 export type ResetPasswordTipItem = {

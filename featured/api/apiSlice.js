@@ -28,7 +28,11 @@ const baseQueryWithReAuth = async (args, api, extraOptions) => {
 
   const result = await baseQuery(args, api, extraOptions);
 
-  if (result?.error?.status === 401) {
+  // Only an authenticated session can *lose* its authentication. On public
+  // pages (forgot/reset password) a 401 means the request itself was rejected —
+  // e.g. an expired reset token — and signing out there would redirect away
+  // before the user could read the error.
+  if (result?.error?.status === 401 && session) {
     await signOut({ callbackUrl: "/login" });
   }
 

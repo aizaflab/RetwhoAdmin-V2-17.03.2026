@@ -2,11 +2,8 @@ import type { ComponentType } from "react";
 
 // ─── Form ────────────────────────────────────────────────────────────────────
 
-export type ForgotPasswordStep = "email" | "otp";
-
 export type ForgotPasswordFormValues = {
   email: string;
-  otp: string[];
 };
 
 export type ForgotPasswordFormErrors = Partial<

@@ -9,6 +9,7 @@ import { Input, ThemeToggle } from "@/components/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button/Button";
 import { EyeIcon, EyeOffIcon } from "@/components/icons/Icons";
+import { getPasswordError } from "@/lib/validation/password";
 import type { LoginFormErrors, LoginFormValues } from "../_types";
 
 const INITIAL_VALUES: LoginFormValues = {
@@ -35,11 +36,10 @@ export default function LoginForm() {
       nextErrors.email = "Enter a valid email address";
     }
 
-    if (!values.password) {
-      nextErrors.password = "Password is required";
-    } else if (values.password.length < 6) {
-      nextErrors.password = "Password must be at least 6 characters";
-    }
+    // Assigned only when it fails — an explicit `undefined` would still count
+    // as a key below.
+    const passwordError = getPasswordError(values.password);
+    if (passwordError) nextErrors.password = passwordError;
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;

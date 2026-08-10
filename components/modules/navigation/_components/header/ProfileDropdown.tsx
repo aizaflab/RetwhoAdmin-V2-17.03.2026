@@ -1,12 +1,20 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { LogOut, User, Settings } from "lucide-react";
+import { LogOut, User, Settings, Loader2 } from "lucide-react";
 import Link from "next/link";
+
+import { useLogout } from "@/hooks/useLogout";
 
 export function ProfileDropdown() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { handleLogout, isSigningOut } = useLogout();
+
+  const onSignOut = async () => {
+    setIsProfileOpen(false);
+    await handleLogout();
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -71,9 +79,18 @@ export function ProfileDropdown() {
         </div>
 
         <div className="p-1.5 border-t border-border/50 dark:border-darkBorder/60">
-          <button className="flex items-center w-full cursor-pointer  gap-3 px-3 py-2 text-sm  rounded-md transition-colors text-red-600 dark:text-red-400 hover:bg-red-100 bg-red-50 dark:bg-red-900/50 dark:hover:bg-red-900/30">
-            <LogOut className="h-4 w-4" />
-            Sign Out
+          <button
+            type="button"
+            onClick={onSignOut}
+            disabled={isSigningOut}
+            className="flex items-center w-full cursor-pointer  gap-3 px-3 py-2 text-sm  rounded-md transition-colors text-red-600 dark:text-red-400 hover:bg-red-100 bg-red-50 dark:bg-red-900/50 dark:hover:bg-red-900/30 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSigningOut ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="h-4 w-4" />
+            )}
+            {isSigningOut ? "Signing Out..." : "Sign Out"}
           </button>
         </div>
       </div>
