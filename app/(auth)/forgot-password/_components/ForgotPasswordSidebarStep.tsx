@@ -15,8 +15,8 @@ export default function ForgotPasswordSidebarStep({ item, isActive }: Props) {
         <div
           className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border transition-colors ${
             isActive
-              ? "bg-primary border-darkBorder text-white"
-              : "bg-primary dark:bg-darkBorder border-darkLight/20  text-white dark:text-darkLight"
+              ? "bg-primary border-primary text-primary-foreground"
+              : "bg-primary/10 border-border text-primary"
           }`}
         >
           {step}
@@ -27,19 +27,19 @@ export default function ForgotPasswordSidebarStep({ item, isActive }: Props) {
       <div className="flex-1 pt-0.5">
         <div className="flex items-center gap-2 mb-1">
           <Icon
-            className={`w-4 h-4 ${isActive ? "text-primary dark:text-darkLight" : "text-text6 dark:text-text4"}`}
+            className={`w-4 h-4 ${isActive ? "text-primary" : "text-muted-foreground"}`}
           />
           <h4
             className={`text-sm font-medium ${
-              isActive
-                ? "text-black dark:text-white"
-                : "text-text6 dark:text-text4"
+              isActive ? "text-foreground" : "text-foreground/80"
             }`}
           >
             {title}
           </h4>
         </div>
-        <p className="text-xs leading-relaxed text-text5">{description}</p>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {description}
+        </p>
       </div>
     </div>
   );

@@ -8,11 +8,17 @@ import type {
   ResetPasswordFormErrors,
   ResetPasswordFormValues,
 } from "../_types";
-import { EyeIcon, EyeOffIcon, KeyIcon } from "@/components/icons/Icons";
+import {
+  CheckIcon,
+  EyeIcon,
+  EyeOffIcon,
+  KeyIcon,
+} from "@/components/icons/Icons";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button/Button";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getPasswordError, PASSWORD_RULES } from "@/lib/validation/password";
 import { useResetPasswordMutation } from "@/featured/auth/authApiSlice";
-import { getPasswordError } from "@/lib/validation/password";
 
 const INITIAL_VALUES: ResetPasswordFormValues = {
   password: "",
@@ -21,47 +27,6 @@ const INITIAL_VALUES: ResetPasswordFormValues = {
 
 // How long the success screen stays up before we send the user to sign in.
 const REDIRECT_DELAY_MS = 4000;
-
-type StrengthInfo = {
-  score: number; // 0–4
-  label: string;
-  color: string;
-  barColor: string;
-};
-
-function getStrength(password: string): StrengthInfo {
-  if (!password) return { score: 0, label: "", color: "", barColor: "" };
-
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
-  if (/\d/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  const map: StrengthInfo[] = [
-    { score: 1, label: "Weak", color: "text-red-500", barColor: "bg-red-500" },
-    {
-      score: 2,
-      label: "Fair",
-      color: "text-amber-400",
-      barColor: "bg-amber-400",
-    },
-    {
-      score: 3,
-      label: "Good",
-      color: "text-blue-400",
-      barColor: "bg-blue-400",
-    },
-    {
-      score: 4,
-      label: "Strong",
-      color: "text-emerald-400",
-      barColor: "bg-emerald-400",
-    },
-  ];
-
-  return map[Math.max(0, score - 1)] ?? map[0];
-}
 
 /** Shape the backend uses for zod failures: 400 + a details array. */
 type ApiError = {
@@ -115,8 +80,6 @@ export default function ResetPasswordForm() {
 
   const [resetPassword, { isLoading }] = useResetPasswordMutation();
 
-  const strength = getStrength(values.password);
-
   // Send the user to sign in once they have had a moment to read the
   // confirmation.
   useEffect(() => {
@@ -167,6 +130,8 @@ export default function ResetPasswordForm() {
       toast.success("Password reset successfully");
       setSuccess(true);
     } catch (err) {
+      console.log("Reset password error:", err);
+
       const nextErrors = toFormErrors(err);
       setErrors(nextErrors);
       toast.error(
@@ -271,35 +236,26 @@ export default function ResetPasswordForm() {
               }
             />
 
-            {/* Strength meter */}
-            {values.password && (
-              <div className="space-y-1.5">
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4].map((s) => (
-                    <div
-                      key={s}
-                      className={`flex-1 h-1 rounded-full transition-colors ${
-                        s <= strength.score
-                          ? strength.barColor
-                          : "bg-gray-200 dark:bg-darkBorder"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <p className={`text-xs font-medium ${strength.color}`}>
-                  {strength.label}
-                </p>
-              </div>
-            )}
-
-            {/* One-line summary of the policy. The full breakdown only shows
-                up as an inline error once the user submits. */}
-            {!errors.password && (
-              <p className="text-xs text-text5">
-                Use 8+ characters with an uppercase letter, a lowercase letter,
-                a number and a symbol (@ $ ! % * ? &).
-              </p>
-            )}
+            {/* Live requirements — compact chips */}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {PASSWORD_RULES.map((rule) => {
+                const met = rule.test(values.password);
+                return (
+                  <span
+                    key={rule.label}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors",
+                      met
+                        ? "border-success/30 bg-success/10 text-success"
+                        : "border-border text-muted-foreground",
+                    )}
+                  >
+                    {met && <CheckIcon className="size-2.5" strokeWidth={3} />}
+                    {rule.label}
+                  </span>
+                );
+              })}
+            </div>
           </div>
 
           {/* Confirm password */}
@@ -348,10 +304,7 @@ export default function ResetPasswordForm() {
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
             Remember your password?{" "}
-            <Link
-              href="/login"
-              className="text-white hover:text-gray-300 font-medium"
-            >
+            <Link href="/login" className="text-foreground font-medium">
               Sign in
             </Link>
           </p>
