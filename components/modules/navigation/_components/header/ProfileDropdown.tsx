@@ -5,11 +5,38 @@ import { LogOut, User, Settings, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 import { useLogout } from "@/hooks/useLogout";
+import { useGetProfileQuery } from "@/featured/user/userApiSlice";
+import { Skeleton } from "@/components/ui/skeleton/Skeleton";
+
+type Profile = {
+  _id: string;
+  name?: string;
+  email?: string;
+  // Populated by the server, so this is the role document rather than an id.
+  roleId?: { _id: string; name?: string };
+  status?: string;
+};
+
+/** "Shafik Islam" -> "SI", "Shafik" -> "SH" */
+const getInitials = (name?: string) => {
+  const parts = name?.trim().split(/\s+/).filter(Boolean) ?? [];
+  if (parts.length === 0) return "AD";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 
 export function ProfileDropdown() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { handleLogout, isSigningOut } = useLogout();
+  const { data: profile, isLoading } = useGetProfileQuery(undefined) as {
+    data?: Profile;
+    isLoading: boolean;
+  };
+
+  const displayName = profile?.name ?? "Admin User";
+  const displayEmail = profile?.email ?? "";
+  const displayRole = profile?.roleId?.name ?? "";
 
   const onSignOut = async () => {
     setIsProfileOpen(false);
@@ -34,56 +61,79 @@ export function ProfileDropdown() {
     <div className="relative pl-1 sm:pl-2" ref={dropdownRef}>
       <button
         onClick={() => setIsProfileOpen(!isProfileOpen)}
-        className="flex items-center gap-2 rounded-full p-0.5 sm:pl-0.5 sm:pr-5 border transition-all cursor-pointer outline-none group dark:bg-darkBorder/30 hover:bg-gray-mid dark:hover:bg-darkBorder/40 border-slate-200 dark:border-darkBorder "
+        className="flex items-center gap-2 rounded-full p-0.5 sm:pl-0.5 sm:pr-5 border border-border bg-muted/50 hover:bg-accent transition-all cursor-pointer outline-none group"
       >
-        <div className="sm:size-9 size-8 rounded-full center text-xs font-medium shadow-sm bg-gray-light dark:bg-darkBorder/60 text-text6 dark:text-white ">
-          AD
-        </div>
-        <div className="hidden sm:flex flex-col items-start overflow-hidden">
-          <span className="text-sm font-semibold leading-tight text-text6 dark:text-white/80">
-            Admin User
-          </span>
-          <span className="text-[10px] leading-tight  text-slate-500 dark:text-text5">
-            Superadmin
-          </span>
-        </div>
+        {isLoading ? (
+          <Skeleton variant="circular" className="sm:size-9 size-8 shrink-0" />
+        ) : (
+          <div className="sm:size-9 size-8 rounded-full center text-xs font-medium shadow-sm bg-muted text-foreground">
+            {getInitials(profile?.name)}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="hidden sm:flex flex-col items-start gap-1.5">
+            <Skeleton variant="text" className="h-3 w-24" />
+            <Skeleton variant="text" className="h-2 w-16" />
+          </div>
+        ) : (
+          <div className="hidden sm:flex flex-col items-start overflow-hidden">
+            <span className="text-sm font-semibold leading-tight text-foreground">
+              {displayName}
+            </span>
+            <span className="text-[10px] leading-tight text-muted-foreground">
+              {displayRole || displayEmail}
+            </span>
+          </div>
+        )}
       </button>
 
       <div
-        className={`absolute right-0 mt-3 w-54 border  rounded-lg shadow-lg shadow-slate-200/50 dark:shadow-none origin-top-right overflow-hidden flex flex-col transition-all duration-200 ease-out z-50 bg-white dark:bg-darkBg  border-border/70 dark:border-darkBorder ${
+        className={`absolute right-0 mt-3 w-54 border border-border rounded-lg shadow-lg origin-top-right overflow-hidden flex flex-col transition-all duration-200 ease-out z-50 bg-popover text-popover-foreground ${
           isProfileOpen
             ? "opacity-100 scale-100 visible pointer-events-auto"
             : "opacity-0 scale-95 invisible pointer-events-none"
         }`}
       >
-        <div className="px-4 py-2.5 border-b border-border/50 dark:border-darkBorder/40 bg-gray-mid dark:bg-darkPrimary">
-          <p className="text-sm font-semibold">Admin User</p>
-          <p className="text-xs truncate text-text5">admin@retwho.com</p>
+        <div className="px-4 py-2.5 border-b border-border bg-muted">
+          {isLoading ? (
+            <div className="flex flex-col gap-1.5 py-1">
+              <Skeleton variant="text" className="h-3 w-28" />
+              <Skeleton variant="text" className="h-2.5 w-36" />
+            </div>
+          ) : (
+            <>
+              <p className="text-sm font-semibold">{displayName}</p>
+              <p className="text-xs truncate text-muted-foreground">
+                {displayEmail}
+              </p>
+            </>
+          )}
         </div>
 
         <div className="p-1.5 space-y-0.5">
           <Link
             href="/settings"
-            className="flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-text6 dark:text-text4 hover:bg-gray-mid dark:hover:bg-darkPrimary"
+            className="flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-foreground hover:bg-accent hover:text-accent-foreground"
           >
-            <User className="h-4 w-4 text-text5" />
+            <User className="h-4 w-4 text-muted-foreground" />
             My Profile
           </Link>
           <Link
             href="/settings"
-            className="flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-text6 dark:text-text4 hover:bg-gray-mid dark:hover:bg-darkPrimary"
+            className="flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors text-foreground hover:bg-accent hover:text-accent-foreground"
           >
-            <Settings className="h-4 w-4 text-text5" />
+            <Settings className="h-4 w-4 text-muted-foreground" />
             Account Settings
           </Link>
         </div>
 
-        <div className="p-1.5 border-t border-border/50 dark:border-darkBorder/60">
+        <div className="p-1.5 border-t border-border">
           <button
             type="button"
             onClick={onSignOut}
             disabled={isSigningOut}
-            className="flex items-center w-full cursor-pointer  gap-3 px-3 py-2 text-sm  rounded-md transition-colors text-red-600 dark:text-red-400 hover:bg-red-100 bg-red-50 dark:bg-red-900/50 dark:hover:bg-red-900/30 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex items-center w-full cursor-pointer gap-3 px-3 py-2 text-sm rounded-md transition-colors text-destructive bg-destructive/10 hover:bg-destructive/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSigningOut ? (
               <Loader2 className="h-4 w-4 animate-spin" />

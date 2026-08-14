@@ -44,7 +44,9 @@
   --popover: oklch(0.22 0.005 260);
   --popover-foreground: oklch(0.96 0.003 260);
   --primary: oklch(0.55 0.2 258);
-  --primary-foreground: oklch(0.2 0.006 260);
+  /* --primary is the same blue in both themes, so its foreground stays light —
+     a dark value here put black text on the blue active/nav items. */
+  --primary-foreground: oklch(0.98 0.002 260);
   --secondary: oklch(0.27 0.006 260);
   --secondary-foreground: oklch(0.96 0.003 260);
   --muted: oklch(0.25 0.005 260);
@@ -137,15 +139,35 @@ body {
   font-family: "Poppins", sans-serif;
 }
 
-/* ── Suppress browser autofill background highlight ───────────────────────── */
+/* ── Suppress browser autofill background highlight ─────────────────────────
+   Chrome paints its own background on autofilled / autocomplete-highlighted
+   fields. The only way to override it is a large inset box-shadow, so it has
+   to follow the theme instead of being a fixed colour — a hardcoded dark
+   value shows up as a black box in light mode. */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px #1a1d29 inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  caret-color: #ffffff;
+input:-webkit-autofill:active,
+input:autofill,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--autofill-bg, var(--background)) inset !important;
+  box-shadow: 0 0 0 1000px var(--autofill-bg, var(--background)) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground);
   transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Inputs are bg-transparent, so the autofill fill has to match whatever
+   surface they sit on. Page background is the default; set --autofill-bg on a
+   card/modal wrapper when the form lives on a raised surface. */
+.bg-card,
+[data-autofill-surface="card"] {
+  --autofill-bg: var(--card);
 }
 
 /* Scrollbar */

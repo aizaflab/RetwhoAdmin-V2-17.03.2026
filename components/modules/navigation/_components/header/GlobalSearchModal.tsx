@@ -15,6 +15,47 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+// Accent per shortcut. Alpha backgrounds sit on whatever surface is behind
+// them, so one class works in both themes.
+const SHORTCUTS = [
+  {
+    href: "/",
+    icon: FileText,
+    title: "Manage Products",
+    desc: "View and edit your store inventory",
+    accent: "text-indigo-500",
+    accentHover: "group-hover:text-indigo-500",
+    accentBg: "bg-indigo-500/10 ring-indigo-500/20",
+  },
+  {
+    href: "/settings",
+    icon: Settings,
+    title: "Dashboard Settings",
+    desc: "System configurations and preferences",
+    accent: "text-sky-500",
+    accentHover: "group-hover:text-sky-500",
+    accentBg: "bg-sky-500/10 ring-sky-500/20",
+  },
+  {
+    href: "/orders",
+    icon: ShoppingCart,
+    title: "Manage Orders",
+    desc: "View and track recent purchases",
+    accent: "text-amber-500",
+    accentHover: "group-hover:text-amber-500",
+    accentBg: "bg-amber-500/10 ring-amber-500/20",
+  },
+  {
+    href: "/customers",
+    icon: Users,
+    title: "Customer Directory",
+    desc: "Manage users and customer profiles",
+    accent: "text-cyan-500",
+    accentHover: "group-hover:text-cyan-500",
+    accentBg: "bg-cyan-500/10 ring-cyan-500/20",
+  },
+];
+
 export function GlobalSearchModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -56,18 +97,15 @@ export function GlobalSearchModal() {
           className={cn(
             // Base / Mobile styles (matches other header icons)
             "relative size-9 rounded-[11px] flex items-center justify-center cursor-pointer transition-all duration-200 outline-none",
-            "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
-            "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-darkBorder",
-
-            "text-text6 dark:text-text5",
+            "bg-muted hover:bg-accent border border-border hover:border-primary/50",
+            "text-muted-foreground",
             // Desktop styles (sm and up)
             "sm:w-full sm:justify-between sm:pl-10 sm:pr-3 sm:py-2.5 sm:rounded-full sm:h-auto sm:leading-5",
-            "dark:bg-darkBorder/30 hover:bg-gray-mid dark:hover:bg-darkBorder/40 border-slate-200 dark:border-darkBorder",
-            "group ",
+            "group",
           )}
         >
           {/* Mobile Icon */}
-          <Search className="size-z sm:hidden group-hover:text-primary transition-colors" />
+          <Search className="size-4 sm:hidden group-hover:text-primary transition-colors" />
 
           {/* Desktop Search Icon */}
           <div className="absolute inset-y-0 left-0 pl-3 hidden sm:flex items-center pointer-events-none">
@@ -77,10 +115,10 @@ export function GlobalSearchModal() {
           <span className="text-sm hidden sm:inline">Search anything...</span>
 
           <div className="hidden sm:flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
-            <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border dark:border-primary/30 bg-white dark:bg-darkPrimary px-1 font-sans text-[14px] font-medium text-text5 dark:text-text4">
+            <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border bg-card px-1 font-sans text-[14px] font-medium text-muted-foreground">
               ⌘
             </kbd>
-            <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border dark:border-darkBorder bg-white dark:bg-darkPrimary px-1 font-sans text-[10px] font-medium text-text5 dark:text-text4">
+            <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-border bg-card px-1 font-sans text-[10px] font-medium text-muted-foreground">
               K
             </kbd>
           </div>
@@ -94,22 +132,22 @@ export function GlobalSearchModal() {
         size="xlarge"
         showCloseButton={false}
         className="p-0 overflow-hidden [&>div.p-3]:p-0! border-0 rounded-xl"
-        overlayClassName="bg-darkBg/40 backdrop-blur-sm dark:bg-black/60"
+        overlayClassName="bg-black/50 backdrop-blur-sm"
       >
-        <div className="flex flex-col w-full bg-white dark:bg-darkPrimary rounded-lg">
+        <div className="flex flex-col w-full bg-popover text-popover-foreground rounded-lg">
           {/* Main Input */}
-          <div className="flex items-center px-4 py-3 border-b border-border dark:border-darkBorder relative bg-gray-light/50 dark:bg-darkPrimary/20">
-            <Search className="h-5 w-5 text-text6 dark:text-text5 absolute left-5" />
+          <div className="flex items-center px-4 py-3 border-b border-border relative bg-muted/50">
+            <Search className="h-5 w-5 text-muted-foreground absolute left-5" />
             <input
               ref={inputRef}
               type="text"
               placeholder="What are you looking for?"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 bg-transparent pl-10 pr-4 py-2 text-black dark:text-white placeholder-text6  dark:placeholder-text4  focus:outline-none text-sm"
+              className="flex-1 bg-transparent pl-10 pr-4 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none text-sm"
             />
             <kbd
-              className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md border border-border dark:border-darkBorder bg-white dark:bg-darkBorder font-sans text-xs font-medium text-text5 dark:text-text4 cursor-pointer hover:bg-gray-light dark:hover:bg-darkBorder/80 transition"
+              className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md border border-border bg-card font-sans text-xs font-medium text-muted-foreground cursor-pointer hover:bg-accent transition"
               onClick={handleClose}
             >
               ESC
@@ -119,152 +157,91 @@ export function GlobalSearchModal() {
           {/* Dynamic Search Results */}
           <div className="p-3 custom-scroll">
             {query.length > 0 ? (
-              <div className="py-20 text-center text-sm text-text5 flex flex-col items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-border dark:bg-darkBorder flex items-center justify-center">
-                  <Search className="h-8 w-8 text-text4 dark:text-text5" />
+              <div className="py-20 text-center text-sm text-muted-foreground flex flex-col items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                  <Search className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <div>
                   No exact results found for &quot;
-                  <span className="text-black dark:text-border font-semibold">
-                    {query}
-                  </span>
+                  <span className="text-foreground font-semibold">{query}</span>
                   &quot;
                 </div>
               </div>
             ) : (
               <>
-                <div className="px-2 py-1 text-[10px] font-medium text-text6 dark:text-text5 uppercase tracking-widest">
+                <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
                   Quick Shortcuts
                 </div>
                 <div className="space-y-1 mb-4 mt-2">
-                  <Link
-                    href="/"
-                    onClick={handleClose}
-                    className="group between p-2 rounded-lg hover:bg-gray-light dark:hover:bg-darkBorder/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="size-9 center rounded-lg bg-gray-light dark:bg-cat-indigo/10 text-text6 dark:text-cat-indigo ring-1 ring-cat-indigo-light dark:ring-cat-indigo/20  transition-transform group-hover:scale-105">
-                        <FileText className="size-4" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-text6 dark:text-border group-hover:text-cat-indigo-dark dark:group-hover:text-cat-indigo transition-colors">
-                          Manage Products
-                        </span>
-                        <span className="text-xs text-text5 dark:text-text4">
-                          View and edit your store inventory
-                        </span>
-                      </div>
-                    </div>
-                    <div className="hidden group-hover:flex items-center gap-2 pr-2">
-                      <span className="text-xs text-text4 dark:text-text5">
-                        Jump to
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-cat-indigo" />
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/settings"
-                    onClick={handleClose}
-                    className="group flex items-center justify-between p-2 rounded-lg hover:bg-gray-light dark:hover:bg-darkBorder/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="size-9 center rounded-lg bg-gray-light dark:bg-cat-indigo/10 text-text6 dark:text-cat-indigo ring-1 ring-cat-indigo-light dark:ring-cat-indigo/20  transition-transform group-hover:scale-105">
-                        <Settings className="size-4" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-text6 dark:text-border group-hover:text-black dark:group-hover:text-white transition-colors">
-                          Dashboard Settings
-                        </span>
-                        <span className="text-xs text-text5 dark:text-text4">
-                          System configurations and preferences
-                        </span>
-                      </div>
-                    </div>
-                    <div className="hidden group-hover:flex items-center gap-2 pr-2">
-                      <span className="text-xs font-medium text-text4 dark:text-text5">
-                        Jump to
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-text4" />
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/orders"
-                    onClick={handleClose}
-                    className="group flex items-center justify-between p-2 rounded-lg hover:bg-gray-light dark:hover:bg-darkBorder/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="size-9 center rounded-lg bg-gray-light dark:bg-cat-amber/10 text-text6 dark:text-cat-amber ring-1 ring-cat-amber-light dark:ring-cat-amber/20  transition-transform group-hover:scale-105">
-                        <ShoppingCart className="size-4" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-text6 dark:text-border group-hover:text-cat-amber-dark dark:group-hover:text-cat-amber transition-colors">
-                          Manage Orders
-                        </span>
-                        <span className="text-xs text-text5 dark:text-text4">
-                          View and track recent purchases
-                        </span>
-                      </div>
-                    </div>
-                    <div className="hidden group-hover:flex items-center gap-2 pr-2">
-                      <span className="text-xs font-medium text-text4 dark:text-text5">
-                        Jump to
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-cat-amber" />
-                    </div>
-                  </Link>
-
-                  <Link
-                    href="/customers"
-                    onClick={handleClose}
-                    className="group flex items-center justify-between p-2 rounded-lg hover:bg-gray-light dark:hover:bg-darkBorder/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="size-9 center rounded-lg bg-gray-light dark:bg-cat-cyan/10 text-text6 dark:text-cat-cyan ring-1 ring-cat-cyan-light dark:ring-cat-cyan/20  transition-transform group-hover:scale-105">
-                        <Users className="size-4" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-text6 dark:text-border group-hover:text-cat-cyan-dark dark:group-hover:text-cat-cyan transition-colors">
-                          Customer Directory
-                        </span>
-                        <span className="text-xs text-text5 dark:text-text4">
-                          Manage users and customer profiles
-                        </span>
-                      </div>
-                    </div>
-                    <div className="hidden group-hover:flex items-center gap-2 pr-2">
-                      <span className="text-xs font-medium text-text4 dark:text-text5">
-                        Jump to
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-cat-cyan" />
-                    </div>
-                  </Link>
+                  {SHORTCUTS.map((shortcut) => {
+                    const Icon = shortcut.icon;
+                    return (
+                      <Link
+                        key={shortcut.title}
+                        href={shortcut.href}
+                        onClick={handleClose}
+                        className="group flex items-center justify-between p-2 rounded-lg hover:bg-accent transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={cn(
+                              "size-9 center rounded-lg ring-1 transition-transform group-hover:scale-105",
+                              shortcut.accentBg,
+                              shortcut.accent,
+                            )}
+                          >
+                            <Icon className="size-4" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span
+                              className={cn(
+                                "text-sm font-semibold text-foreground transition-colors",
+                                shortcut.accentHover,
+                              )}
+                            >
+                              {shortcut.title}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {shortcut.desc}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="hidden group-hover:flex items-center gap-2 pr-2">
+                          <span className="text-xs text-muted-foreground">
+                            Jump to
+                          </span>
+                          <ChevronRight
+                            className={cn("h-4 w-4", shortcut.accent)}
+                          />
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
 
-                <div className="px-2 py-1 text-[10px] font-medium text-text6 dark:text-text5 uppercase pt-4 tracking-widest border-t border-border dark:border-darkBorder">
+                <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground uppercase pt-4 tracking-widest border-t border-border">
                   Actions
                 </div>
                 <div className="space-y-1 mt-2">
                   <button
                     onClick={handleClose}
-                    className="w-full text-left group between p-2 rounded-lg hover:bg-gray-light dark:hover:bg-darkBorder/50 transition-colors cursor-pointer outline-none"
+                    className="w-full text-left group flex items-center justify-between p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer outline-none"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="size-9 center rounded-lg bg-gray-light dark:bg-cat-emerald/10 text-text6 dark:text-cat-emerald ring-1 ring-cat-emerald-light dark:ring-cat-emerald/20  transition-transform group-hover:scale-105">
+                      <div className="size-9 center rounded-lg bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/20 transition-transform group-hover:scale-105">
                         <User className="size-4" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-text6 dark:text-border group-hover:text-cat-emerald-dark dark:group-hover:text-cat-emerald transition-colors">
+                        <span className="text-sm font-semibold text-foreground group-hover:text-emerald-500 transition-colors">
                           Create New User
                         </span>
-                        <span className="text-xs text-text5 dark:text-text4">
+                        <span className="text-xs text-muted-foreground">
                           Add a new admin to your workspace
                         </span>
                       </div>
                     </div>
                     <div className="hidden group-hover:flex items-center pr-2">
-                      <Command className="h-4 w-4 text-cat-emerald" />
+                      <Command className="h-4 w-4 text-emerald-500" />
                     </div>
                   </button>
                 </div>
@@ -273,26 +250,24 @@ export function GlobalSearchModal() {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-border dark:border-darkBorder bg-gray-light/80 dark:bg-darkPrimary/50 flex items-center justify-between">
-            <div className="flex items-center gap-4 text-xs text-text5 dark:text-text4">
+          <div className="px-4 py-3 border-t border-border bg-muted/50 flex items-center justify-between">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="hidden sm:flex items-center gap-1.5">
-                <kbd className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-white dark:bg-darkBorder border border-border dark:border-darkBorder font-sans font-medium text-[12px] text-text5">
+                <kbd className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-card border border-border font-sans font-medium text-[12px] text-muted-foreground">
                   ↑↓
                 </kbd>
                 to navigate
               </span>
               <span className="hidden sm:flex items-center gap-1.5">
-                <kbd className="flex items-center justify-center px-1.5 py-0.5 rounded-md bg-white dark:bg-darkBorder border border-border dark:border-darkBorder font-sans font-bold text-[12px] text-text5">
+                <kbd className="flex items-center justify-center px-1.5 py-0.5 rounded-md bg-card border border-border font-sans font-bold text-[12px] text-muted-foreground">
                   <CornerDownLeft className="size-3" />
                 </kbd>
                 to select
               </span>
             </div>
-            <span className="text-xs text-text4 flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               Search by{" "}
-              <span className="font-semibold text-text6 dark:text-text4">
-                Retwho
-              </span>
+              <span className="font-semibold text-foreground">Retwho</span>
             </span>
           </div>
         </div>

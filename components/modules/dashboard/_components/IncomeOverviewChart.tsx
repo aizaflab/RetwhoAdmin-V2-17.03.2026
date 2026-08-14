@@ -1,7 +1,6 @@
 "use client";
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { useEffect, useState } from "react";
 
 const COLORS = ["#EBF4DD", "#90AB8B", "#5A7863", "#778873"];
 
@@ -13,24 +12,12 @@ const data = [
 ];
 
 export default function IncomeOverviewChart() {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const check = () =>
-      setIsDark(document.documentElement.classList.contains("dark"));
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    return () => observer.disconnect();
-  }, []);
-
+  // Recharts writes these straight into SVG/inline styles, so CSS variables
+  // resolve per theme without a class observer.
   return (
-    <div className="bg-white dark:bg-darkBg rounded-xl border border-border/70 dark:border-darkBorder/50 p-5">
+    <div className="bg-card rounded-xl border border-border p-5">
       <div className="mb-2">
-        <h3 className="text-xl font-semibold text-black dark:text-white">
+        <h3 className="text-xl font-semibold text-foreground">
           Income Overview
         </h3>
       </div>
@@ -45,12 +32,12 @@ export default function IncomeOverviewChart() {
             dataKey="value"
             label={{
               position: "outside",
-              fill: isDark ? "#9CA3AF" : "#1F2937",
+              fill: "var(--foreground)",
               fontSize: 13,
               fontWeight: "600",
             }}
             labelLine={{
-              stroke: isDark ? "#4B5563" : "#9CA3AF",
+              stroke: "var(--muted-foreground)",
               strokeWidth: 1,
             }}
           >
@@ -63,11 +50,11 @@ export default function IncomeOverviewChart() {
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: isDark ? "#1a1d29" : "#fff",
-              border: `1px solid ${isDark ? "#2a2a2a" : "#E5E7EB"}`,
+              backgroundColor: "var(--popover)",
+              border: "1px solid var(--border)",
               borderRadius: "8px",
               boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.2)",
-              color: isDark ? "#F9FAFB" : "#1F2937",
+              color: "var(--popover-foreground)",
             }}
           />
         </PieChart>
@@ -82,8 +69,10 @@ export default function IncomeOverviewChart() {
               style={{ backgroundColor: COLORS[index] }}
             />
             <div className="flex-1 flex items-center gap-2">
-              <span className="text-xs text-text5">{item.name} :</span>
-              <p className="text-sm font-semibold text-black dark:text-white">
+              <span className="text-xs text-muted-foreground">
+                {item.name} :
+              </span>
+              <p className="text-sm font-semibold text-foreground">
                 {item.value}
               </p>
             </div>

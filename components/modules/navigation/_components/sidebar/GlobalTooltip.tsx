@@ -44,8 +44,8 @@ export function GlobalTooltip({
       onMouseLeave={clearHover}
     >
       {isGroup ? (
-        <div className="min-w-[200px] bg-white border border-slate-200 rounded-md p-2 dark:bg-slate-900 dark:border-slate-700 h-full flex flex-col transition-all duration-300">
-          <div className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100 dark:border-slate-800 mb-2 truncate">
+        <div className="min-w-[200px] bg-popover text-popover-foreground border border-border rounded-md p-2 h-full flex flex-col transition-all duration-300">
+          <div className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border mb-2 truncate">
             {item.title}
           </div>
           <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto custom-scroll">
@@ -63,8 +63,8 @@ export function GlobalTooltip({
         </div>
       ) : (
         <div className="flex items-center">
-          <div className="w-2 h-2 bg-slate-900 rotate-45 -mr-2 z-[-1] absolute" />
-          <div className="bg-slate-900 border border-slate-700 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-xl whitespace-nowrap z-10 transition-all">
+          <div className="w-2 h-2 bg-popover rotate-45 -mr-2 z-[-1] absolute" />
+          <div className="bg-popover text-popover-foreground border border-border text-xs font-medium px-3 py-1.5 rounded-md shadow-xl whitespace-nowrap z-10 transition-all">
             {item.title}
           </div>
         </div>

@@ -10,27 +10,30 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { ArrowUpOutlineIcon, CheckIcon } from "@/components/icons/Icons";
+
+// Bar tones per metric. These are mid-range blues that read on both the light
+// and the dark card surface, so no per-theme swap is needed.
+const BAR_FILL: Record<string, string> = {
+  Paid: "#93C5FD",
+  Due: "#60A5FA",
+  Revenue: "#3B82F6",
+};
+
+const BAR_ACTIVE_FILL: Record<string, string> = {
+  Paid: "#3B82F6",
+  Due: "#2563EB",
+  Revenue: "#1D4ED8",
+};
 
 export default function RevenueOverviewChart() {
   const [selectedMetric, setSelectedMetric] = useState("Revenue");
-  const [isDark, setIsDark] = useState(false);
 
-  useEffect(() => {
-    const check = () =>
-      setIsDark(document.documentElement.classList.contains("dark"));
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  const gridColor = isDark ? "#2a2a2a" : "#E5E7EB";
-  const axisColor = isDark ? "#6B7280" : "#9CA3AF";
+  // Recharts writes these into SVG attributes, so CSS variables resolve
+  // per theme on their own.
+  const gridColor = "var(--border)";
+  const axisColor = "var(--muted-foreground)";
 
   const shipmentData = useMemo(
     () => [
@@ -57,9 +60,9 @@ export default function RevenueOverviewChart() {
 
   return (
     <div className="lg:col-span-2">
-      <div className="bg-white dark:bg-darkBg rounded-xl border border-border/70 dark:border-darkBorder/50 p-5">
+      <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex items-center justify-between mb-1.5">
-          <h3 className="text-xl font-semibold text-black dark:text-white">
+          <h3 className="text-xl font-semibold text-foreground">
             Revenue Overview
           </h3>
           <div className="flex items-center gap-4">
@@ -84,8 +87,8 @@ export default function RevenueOverviewChart() {
                 <span
                   className={`text-xs font-medium ${
                     selectedMetric === metric.name
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-text5"
+                      ? "text-primary"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {metric.name}
@@ -108,8 +111,10 @@ export default function RevenueOverviewChart() {
             },
           ].map((stat, index) => (
             <div key={index} className="flex items-center gap-1.5">
-              <span className="text-xs text-text5">{stat.label}:</span>
-              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+              <span className="text-xs text-muted-foreground">
+                {stat.label}:
+              </span>
+              <span className="text-sm font-bold text-primary">
                 {stat.value}
               </span>
               <span
@@ -156,29 +161,12 @@ export default function RevenueOverviewChart() {
 
             <Bar
               dataKey={selectedMetric}
-              fill={
-                selectedMetric === "Paid"
-                  ? isDark
-                    ? "#1E3A5F"
-                    : "#DBEAFE"
-                  : selectedMetric === "Due"
-                    ? isDark
-                      ? "#1E3A8A"
-                      : "#BFDBFE"
-                    : isDark
-                      ? "#1E40AF"
-                      : "#93C5FD"
-              }
+              fill={BAR_FILL[selectedMetric]}
               radius={[50, 50, 50, 50]}
               maxBarSize={30}
               activeBar={(props: any) => {
                 const { x, y, width, height, payload } = props;
-                const deepFill =
-                  selectedMetric === "Paid"
-                    ? "#3B82F6"
-                    : selectedMetric === "Due"
-                      ? "#2563EB"
-                      : "#1D4ED8";
+                const deepFill = BAR_ACTIVE_FILL[selectedMetric];
 
                 const value = payload[selectedMetric];
                 const formattedValue =
@@ -216,7 +204,7 @@ export default function RevenueOverviewChart() {
                           pointerEvents: "none",
                         }}
                       >
-                        <div className="bg-gray-900 dark:bg-darkBorder text-white px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap">
+                        <div className="bg-popover text-popover-foreground border border-border px-3 py-1.5 rounded-md shadow-lg whitespace-nowrap">
                           <p className="text-xs font-semibold">
                             Avg {formattedValue}
                           </p>

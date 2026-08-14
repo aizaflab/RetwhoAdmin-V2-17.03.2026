@@ -42,13 +42,15 @@ export default function DashboardCharts() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
       {/* Revenue Analytics (Area Chart) */}
-      <div className="lg:col-span-2 rounded-xl border border-text4/30 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-6 shadow-sm">
+      <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h4 className="text-base font-semibold text-black dark:text-white">
+            <h4 className="text-base font-semibold text-foreground">
               Revenue Analytics
             </h4>
-            <p className="text-xs text-text5">Monthly revenue trend</p>
+            <p className="text-xs text-muted-foreground">
+              Monthly revenue trend
+            </p>
           </div>
           <div className="flex items-center text-emerald-500 text-sm font-medium">
             <ArrowUpIcon className="w-4 h-4 mr-1" />
@@ -77,7 +79,7 @@ export default function DashboardCharts() {
               y2="0"
               stroke="currentColor"
               strokeDasharray="4 4"
-              className="text-text4/30 dark:text-darkBorder/30"
+              className="text-border"
               strokeWidth="1"
             />
             <line
@@ -87,7 +89,7 @@ export default function DashboardCharts() {
               y2="50"
               stroke="currentColor"
               strokeDasharray="4 4"
-              className="text-text4/30 dark:text-darkBorder/30"
+              className="text-border"
               strokeWidth="1"
             />
             <line
@@ -97,7 +99,7 @@ export default function DashboardCharts() {
               y2="100"
               stroke="currentColor"
               strokeDasharray="4 4"
-              className="text-text4/30 dark:text-darkBorder/30"
+              className="text-border"
               strokeWidth="1"
             />
             <line
@@ -107,7 +109,7 @@ export default function DashboardCharts() {
               y2="150"
               stroke="currentColor"
               strokeDasharray="4 4"
-              className="text-text4/30 dark:text-darkBorder/30"
+              className="text-border"
               strokeWidth="1"
             />
 
@@ -161,7 +163,10 @@ export default function DashboardCharts() {
         {/* X-Axis Labels */}
         <div className="flex justify-between mt-4 px-2">
           {months.map((month) => (
-            <span key={month} className="text-xs text-text5 font-medium">
+            <span
+              key={month}
+              className="text-xs text-muted-foreground font-medium"
+            >
               {month}
             </span>
           ))}
@@ -169,8 +174,8 @@ export default function DashboardCharts() {
       </div>
 
       {/* Sales Performance (Bar Chart) */}
-      <div className="rounded-xl border border-text4/30 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-6 shadow-sm">
-        <h4 className="text-base font-semibold text-black dark:text-white mb-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h4 className="text-base font-semibold text-foreground mb-6">
           Sales Performance
         </h4>
 
@@ -181,16 +186,16 @@ export default function DashboardCharts() {
 
             return (
               <div key={month} className="flex items-center gap-3">
-                <span className="text-xs font-medium text-text5 w-8">
+                <span className="text-xs font-medium text-muted-foreground w-8">
                   {month}
                 </span>
-                <div className="flex-1 h-3 bg-gray-100 dark:bg-darkBorder/30 rounded-full overflow-hidden">
+                <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500 hover:opacity-80"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
-                <span className="text-xs font-semibold text-black dark:text-white w-8 text-right border border-text4/30 dark:border-darkBorder/40 px-1 rounded">
+                <span className="text-xs font-semibold text-foreground w-8 text-right border border-border px-1 rounded">
                   {val}
                 </span>
               </div>

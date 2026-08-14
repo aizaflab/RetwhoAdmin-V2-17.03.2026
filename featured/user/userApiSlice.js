@@ -10,11 +10,16 @@ const userApiSlice = apiSlice.injectEndpoints({
       providesTags: ["users"],
     }),
 
-    // Get user profile (GET)
+    // Get the logged-in employee's own profile (GET). This panel signs in
+    // through /admin/employees/auth/login, so the session token is an employee
+    // token — the user-side /users/me would reject it.
     getProfile: builder.query({
       query: () => ({
-        url: "/user/profile",
+        url: "/admin/employees/me",
       }),
+      // Unwrap the { status, statusCode, message, data } envelope so callers
+      // get the profile object directly.
+      transformResponse: (response) => response?.data ?? null,
       providesTags: ["user"],
     }),
 

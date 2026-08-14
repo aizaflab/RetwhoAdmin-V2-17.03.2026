@@ -32,8 +32,8 @@ const mockNotifications = [
     time: "2 min ago",
     read: false,
     icon: PackageCheck,
-    iconColor: "text-emerald-500 dark:text-emerald-400",
-    bgColor: "bg-emerald-500/10 dark:bg-emerald-500/20",
+    iconColor: "text-emerald-500",
+    bgColor: "bg-emerald-500/15",
     borderColor: "border-emerald-500/20",
     glowColor: "shadow-[0_0_15px_rgba(16,185,129,0.3)]",
   },
@@ -45,8 +45,8 @@ const mockNotifications = [
     time: "1 hour ago",
     read: false,
     icon: Truck,
-    iconColor: "text-blue-500 dark:text-blue-400",
-    bgColor: "bg-blue-500/10 dark:bg-blue-500/20",
+    iconColor: "text-blue-500",
+    bgColor: "bg-blue-500/15",
     borderColor: "border-blue-500/20",
     glowColor: "shadow-[0_0_15px_rgba(59,130,246,0.3)]",
   },
@@ -58,8 +58,8 @@ const mockNotifications = [
     time: "3 hours ago",
     read: true,
     icon: UserPlus,
-    iconColor: "text-purple-500 dark:text-purple-400",
-    bgColor: "bg-purple-500/10 dark:bg-purple-500/20",
+    iconColor: "text-purple-500",
+    bgColor: "bg-purple-500/15",
     borderColor: "border-purple-500/20",
     glowColor: "shadow-[0_0_15px_rgba(168,85,247,0.3)]",
   },
@@ -71,8 +71,8 @@ const mockNotifications = [
     time: "1 day ago",
     read: true,
     icon: Package,
-    iconColor: "text-orange-500 dark:text-orange-400",
-    bgColor: "bg-orange-500/10 dark:bg-orange-500/20",
+    iconColor: "text-orange-500",
+    bgColor: "bg-orange-500/15",
     borderColor: "border-orange-500/20",
     glowColor: "shadow-[0_0_15px_rgba(249,115,22,0.3)]",
   },
@@ -84,8 +84,8 @@ const mockNotifications = [
     time: "2 days ago",
     read: true,
     icon: MessageSquare,
-    iconColor: "text-pink-500 dark:text-pink-400",
-    bgColor: "bg-pink-500/10 dark:bg-pink-500/20",
+    iconColor: "text-pink-500",
+    bgColor: "bg-pink-500/15",
     borderColor: "border-pink-500/20",
     glowColor: "shadow-[0_0_15px_rgba(236,72,153,0.3)]",
   },
@@ -97,8 +97,8 @@ const mockNotifications = [
     time: "3 days ago",
     read: false,
     icon: Tag,
-    iconColor: "text-yellow-500 dark:text-yellow-400",
-    bgColor: "bg-yellow-500/10 dark:bg-yellow-500/20",
+    iconColor: "text-yellow-500",
+    bgColor: "bg-yellow-500/15",
     borderColor: "border-yellow-500/20",
     glowColor: "shadow-[0_0_15px_rgba(234,179,8,0.3)]",
   },
@@ -110,8 +110,8 @@ const mockNotifications = [
     time: "4 days ago",
     read: true,
     icon: ShieldAlert,
-    iconColor: "text-red-500 dark:text-red-400",
-    bgColor: "bg-red-500/10 dark:bg-red-500/20",
+    iconColor: "text-red-500",
+    bgColor: "bg-red-500/15",
     borderColor: "border-red-500/20",
     glowColor: "shadow-[0_0_15px_rgba(239,68,68,0.3)]",
   },
@@ -123,8 +123,8 @@ const mockNotifications = [
     time: "5 days ago",
     read: true,
     icon: RefreshCw,
-    iconColor: "text-indigo-500 dark:text-indigo-400",
-    bgColor: "bg-indigo-500/10 dark:bg-indigo-500/20",
+    iconColor: "text-indigo-500",
+    bgColor: "bg-indigo-500/15",
     borderColor: "border-indigo-500/20",
     glowColor: "shadow-[0_0_15px_rgba(99,102,241,0.3)]",
   },
@@ -225,17 +225,17 @@ export function NotificationNav() {
           aria-label="Notifications"
           className={cn(
             "relative size-9 rounded-[11px] center cursor-pointer",
-            "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
-            "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-primary/50",
+            "bg-muted hover:bg-accent",
+            "border border-border hover:border-primary/50",
             "transition-all duration-200",
-            "text-gray-700 dark:text-white",
+            "text-foreground",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
           )}
           onClick={() => setOpenDropdown(!openDropdown)}
         >
           <Bell className="h-5 w-5 group-hover:animate-[wiggle_1s_ease-in-out_infinite]" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white dark:ring-slate-900 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse"></span>
+            <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-primary ring-2 ring-card animate-pulse"></span>
           )}
         </button>
       </div>
@@ -243,47 +243,45 @@ export function NotificationNav() {
       {/* Dropdown Panel */}
 
       <div
-        className={`absolute sm:right-0 -right-16 top-[50px] w-[370px] sm:w-[420px]  rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] border bg-white dark:bg-darkBg border-border/70 dark:border-darkBorder z-50 overflow-hidden origin-top-right transition-all duration-200 ease-out ${
+        className={`absolute sm:right-0 -right-16 top-[50px] w-[370px] sm:w-[420px] rounded-xl shadow-xl border border-border bg-popover text-popover-foreground z-50 overflow-hidden origin-top-right transition-all duration-200 ease-out ${
           openDropdown
             ? "opacity-100 translate-y-0 visible pointer-events-auto"
             : "opacity-0 translate-y-2 invisible pointer-events-none"
         }`}
       >
         {/* Header */}
-        <div className="relative px-5 py-3.5 border-b border-slate-200/50 dark:border-slate-800/50 overflow-hidden">
+        <div className="relative px-5 py-3.5 border-b border-border overflow-hidden">
           {/* Header Background Glow */}
-          <div className="absolute top-0 left-0 w-full h-[200px] bg-blue-500/5  rounded-t-xl pointer-events-none -z-10"></div>
+          <div className="absolute top-0 left-0 w-full h-[200px] bg-primary/5 rounded-t-xl pointer-events-none -z-10"></div>
 
           <div className="flex items-center justify-between  relative z-10">
-            <h3 className="text-lg font-semibold text-black dark:text-white">
+            <h3 className="text-lg font-semibold text-foreground">
               Notifications
             </h3>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-md cursor-pointer"
+                className="flex items-center gap-1 text-xs text-primary hover:opacity-80 font-medium transition-colors bg-primary/10 px-2 py-1 rounded-md cursor-pointer"
               >
                 <Check className="h-3 w-3" />
                 Mark all as read
               </button>
             )}
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 relative z-10">
+          <p className="text-xs text-muted-foreground relative z-10">
             You have{" "}
-            <span className="font-semibold text-blue-600 dark:text-blue-400">
-              {unreadCount}
-            </span>{" "}
+            <span className="font-semibold text-primary">{unreadCount}</span>{" "}
             unread notification{unreadCount !== 1 ? "s" : ""}
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="px-5 py-3 border-b border-slate-200/50 dark:border-slate-800/50 relative">
+        <div className="px-5 py-3 border-b border-border relative">
           {/* Left scroll button */}
           {canScrollLeft && (
             <button
               onClick={() => scroll("left")}
-              className="absolute left-2 top-[47%] -translate-y-1/2 z-20 h-7 w-7 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 text-slate-700 dark:text-slate-300 cursor-pointer"
+              className="absolute left-2 top-[47%] -translate-y-1/2 z-20 h-7 w-7 bg-card/90 backdrop-blur-md border border-border rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 text-foreground cursor-pointer"
               aria-label="Scroll left"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -294,7 +292,7 @@ export function NotificationNav() {
           {canScrollRight && (
             <button
               onClick={() => scroll("right")}
-              className="absolute right-2 top-[47%] -translate-y-1/2 z-20 h-7 w-7 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 text-slate-700 dark:text-slate-300 cursor-pointer"
+              className="absolute right-2 top-[47%] -translate-y-1/2 z-20 h-7 w-7 bg-card/90 backdrop-blur-md border border-border rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 text-foreground cursor-pointer"
               aria-label="Scroll right"
             >
               <ChevronRight className="h-4 w-4" />
@@ -316,13 +314,11 @@ export function NotificationNav() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center cursor-pointer gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 whitespace-nowrap ${
                     isActive
-                      ? "bg-primary text-white "
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent hover:border-slate-300 dark:hover:border-slate-600"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground border border-transparent hover:border-border"
                   }`}
                 >
-                  <IconComponent
-                    className={`h-3.5 w-3.5 ${isActive ? "text-white" : ""}`}
-                  />
+                  <IconComponent className="h-3.5 w-3.5" />
                   {tab.label}
                 </button>
               );
@@ -341,14 +337,14 @@ export function NotificationNav() {
                     key={notification.id}
                     className={`relative group p-3 rounded-lg transition-all duration-300 cursor-pointer overflow-hidden ${
                       !notification.read
-                        ? "bg-blue-50/50 dark:bg-blue-500/5 hover:bg-blue-100/80 dark:hover:bg-blue-500/10"
-                        : "hover:bg-slate-100/80 dark:hover:bg-slate-800/50"
+                        ? "bg-primary/5 hover:bg-primary/10"
+                        : "hover:bg-accent"
                     }`}
                     onClick={() => handleMarkAsRead(notification.id)}
                   >
                     {/* Animated gradient border for unread */}
                     {!notification.read && (
-                      <div className="absolute inset-0 rounded-lg border border-blue-200 dark:border-blue-500/30 opacity-100 transition-opacity"></div>
+                      <div className="absolute inset-0 rounded-lg border border-primary/30 opacity-100 transition-opacity"></div>
                     )}
 
                     <div className="flex gap-3 relative z-10">
@@ -367,21 +363,21 @@ export function NotificationNav() {
                           <h4
                             className={`text-sm font-semibold line-clamp-1 transition-colors ${
                               !notification.read
-                                ? "text-slate-900 dark:text-white"
-                                : "text-slate-700 dark:text-slate-300"
+                                ? "text-foreground"
+                                : "text-muted-foreground"
                             }`}
                           >
                             {notification.title}
                           </h4>
                           {!notification.read && (
-                            <span className="h-2 w-2 bg-blue-500 rounded-full shrink-0 mt-1.5 shadow-[0_0_8px_rgba(59,130,246,0.8)] animate-pulse" />
+                            <span className="h-2 w-2 bg-primary rounded-full shrink-0 mt-1.5 animate-pulse" />
                           )}
                         </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-1.5">
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-1.5">
                           {notification.message}
                         </p>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                          <span className="text-[10px] font-medium text-muted-foreground">
                             {notification.time}
                           </span>
                         </div>
@@ -393,13 +389,13 @@ export function NotificationNav() {
             </div>
           ) : (
             <div className="py-16 px-6 text-center flex flex-col items-center justify-center">
-              <div className="h-16 w-16 mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 shadow-inner">
+              <div className="h-16 w-16 mb-4 rounded-full bg-muted flex items-center justify-center text-muted-foreground shadow-inner">
                 <Bell className="h-8 w-8 opacity-50" />
               </div>
-              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <p className="text-sm font-semibold text-foreground mb-1">
                 No notifications
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 You&apos;re all caught up! Check back later.
               </p>
             </div>
@@ -408,11 +404,11 @@ export function NotificationNav() {
 
         {/* Footer */}
         {filteredNotifications.length > 0 && (
-          <div className="p-3 border-t border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md">
+          <div className="p-3 border-t border-border bg-muted/50 backdrop-blur-md">
             <Link
               href="/notifications"
               onClick={() => setOpenDropdown(false)}
-              className="w-full block text-center cursor-pointer py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-linear-to-r hover:from-slate-800 hover:to-slate-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 hover:border-transparent rounded-md transition-all duration-300"
+              className="w-full block text-center cursor-pointer py-2.5 text-xs font-semibold text-foreground bg-card border border-border hover:bg-primary hover:text-primary-foreground hover:border-transparent rounded-md transition-all duration-300"
             >
               View All Notifications
             </Link>
