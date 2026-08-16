@@ -64,7 +64,7 @@ export function ProfileDropdown() {
         className="flex items-center gap-2 rounded-full p-0.5 sm:pl-0.5 sm:pr-5 border border-border bg-muted/50 hover:bg-accent transition-all cursor-pointer outline-none group"
       >
         {isLoading ? (
-          <Skeleton variant="circular" className="sm:size-9 size-8 shrink-0" />
+          <Skeleton shape="circle" className="sm:size-9 size-8 shrink-0" />
         ) : (
           <div className="sm:size-9 size-8 rounded-full center text-xs font-medium shadow-sm bg-muted text-foreground">
             {getInitials(profile?.name)}
@@ -73,8 +73,8 @@ export function ProfileDropdown() {
 
         {isLoading ? (
           <div className="hidden sm:flex flex-col items-start gap-1.5">
-            <Skeleton variant="text" className="h-3 w-24" />
-            <Skeleton variant="text" className="h-2 w-16" />
+            <Skeleton shape="text" className="h-3 w-24" />
+            <Skeleton shape="text" className="h-2 w-16" />
           </div>
         ) : (
           <div className="hidden sm:flex flex-col items-start overflow-hidden">
@@ -98,8 +98,8 @@ export function ProfileDropdown() {
         <div className="px-4 py-2.5 border-b border-border bg-muted">
           {isLoading ? (
             <div className="flex flex-col gap-1.5 py-1">
-              <Skeleton variant="text" className="h-3 w-28" />
-              <Skeleton variant="text" className="h-2.5 w-36" />
+              <Skeleton shape="text" className="h-3 w-28" />
+              <Skeleton shape="text" className="h-2.5 w-36" />
             </div>
           ) : (
             <>

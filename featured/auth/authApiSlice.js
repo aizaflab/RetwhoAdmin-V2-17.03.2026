@@ -25,19 +25,11 @@ const authApiSlice = apiSlice.injectEndpoints({
       }),
     }),
 
-    // POST : Logout — revokes the refresh token on the server. The access
-    // token is attached by prepareHeaders, so no body is needed.
-    logout: builder.mutation({
-      query: () => ({
-        url: `/admin/employees/auth/logout`,
-        method: "POST",
-      }),
-    }),
+    // Note: logout is NOT here either. The backend revokes the refresh token it
+    // finds in an httpOnly cookie the browser never received, so the call has
+    // to be made server-side — see app/api/logout/route.ts.
   }),
 });
 
-export const {
-  useForgotPasswordMutation,
-  useResetPasswordMutation,
-  useLogoutMutation,
-} = authApiSlice;
+export const { useForgotPasswordMutation, useResetPasswordMutation } =
+  authApiSlice;

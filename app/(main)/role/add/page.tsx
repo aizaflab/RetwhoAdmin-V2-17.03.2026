@@ -21,17 +21,17 @@ export default function AddRolePage() {
             <ShieldCheck className="w-8 h-8 text-rose-500" />
           </div>
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-black dark:text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Access Denied
             </h2>
-            <p className="text-sm text-text5 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               You do not have permission to create roles.
             </p>
           </div>
         </div>
       }
     >
-      <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
+      <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
         <RoleFormEditor />
       </div>
     </PermissionGuard>

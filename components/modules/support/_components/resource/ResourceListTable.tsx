@@ -5,7 +5,13 @@ import { format } from "date-fns";
 import { SupportResource } from "../../_types/support.types";
 import { Input } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
@@ -22,6 +28,12 @@ const STATUS_STYLES: Record<string, string> = {
     "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
   inactive: "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400",
 };
+
+const RESOURCE_STATUS_OPTIONS = [
+  { value: "all", label: "All Status" },
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
 
 interface ResourceListTableProps {
   resources: SupportResource[];
@@ -173,17 +185,17 @@ export default function ResourceListTable({
           </div>
 
           <div className="relative w-32">
-            <Select
-              options={[
-                { value: "all", label: "All Status" },
-                { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
-              ]}
-              value={statusFilter}
-              onValueChange={(val) => setStatusFilter(val)}
-              className="rounded-md bg-white dark:bg-darkBg"
-              fieldClass="h-10!"
-            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10 rounded-md bg-card">
+                <SelectValue
+                  options={RESOURCE_STATUS_OPTIONS}
+                  placeholder="All Status"
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={RESOURCE_STATUS_OPTIONS} />
+              </SelectContent>
+            </Select>
           </div>
 
           <Button

@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input, ThemeToggle } from "@/components/ui";
+import { FieldError, Input, Label, ThemeToggle } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
 import { useForgotPasswordMutation } from "@/featured/auth/authApiSlice";
 import type {
@@ -22,7 +22,7 @@ const REDIRECT_DELAY_MS = 2500;
 function MailSendIcon() {
   return (
     <svg
-      className="w-6 h-6 dark:text-white text-black"
+      className="w-6 h-6 text-foreground"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -95,16 +95,16 @@ export default function ForgotPasswordForm() {
       <div className="w-full max-w-sm relative z-10">
         <div>
           {/* Icon */}
-          <div className="w-12 h-12 rounded-xl center mb-6 mx-auto border bg-black/5 dark:bg-darkPrimary/70  border-border/50 dark:border-darkBorder text-black dark:text-white ">
+          <div className="size-12 rounded-xl center mb-4 mx-auto border bg-primary/5 border-primary/50 text-primary">
             <MailSendIcon />
           </div>
 
           {/* Heading */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-semibold mb-2 dark:text-white text-black">
+            <h1 className="text-2xl font-semibold mb-2 text-foreground">
               Forgot Password
             </h1>
-            <p className="text-sm text-text6 dark:text-text5/70">
+            <p className="text-sm text-muted-foreground">
               {sent
                 ? "Check your inbox and follow the link to set a new password. Taking you back to sign in…"
                 : "Enter your email and we'll send you a password reset link."}
@@ -113,17 +113,20 @@ export default function ForgotPasswordForm() {
 
           {/* Form */}
           <form className="space-y-5" onSubmit={handleEmailSubmit} noValidate>
-            <Input
-              label="Email address"
-              name="email"
-              type="text"
-              inputMode="email"
-              value={values.email}
-              onChange={handleEmailChange}
-              error={errors.email}
-              placeholder="you@example.com"
-              fullWidth
-            />
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                name="email"
+                type="text"
+                inputMode="email"
+                value={values.email}
+                onChange={handleEmailChange}
+                aria-invalid={errors.email ? true : undefined}
+                placeholder="you@example.com"
+              />
+              {errors.email && <FieldError>{errors.email}</FieldError>}
+            </div>
 
             <Button
               type="submit"

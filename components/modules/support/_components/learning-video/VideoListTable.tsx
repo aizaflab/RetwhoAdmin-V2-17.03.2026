@@ -312,7 +312,6 @@ export default function VideoListTable({
               value={resourceFilter}
               onChange={(val) => setResourceFilter(val)}
               className="h-10 rounded-md bg-white dark:bg-darkBg"
-              arrowClass="size-6"
             />
           </div>
 
@@ -322,7 +321,6 @@ export default function VideoListTable({
               value={statusFilter}
               onChange={(val) => setStatusFilter(val)}
               className="h-10 rounded-md bg-white dark:bg-darkBg"
-              arrowClass="size-6"
             />
           </div>
 

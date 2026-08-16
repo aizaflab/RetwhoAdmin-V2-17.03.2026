@@ -12,9 +12,10 @@ export interface BlogPost {
   title: string;
   slug: string;
   categoryId: string;
-  bannerImage: string;
+  image: string;
   altText: string;
   imageTitle: string;
+  tags: string[];
   metaTitle: string;
   metaDescription: string;
   content: string;

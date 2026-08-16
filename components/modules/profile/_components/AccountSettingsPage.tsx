@@ -107,19 +107,19 @@ export default function AccountSettingsPage() {
       <div className="flex flex-col lg:flex-row gap-5">
         {/* ── Sidebar ── */}
         <div className="lg:w-64 shrink-0">
-          <div className="rounded-sm border border-text4/30 dark:border-darkBorder/50 bg-white dark:bg-darkBg overflow-hidden lg:sticky top-[90px] min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-110px)]">
+          <div className="rounded-sm border border-border/70 bg-card overflow-hidden lg:sticky top-[90px] min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-110px)]">
             {/* Mini profile atop sidebar */}
-            <div className="px-4 pt-4 pb-3 border-b border-primary/10 dark:border-darkBorder/40 bg-primary/10 dark:bg-darkPrimary/50 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white dark:bg-darkBorder/50 border border-gray-light dark:border-darkBorder/40 center shrink-0">
-                <span className="text-sm font-semibold text-primary dark:text-darkLight">
-                  AD
-                </span>
+            <div className="px-4 pt-4 pb-3 border-b border-primary/10 bg-primary/10 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-card border border-gray-light center shrink-0">
+                <span className="text-sm font-semibold text-primary">AD</span>
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-text6 dark:text-white truncate">
+                <p className="text-xs font-semibold text-foreground truncate">
                   Admin User
                 </p>
-                <p className="text-[10px] text-text5 truncate">Super Admin</p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  Super Admin
+                </p>
               </div>
             </div>
 
@@ -133,24 +133,24 @@ export default function AccountSettingsPage() {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 cursor-pointer group",
                       isActive
-                        ? "bg-primary/5 dark:bg-darkPrimary text-primary dark:text-darkLight"
-                        : "text-text6 dark:text-text5 hover:bg-gray-light/50 dark:hover:bg-darkPrimary",
+                        ? "bg-primary/5 text-primary"
+                        : "text-foreground hover:bg-gray-light/50",
                     )}
                   >
                     <div
                       className={cn(
                         "w-8 h-8 rounded-lg center shrink-0 transition-colors",
                         isActive
-                          ? "bg-primary/10 dark:bg-darkBorder/50"
-                          : "bg-gray-light dark:bg-darkPrimary/70 group-hover:bg-primary/10 dark:group-hover:bg-darkBorder/50",
+                          ? "bg-primary/10"
+                          : "bg-gray-light group-hover:bg-primary/10",
                       )}
                     >
                       <tab.icon
                         className={cn(
                           "w-4 h-4",
                           isActive
-                            ? "text-primary dark:text-darkLight"
-                            : "text-text5 group-hover:text-primary dark:group-hover:text-darkLight",
+                            ? "text-primary"
+                            : "text-muted-foreground group-hover:text-primary",
                         )}
                       />
                     </div>
@@ -158,12 +158,12 @@ export default function AccountSettingsPage() {
                       <p
                         className={cn(
                           "text-xs font-semibold",
-                          isActive ? "text-primary dark:text-darkLight" : "",
+                          isActive ? "text-primary" : "",
                         )}
                       >
                         {tab.label}
                       </p>
-                      <p className="text-[10px] text-text5 truncate hidden sm:block">
+                      <p className="text-[10px] text-muted-foreground truncate hidden sm:block">
                         {tab.desc}
                       </p>
                     </div>
@@ -179,24 +179,24 @@ export default function AccountSettingsPage() {
 
         {/* ── Content Panel ── */}
         <div className="flex-1 min-w-0">
-          <div className="rounded-lg border border-text4/30 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-3 sm:p-5">
+          <div className="rounded-lg border border-border/70 bg-card p-3 sm:p-5">
             {/* Panel header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
               <div>
-                <h2 className="text-lg font-semibold text-black dark:text-white flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                   <activeTabMeta.icon className="w-5 h-5 text-primary" />
                   {activeTabMeta.label}
                 </h2>
-                <p className="text-xs text-text5 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {activeTabMeta.desc}
                 </p>
               </div>
 
               {/* Right Side: Platform Status & Quick Link */}
               <div className="flex items-center gap-3">
-                <div className="hidden md:flex flex-col items-end bg-gray-light/30 dark:bg-darkPrimary/20 px-3 py-1.5 rounded-md border border-border/30 dark:border-darkBorder/30">
+                <div className="hidden md:flex flex-col items-end bg-gray-light/30 px-3 py-1.5 rounded-md border border-border/30">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-semibold text-text6 dark:text-text4 uppercase tracking-tighter">
+                    <span className="text-[10px] font-semibold text-foreground uppercase tracking-tighter">
                       Retwho Systems
                     </span>
                     <div className="flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
@@ -207,15 +207,15 @@ export default function AccountSettingsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <Activity className="w-2.5 h-2.5 text-text5" />
-                    <p className="text-[9px] text-text5">
+                    <Activity className="w-2.5 h-2.5 text-muted-foreground" />
+                    <p className="text-[9px] text-muted-foreground">
                       Last synced: Just now
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="h-px bg-border/40 dark:bg-darkBorder/40 mb-5" />
+            <div className="h-px bg-border/40 mb-5" />
 
             {/* Active panel */}
             {renderPanel()}

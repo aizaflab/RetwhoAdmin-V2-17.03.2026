@@ -2,9 +2,28 @@
 
 import { useState } from "react";
 import { BlogCategory } from "../_types/blog.types";
-import { Input, Modal } from "@/components/ui";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Dialog,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Input,
+} from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+  type SelectOption,
+} from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+];
 
 interface BlogCategoryModalProps {
   category: BlogCategory | null;
@@ -88,7 +107,7 @@ export default function BlogCategoryModal({
   };
 
   return (
-    <Modal
+    <Dialog
       open
       onClose={onClose}
       title={category ? "Edit Category" : "Add Category"}
@@ -103,7 +122,11 @@ export default function BlogCategoryModal({
           >
             Cancel
           </Button>
-          <Button type="submit" className="flex-1 h-10">
+          <Button
+            type="submit"
+            form="blog-category-form"
+            className="flex-1 h-10"
+          >
             {category ? "Save Changes" : "Create Category"}
           </Button>
         </div>
@@ -114,46 +137,79 @@ export default function BlogCategoryModal({
         onSubmit={handleSubmit}
         className="space-y-4"
       >
-        <Input
-          label="Category Name"
-          placeholder="e.g. Technology"
-          value={formData.name}
-          onValueChange={handleNameChange}
-          error={errors.name}
-          requiredSign
-          className="dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel htmlFor="category-name">
+            Category Name
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="category-name"
+            name="name"
+            placeholder="e.g. Technology"
+            value={formData.name}
+            onValueChange={handleNameChange}
+            aria-invalid={errors.name ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.name && <FieldError>{errors.name}</FieldError>}
+        </Field>
 
-        <Input
-          label="Slug"
-          placeholder="e.g. technology"
-          value={formData.slug}
-          onValueChange={(val) => {
-            setFormData((prev) => ({ ...prev, slug: val }));
-            if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
-          }}
-          error={errors.slug}
-          requiredSign
-          helperText="URL-friendly string. Will auto-generate if left empty during typing."
-          className="dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel htmlFor="category-slug">
+            Slug
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="category-slug"
+            name="slug"
+            placeholder="e.g. technology"
+            value={formData.slug}
+            onValueChange={(val) => {
+              setFormData((prev) => ({ ...prev, slug: val }));
+              if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
+            }}
+            aria-invalid={errors.slug ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.slug ? (
+            <FieldError>{errors.slug}</FieldError>
+          ) : (
+            <FieldDescription>
+              URL-friendly string. Auto-generated from the name while typing.
+            </FieldDescription>
+          )}
+        </Field>
 
-        <Select
-          label="Status"
-          options={[
-            { label: "Active", value: "active" },
-            { label: "Inactive", value: "inactive" },
-          ]}
-          value={formData.status}
-          onValueChange={(val) =>
-            setFormData((prev) => ({
-              ...prev,
-              status: val as "active" | "inactive",
-            }))
-          }
-          className="w-full dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel id="category-status-label" htmlFor="category-status">
+            Status
+          </FieldLabel>
+          <Select
+            id="category-status"
+            value={formData.status}
+            onValueChange={(val) =>
+              setFormData((prev) => ({
+                ...prev,
+                status: val as "active" | "inactive",
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue
+                placeholder="Select status"
+                options={STATUS_OPTIONS}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItems options={STATUS_OPTIONS} />
+            </SelectContent>
+          </Select>
+        </Field>
       </form>
-    </Modal>
+    </Dialog>
   );
 }

@@ -9,9 +9,6 @@ import { UserListTable, MOCK_USERS } from "@/components/modules/users";
 
 export default function ManageUsersPage() {
   const user = useCurrentAccess();
-
-  // Filter mock users to only show active users for the Manage Users page
-  // Inactive users have their own dedicated page
   const activeUsers = MOCK_USERS.filter(
     (u) => u.status === "active" && !u.isDeleted,
   );

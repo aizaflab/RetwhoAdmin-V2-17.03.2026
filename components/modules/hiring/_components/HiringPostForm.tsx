@@ -8,11 +8,17 @@ import {
   JobType,
   SalaryType,
 } from "../_types/hiring.types";
-import { Input } from "@/components/ui";
+import { Field, FieldError, FieldLabel, Input } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+  type SelectOption,
+} from "@/components/ui/select/Select";
 import { useRouter } from "next/navigation";
-import TextEditor from "@/components/ui/editor/TextEditor";
 import {
   CloudUploadIcon,
   Building2,
@@ -22,11 +28,11 @@ import {
   Users,
   X,
   Plus,
-  Calendar,
 } from "lucide-react";
 import Image from "next/image";
 import { MoveLeft } from "lucide-react";
-import { HugeCalender } from "@/components/ui/calender/HugeCalender";
+import TextEditor from "@/components/ui/editor/TextEditor";
+import { HugeCalender } from "@/components/ui/calendar/HugeCalender";
 
 interface HiringPostFormProps {
   initialData?: HiringPost | null;
@@ -58,7 +64,7 @@ const STATUS_OPTIONS: { value: HiringStatus; label: string }[] = [
   { value: "closed", label: "Closed" },
 ];
 
-const CURRENCY_OPTIONS = [
+const CURRENCY_OPTIONS: SelectOption[] = [
   { value: "BDT", label: "BDT (৳)" },
   { value: "USD", label: "USD ($)" },
   { value: "EUR", label: "EUR (€)" },
@@ -202,10 +208,9 @@ export default function HiringPostForm({
     label: `${c.name} (${c.type})`,
   }));
 
-  const sectionClass =
-    "bg-white dark:bg-darkBg rounded-lg border border-border/50 dark:border-darkBorder/80";
+  const sectionClass = "bg-card rounded-lg border border-border/50";
   const sectionTitle =
-    "bg-border/20 dark:bg-darkBorder/20 p-3 font-semibold text-black dark:text-white flex items-center gap-2 rounded-t-lg";
+    "bg-border/20 p-3 font-semibold text-foreground flex items-center gap-2 rounded-t-lg";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -214,15 +219,15 @@ export default function HiringPostForm({
         <button
           type="button"
           onClick={() => router.back()}
-          className="size-9 center rounded-lg bg-white dark:bg-darkPrimary border border-border/50 dark:border-darkBorder/50 hover:bg-gray-50 dark:hover:bg-darkBorder/40 cursor-pointer shrink-0"
+          className="size-9 center rounded-lg bg-popover border border-border/50 hover:bg-muted/50 cursor-pointer shrink-0"
         >
-          <MoveLeft className="w-5 h-5 text-black dark:text-white" />
+          <MoveLeft className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex-1">
-          <h1 className="sm:text-[22px] text-lg font-medium text-black dark:text-white">
+          <h1 className="sm:text-[22px] text-lg font-medium text-foreground">
             {initialData ? "Edit Hiring Post" : "Add New Hiring Post"}
           </h1>
-          <p className="text-xs text-text5 mt-0.5 hidden sm:block">
+          <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
             Fill in all details carefully. Fields marked * are required.
           </p>
         </div>
@@ -231,7 +236,7 @@ export default function HiringPostForm({
             type="button"
             variant="outline"
             onClick={() => router.back()}
-            className="h-10 px-5 text-gray-500"
+            className="h-10 px-5 text-muted-foreground"
           >
             Cancel
           </Button>
@@ -255,49 +260,86 @@ export default function HiringPostForm({
               Basic Information
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 sm:p-5">
-              <div className="sm:col-span-2">
+              <Field className="sm:col-span-2">
+                <FieldLabel htmlFor="hiring-title">
+                  Job / Service Title
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
                 <Input
-                  label="Job / Service Title *"
+                  id="hiring-title"
+                  name="title"
                   placeholder="e.g. Senior Full-Stack Developer"
                   value={formData.title}
                   onValueChange={(v) => {
                     set("title", v);
                     if (errors.title) setErrors((p) => ({ ...p, title: "" }));
                   }}
-                  error={errors.title}
-                  fullWidth
-                  className="dark:border-darkBorder dark:focus:border-darkLight/50"
+                  aria-invalid={errors.title ? true : undefined}
+                  className="bg-transparent"
                 />
-              </div>
-              <Input
-                label="Company / Organization Name *"
-                placeholder="e.g. TechVentures Ltd."
-                value={formData.companyName}
-                onValueChange={(v) => {
-                  set("companyName", v);
-                  if (errors.companyName)
-                    setErrors((p) => ({ ...p, companyName: "" }));
-                }}
-                error={errors.companyName}
-                fullWidth
-                className="dark:border-darkBorder"
-              />
+                {errors.title && <FieldError>{errors.title}</FieldError>}
+              </Field>
 
-              <div>
+              <Field>
+                <FieldLabel htmlFor="hiring-company">
+                  Company / Organization Name
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
+                <Input
+                  id="hiring-company"
+                  name="companyName"
+                  placeholder="e.g. TechVentures Ltd."
+                  value={formData.companyName}
+                  onValueChange={(v) => {
+                    set("companyName", v);
+                    if (errors.companyName)
+                      setErrors((p) => ({ ...p, companyName: "" }));
+                  }}
+                  aria-invalid={errors.companyName ? true : undefined}
+                  className="bg-transparent"
+                />
+                {errors.companyName && (
+                  <FieldError>{errors.companyName}</FieldError>
+                )}
+              </Field>
+
+              <Field>
+                <FieldLabel
+                  id="hiring-category-label"
+                  htmlFor="hiring-category"
+                >
+                  Category
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
                 <Select
-                  label="Category *"
-                  options={categoryOptions}
+                  id="hiring-category"
                   value={formData.categoryId}
                   onValueChange={(v) => {
                     set("categoryId", v);
                     if (errors.categoryId)
                       setErrors((p) => ({ ...p, categoryId: "" }));
                   }}
-                  error={errors.categoryId}
-                  className="w-full"
-                  fieldClass="h-[42px]!"
-                />
-              </div>
+                >
+                  <SelectTrigger error={!!errors.categoryId}>
+                    <SelectValue
+                      placeholder="Select a category"
+                      options={categoryOptions}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItems options={categoryOptions} />
+                  </SelectContent>
+                </Select>
+                {errors.categoryId && (
+                  <FieldError>{errors.categoryId}</FieldError>
+                )}
+              </Field>
             </div>
           </div>
 
@@ -308,9 +350,16 @@ export default function HiringPostForm({
               Location Details
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-3 sm:p-5">
-              <div className="sm:col-span-3">
+              <Field className="sm:col-span-3">
+                <FieldLabel htmlFor="hiring-address">
+                  Address
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
                 <Input
-                  label="Address *"
+                  id="hiring-address"
+                  name="address"
                   placeholder="e.g. 123 Tech Park, Gulshan-2"
                   value={formData.address}
                   onValueChange={(v) => {
@@ -318,41 +367,69 @@ export default function HiringPostForm({
                     if (errors.address)
                       setErrors((p) => ({ ...p, address: "" }));
                   }}
-                  error={errors.address}
-                  fullWidth
-                  className="dark:border-darkBorder"
+                  aria-invalid={errors.address ? true : undefined}
+                  className="bg-transparent"
                 />
-              </div>
-              <Input
-                label="City *"
-                placeholder="e.g. Dhaka"
-                value={formData.city}
-                onValueChange={(v) => {
-                  set("city", v);
-                  if (errors.city) setErrors((p) => ({ ...p, city: "" }));
-                }}
-                error={errors.city}
-                fullWidth
-                className="dark:border-darkBorder"
-              />
-              <Input
-                label="Country"
-                placeholder="e.g. Bangladesh"
-                value={formData.country}
-                onValueChange={(v) => set("country", v)}
-                fullWidth
-                className="dark:border-darkBorder"
-              />
-              <div>
+                {errors.address && <FieldError>{errors.address}</FieldError>}
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="hiring-city">
+                  City
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
+                <Input
+                  id="hiring-city"
+                  name="city"
+                  placeholder="e.g. Dhaka"
+                  value={formData.city}
+                  onValueChange={(v) => {
+                    set("city", v);
+                    if (errors.city) setErrors((p) => ({ ...p, city: "" }));
+                  }}
+                  aria-invalid={errors.city ? true : undefined}
+                  className="bg-transparent"
+                />
+                {errors.city && <FieldError>{errors.city}</FieldError>}
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="hiring-country">Country</FieldLabel>
+                <Input
+                  id="hiring-country"
+                  name="country"
+                  placeholder="e.g. Bangladesh"
+                  value={formData.country}
+                  onValueChange={(v) => set("country", v)}
+                  className="bg-transparent"
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel
+                  id="hiring-job-type-label"
+                  htmlFor="hiring-job-type"
+                >
+                  Job Type
+                </FieldLabel>
                 <Select
-                  label="Job Type"
-                  options={JOB_TYPE_OPTIONS}
+                  id="hiring-job-type"
                   value={formData.jobType}
                   onValueChange={(v) => set("jobType", v)}
-                  className="w-full"
-                  fieldClass="h-[42px]!"
-                />
-              </div>
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder="Select job type"
+                      options={JOB_TYPE_OPTIONS}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItems options={JOB_TYPE_OPTIONS} />
+                  </SelectContent>
+                </Select>
+              </Field>
             </div>
           </div>
 
@@ -363,49 +440,94 @@ export default function HiringPostForm({
               Compensation & Salary
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 p-3 sm:p-5">
-              <div className="col-span-2 sm:col-span-1">
+              <Field className="col-span-2 sm:col-span-1">
+                <FieldLabel
+                  id="hiring-currency-label"
+                  htmlFor="hiring-currency"
+                >
+                  Currency
+                </FieldLabel>
                 <Select
-                  label="Currency"
-                  options={CURRENCY_OPTIONS}
+                  id="hiring-currency"
                   value={formData.currency}
                   onValueChange={(v) => set("currency", v)}
-                  className="w-full"
-                  fieldClass="h-[42px]!"
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder="Select currency"
+                      options={CURRENCY_OPTIONS}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItems options={CURRENCY_OPTIONS} />
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="hiring-salary-min">
+                  Minimum Salary
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
+                <Input
+                  id="hiring-salary-min"
+                  name="salaryMin"
+                  type="number"
+                  placeholder="e.g. 50000"
+                  value={formData.salaryMin}
+                  onValueChange={(v) => {
+                    set("salaryMin", v);
+                    if (errors.salaryMin)
+                      setErrors((p) => ({ ...p, salaryMin: "" }));
+                  }}
+                  aria-invalid={errors.salaryMin ? true : undefined}
+                  className="bg-transparent"
                 />
-              </div>
-              <Input
-                label="Minimum Salary *"
-                type="number"
-                placeholder="e.g. 50000"
-                value={formData.salaryMin}
-                onValueChange={(v) => {
-                  set("salaryMin", v);
-                  if (errors.salaryMin)
-                    setErrors((p) => ({ ...p, salaryMin: "" }));
-                }}
-                error={errors.salaryMin}
-                fullWidth
-                className="dark:border-darkBorder"
-              />
-              <Input
-                label="Maximum Salary"
-                type="number"
-                placeholder="e.g. 80000"
-                value={formData.salaryMax}
-                onValueChange={(v) => set("salaryMax", v)}
-                fullWidth
-                className="dark:border-darkBorder"
-              />
-              <div>
+                {errors.salaryMin && (
+                  <FieldError>{errors.salaryMin}</FieldError>
+                )}
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="hiring-salary-max">
+                  Maximum Salary
+                </FieldLabel>
+                <Input
+                  id="hiring-salary-max"
+                  name="salaryMax"
+                  type="number"
+                  placeholder="e.g. 80000"
+                  value={formData.salaryMax}
+                  onValueChange={(v) => set("salaryMax", v)}
+                  className="bg-transparent"
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel
+                  id="hiring-salary-type-label"
+                  htmlFor="hiring-salary-type"
+                >
+                  Salary Type
+                </FieldLabel>
                 <Select
-                  label="Salary Type"
-                  options={SALARY_TYPE_OPTIONS}
+                  id="hiring-salary-type"
                   value={formData.salaryType}
                   onValueChange={(v) => set("salaryType", v)}
-                  className="w-full"
-                  fieldClass="h-[42px]!"
-                />
-              </div>
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder="Select salary type"
+                      options={SALARY_TYPE_OPTIONS}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItems options={SALARY_TYPE_OPTIONS} />
+                  </SelectContent>
+                </Select>
+              </Field>
             </div>
           </div>
 
@@ -416,34 +538,46 @@ export default function HiringPostForm({
               Experience & Education
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 sm:p-5">
-              <Input
-                label="Experience Required"
-                placeholder="e.g. 3-5 years"
-                value={formData.experience}
-                onValueChange={(v) => set("experience", v)}
-                fullWidth
-                className="dark:border-darkBorder"
-              />
-              <Input
-                label="Education Level"
-                placeholder="e.g. Bachelor's in CSE"
-                value={formData.education}
-                onValueChange={(v) => set("education", v)}
-                fullWidth
-                className="dark:border-darkBorder"
-              />
+              <Field>
+                <FieldLabel htmlFor="hiring-experience">
+                  Experience Required
+                </FieldLabel>
+                <Input
+                  id="hiring-experience"
+                  name="experience"
+                  placeholder="e.g. 3-5 years"
+                  value={formData.experience}
+                  onValueChange={(v) => set("experience", v)}
+                  className="bg-transparent"
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="hiring-education">
+                  Education Level
+                </FieldLabel>
+                <Input
+                  id="hiring-education"
+                  name="education"
+                  placeholder="e.g. Bachelor's in CSE"
+                  value={formData.education}
+                  onValueChange={(v) => set("education", v)}
+                  className="bg-transparent"
+                />
+              </Field>
             </div>
 
             {/* Skills / Tags */}
             <div className="p-3 sm:p-5 pt-0 sm:pt-0">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">
+              <FieldLabel htmlFor="hiring-skills" className="mb-1.5">
                 Required Skills
-              </label>
+              </FieldLabel>
               <div className="flex gap-2">
-                <input
-                  type="text"
+                <Input
+                  id="hiring-skills"
+                  name="skills"
                   value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
+                  onValueChange={setSkillInput}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -451,7 +585,7 @@ export default function HiringPostForm({
                     }
                   }}
                   placeholder="Type a skill and press Enter..."
-                  className="flex-1 h-10 px-3 text-sm rounded-md border border-border dark:border-darkBorder bg-white dark:bg-darkPrimary text-black dark:text-white placeholder:text-gray-400 outline-none focus:border-primary transition-colors"
+                  className="flex-1 bg-transparent"
                 />
                 <Button
                   type="button"
@@ -467,7 +601,7 @@ export default function HiringPostForm({
                   {formData.skills.map((s) => (
                     <span
                       key={s}
-                      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary dark:text-blue-300 border border-primary/20"
+                      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20"
                     >
                       {s}
                       <button
@@ -485,14 +619,15 @@ export default function HiringPostForm({
           </div>
 
           <div className={`${sectionClass} p-3 sm:p-5`}>
-            <label className="text-sm font-semibold text-black dark:text-white block mb-2.5">
+            <FieldLabel htmlFor="hiring-requirements" className="mb-2.5">
               Requirements
-            </label>
+            </FieldLabel>
             <div className="flex gap-2">
-              <input
-                type="text"
+              <Input
+                id="hiring-requirements"
+                name="requirements"
                 value={reqInput}
-                onChange={(e) => setReqInput(e.target.value)}
+                onValueChange={setReqInput}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -500,7 +635,7 @@ export default function HiringPostForm({
                   }
                 }}
                 placeholder="Type a requirement and press Enter..."
-                className="flex-1 h-10 px-3 text-sm rounded-md border border-border dark:border-darkBorder bg-white dark:bg-darkPrimary text-black dark:text-white placeholder:text-gray-400 outline-none focus:border-primary transition-colors"
+                className="flex-1 bg-transparent"
               />
               <Button
                 type="button"
@@ -516,13 +651,13 @@ export default function HiringPostForm({
                 {formData.requirements.map((r, i) => (
                   <div
                     key={i}
-                    className="flex justify-between items-center bg-gray-50 dark:bg-darkBorder/40 border border-border/50 dark:border-darkBorder/50 rounded-md px-3 py-2 text-sm text-black dark:text-white"
+                    className="flex justify-between items-center bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm text-foreground"
                   >
                     <span>{r}</span>
                     <button
                       type="button"
                       onClick={() => removeRequirement(r)}
-                      className="hover:bg-red-500 hover:text-white text-gray-500 rounded-md p-1 transition-colors cursor-pointer"
+                      className="hover:bg-destructive hover:text-destructive-foreground text-muted-foreground rounded-md p-1 transition-colors cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -533,14 +668,15 @@ export default function HiringPostForm({
           </div>
 
           <div className={`${sectionClass} p-3 sm:p-5`}>
-            <label className="text-sm font-semibold text-black dark:text-white block mb-2.5">
-              Benefits & Perks
-            </label>
+            <FieldLabel htmlFor="hiring-benefits" className="mb-2.5">
+              Benefits &amp; Perks
+            </FieldLabel>
             <div className="flex gap-2">
-              <input
-                type="text"
+              <Input
+                id="hiring-benefits"
+                name="benefits"
                 value={benefitInput}
-                onChange={(e) => setBenefitInput(e.target.value)}
+                onValueChange={setBenefitInput}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -548,7 +684,7 @@ export default function HiringPostForm({
                   }
                 }}
                 placeholder="Type a benefit/perk and press Enter..."
-                className="flex-1 h-10 px-3 text-sm rounded-md border border-border dark:border-darkBorder bg-white dark:bg-darkPrimary text-black dark:text-white placeholder:text-gray-400 outline-none focus:border-primary transition-colors"
+                className="flex-1 bg-transparent"
               />
               <Button
                 type="button"
@@ -564,13 +700,13 @@ export default function HiringPostForm({
                 {formData.benefits.map((b, i) => (
                   <div
                     key={i}
-                    className="flex justify-between items-center bg-gray-50 dark:bg-darkBorder/40 border border-border/50 dark:border-darkBorder/50 rounded-md px-3 py-2 text-sm text-black dark:text-white"
+                    className="flex justify-between items-center bg-muted/50 border border-border/50 rounded-md px-3 py-2 text-sm text-foreground"
                   >
                     <span>{b}</span>
                     <button
                       type="button"
                       onClick={() => removeBenefit(b)}
-                      className="hover:bg-red-500 hover:text-white text-gray-500 rounded-md p-1 transition-colors cursor-pointer"
+                      className="hover:bg-destructive hover:text-destructive-foreground text-muted-foreground rounded-md p-1 transition-colors cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -582,9 +718,12 @@ export default function HiringPostForm({
 
           {/* Rich-Text Sections */}
           <div className={`${sectionClass} p-3 sm:p-5`}>
-            <label className="text-sm font-semibold text-black dark:text-white block mb-2.5">
-              Job Description *
-            </label>
+            <FieldLabel className="mb-2.5">
+              Job Description
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
+            </FieldLabel>
             <TextEditor
               value={formData.description}
               onChange={(v) => {
@@ -595,7 +734,7 @@ export default function HiringPostForm({
               placeholder="Describe the role, responsibilities, and what the candidate will do..."
             />
             {errors.description && (
-              <p className="text-xs text-red-500 mt-1">{errors.description}</p>
+              <FieldError className="mt-1">{errors.description}</FieldError>
             )}
           </div>
         </div>
@@ -610,29 +749,49 @@ export default function HiringPostForm({
             </h2>
 
             <div className="sm:p-5 p-3 space-y-4">
-              <Select
-                label="Status"
-                options={STATUS_OPTIONS}
-                value={formData.status}
-                onValueChange={(v) => set("status", v)}
-                className="w-full"
-                fieldClass="h-[42px]!"
-              />
+              <Field>
+                <FieldLabel id="hiring-status-label" htmlFor="hiring-status">
+                  Status
+                </FieldLabel>
+                <Select
+                  id="hiring-status"
+                  value={formData.status}
+                  onValueChange={(v) => set("status", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder="Select status"
+                      options={STATUS_OPTIONS}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItems options={STATUS_OPTIONS} />
+                  </SelectContent>
+                </Select>
+              </Field>
 
-              <Input
-                label="Number of Openings"
-                type="number"
-                placeholder="e.g. 2"
-                value={formData.openings}
-                onValueChange={(v) => set("openings", v)}
-                fullWidth
-                className="dark:border-darkBorder"
-              />
+              <Field>
+                <FieldLabel htmlFor="hiring-openings">
+                  Number of Openings
+                </FieldLabel>
+                <Input
+                  id="hiring-openings"
+                  name="openings"
+                  type="number"
+                  placeholder="e.g. 2"
+                  value={formData.openings}
+                  onValueChange={(v) => set("openings", v)}
+                  className="bg-transparent"
+                />
+              </Field>
 
               {/* Application Deadline */}
-              <div>
+              <Field>
+                <FieldLabel htmlFor="hiring-deadline">
+                  Application Deadline
+                </FieldLabel>
                 <HugeCalender
-                  label="Application Deadline"
+                  id="hiring-deadline"
                   value={{
                     start: formData.deadline
                       ? new Date(formData.deadline)
@@ -653,10 +812,10 @@ export default function HiringPostForm({
                     )
                   }
                   fullWidth
-                  inputClass="w-full h-11"
+                  inputClass="w-full h-10 bg-transparent"
                   align="right"
                 />
-              </div>
+              </Field>
             </div>
           </div>
 
@@ -664,11 +823,11 @@ export default function HiringPostForm({
           <div className={sectionClass}>
             <h2 className={sectionTitle}>Company Logo</h2>
 
-            <div className=" p-3 sm:p-5">
+            <div className="p-3 sm:p-5">
               <div
                 role="button"
                 onClick={() => logoInputRef.current?.click()}
-                className="relative border-2 border-dashed border-border dark:border-darkBorder rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors min-h-36 overflow-hidden"
+                className="relative border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors min-h-36 overflow-hidden"
               >
                 <input
                   type="file"
@@ -698,11 +857,11 @@ export default function HiringPostForm({
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-center p-4">
-                    <CloudUploadIcon className="w-8 h-8 text-text5" />
-                    <p className="text-xs text-text5">
+                    <CloudUploadIcon className="w-8 h-8 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
                       <span className="text-primary">Click to upload</span> logo
                     </p>
-                    <p className="text-[10px] text-text5">
+                    <p className="text-[10px] text-muted-foreground">
                       PNG, JPG (square preferred)
                     </p>
                   </div>
@@ -714,11 +873,11 @@ export default function HiringPostForm({
           {/* Banner / Cover Image */}
           <div className={sectionClass}>
             <h2 className={sectionTitle}>Cover / Banner Image</h2>
-            <div className=" p-3 sm:p-5">
+            <div className="p-3 sm:p-5">
               <div
                 role="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="relative border-2 border-dashed border-border dark:border-darkBorder rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors min-h-40 overflow-hidden"
+                className="relative border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors min-h-40 overflow-hidden"
               >
                 <input
                   type="file"
@@ -748,12 +907,12 @@ export default function HiringPostForm({
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-center p-4">
-                    <CloudUploadIcon className="w-8 h-8 text-text5" />
-                    <p className="text-xs text-text5">
+                    <CloudUploadIcon className="w-8 h-8 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
                       <span className="text-primary">Click to upload</span>{" "}
                       banner
                     </p>
-                    <p className="text-[10px] text-text5">
+                    <p className="text-[10px] text-muted-foreground">
                       1200 × 630px recommended
                     </p>
                   </div>

@@ -1,432 +1,648 @@
 "use client";
 
 import React, {
-  useState,
-  useRef,
-  useLayoutEffect,
   createContext,
-  useContext,
   ReactNode,
-  forwardRef,
-  useEffect,
   useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
+import { AnimatePresence, HTMLMotionProps, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 
-type TooltipPosition =
-  | "top"
-  | "topLeft"
-  | "topRight"
-  | "bottom"
-  | "bottomLeft"
-  | "bottomRight"
-  | "left"
-  | "leftTop"
-  | "leftBottom"
-  | "right"
-  | "rightTop"
-  | "rightBottom";
+// ── Types
 
-type TooltipSize = "sm" | "md" | "lg";
-type TooltipTriggerType = "hover" | "click" | "focus" | "contextMenu";
+export type TooltipSide = "top" | "bottom" | "left" | "right";
+export type TooltipAlign = "start" | "center" | "end";
+export type TooltipSize = "sm" | "md" | "lg";
+export type TooltipRadius = "none" | "sm" | "md" | "lg" | "full";
+export type TooltipVariant =
+  | "default"
+  | "primary"
+  | "success"
+  | "warning"
+  | "destructive"
+  | "info";
+export type TooltipTriggerType = "hover" | "click" | "focus" | "contextMenu";
 
-interface TooltipCoords {
-  top: number;
-  left: number;
-  originX: string;
-  originY: string;
+const VARIANT: Record<TooltipVariant, { bubble: string; arrow: string }> = {
+  default: {
+    bubble: "bg-muted text-popover-foreground border-border",
+    arrow: "bg-muted border-border",
+  },
+  primary: {
+    bubble: "bg-primary text-primary-foreground border-transparent",
+    arrow: "bg-primary border-transparent",
+  },
+  success: {
+    bubble: "bg-success text-white border-transparent",
+    arrow: "bg-success border-transparent",
+  },
+  warning: {
+    bubble: "bg-warning text-black border-transparent",
+    arrow: "bg-warning border-transparent",
+  },
+  destructive: {
+    bubble: "bg-destructive text-destructive-foreground border-transparent",
+    arrow: "bg-destructive border-transparent",
+  },
+  info: {
+    bubble: "bg-info text-white border-transparent",
+    arrow: "bg-info border-transparent",
+  },
+};
+
+const RADIUS: Record<TooltipRadius, string> = {
+  none: "rounded-none",
+  sm: "rounded-sm",
+  md: "rounded-md",
+  lg: "rounded-lg",
+  full: "rounded-full",
+};
+
+const SIZE_CLASS: Record<TooltipSize, string> = {
+  sm: "px-2 py-1 text-[11px]",
+  md: "px-3 py-1.5 text-xs",
+  lg: "px-4 py-2 text-sm",
+};
+
+/**
+ * True when focus landed via the keyboard (`:focus-visible`). Lets a hover/focus
+ * tooltip open on Tab-focus, while ignoring the programmatic focus a modal
+ * restores to its opener when it closes — which would otherwise re-show the
+ * tooltip after the user already dismissed it.
+ */
+function isKeyboardFocus(el: EventTarget | null): boolean {
+  if (!(el instanceof Element) || typeof el.matches !== "function") return true;
+  try {
+    return el.matches(":focus-visible");
+  } catch {
+    // Older browsers without :focus-visible — keep the previous behavior.
+    return true;
+  }
 }
+
+const escHandlers = new Set<() => void>();
+
+function onGlobalEscape(e: KeyboardEvent) {
+  if (e.key === "Escape") [...escHandlers].forEach((h) => h());
+}
+
+function registerEscape(handler: () => void) {
+  if (escHandlers.size === 0)
+    document.addEventListener("keydown", onGlobalEscape);
+  escHandlers.add(handler);
+  return () => {
+    escHandlers.delete(handler);
+    if (escHandlers.size === 0)
+      document.removeEventListener("keydown", onGlobalEscape);
+  };
+}
+
+// ── Context
 
 interface TooltipContextType {
   isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
+  setOpen: (v: boolean) => void;
+  show: () => void;
+  hide: () => void;
+  trigger: TooltipTriggerType;
   triggerRef: React.RefObject<HTMLElement | null>;
   contentRef: React.RefObject<HTMLDivElement | null>;
-  position: TooltipPosition;
-  trigger: TooltipTriggerType;
-  delayDuration: number;
   color?: string;
+  variant: TooltipVariant;
   showArrow: boolean;
+  tooltipId: string;
 }
 
 const TooltipContext = createContext<TooltipContextType | null>(null);
 
 function useTooltip() {
-  const context = useContext(TooltipContext);
-  if (!context) {
-    throw new Error("Tooltip components must be used within <Tooltip>");
-  }
-  return context;
+  const ctx = useContext(TooltipContext);
+  if (!ctx) throw new Error("Must be used within <Tooltip>");
+  return ctx;
 }
+
+// ── Position math
+
+const FLIP: Record<TooltipSide, TooltipSide> = {
+  top: "bottom",
+  bottom: "top",
+  left: "right",
+  right: "left",
+};
+
+// Extracted to module scope — no closure allocation on every scroll/resize event.
+function computePosition(
+  r: DOMRect,
+  cW: number,
+  cH: number,
+  s: TooltipSide,
+  align: TooltipAlign,
+  offset: number,
+): { top: number; left: number; ox: string; oy: string } {
+  const top =
+    s === "top"
+      ? r.top - cH - offset
+      : s === "bottom"
+        ? r.bottom + offset
+        : align === "start"
+          ? r.top
+          : align === "end"
+            ? r.bottom - cH
+            : r.top + (r.height - cH) / 2;
+
+  const left =
+    s === "left"
+      ? r.left - cW - offset
+      : s === "right"
+        ? r.right + offset
+        : align === "start"
+          ? r.left
+          : align === "end"
+            ? r.right - cW
+            : r.left + (r.width - cW) / 2;
+
+  const ox =
+    s === "left"
+      ? "right"
+      : s === "right"
+        ? "left"
+        : align === "start"
+          ? "left"
+          : align === "end"
+            ? "right"
+            : "50%";
+
+  const oy = s === "top" ? "bottom" : s === "bottom" ? "top" : "50%";
+
+  return { top, left, ox, oy };
+}
+
+function isOffScreen(
+  c: { top: number; left: number },
+  s: TooltipSide,
+  cW: number,
+  cH: number,
+  vw: number,
+  vh: number,
+): boolean {
+  return (
+    (s === "top" && c.top < 0) ||
+    (s === "bottom" && c.top + cH > vh) ||
+    (s === "left" && c.left < 0) ||
+    (s === "right" && c.left + cW > vw)
+  );
+}
+
+function getCoords(
+  r: DOMRect,
+  cW: number,
+  cH: number,
+  side: TooltipSide,
+  align: TooltipAlign,
+  offset: number,
+): {
+  top: number;
+  left: number;
+  ox: string;
+  oy: string;
+  activeSide: TooltipSide;
+} {
+  const primary = computePosition(r, cW, cH, side, align, offset);
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  const needsFlip = isOffScreen(primary, side, cW, cH, vw, vh);
+  const activeSide = needsFlip ? FLIP[side] : side;
+  const flipped = needsFlip
+    ? computePosition(r, cW, cH, activeSide, align, offset)
+    : primary;
+  const { top, left, ox, oy } = isOffScreen(flipped, activeSide, cW, cH, vw, vh)
+    ? primary
+    : flipped;
+
+  return {
+    top: Math.max(4, Math.min(top, vh - cH - 4)),
+    left: Math.max(4, Math.min(left, vw - cW - 4)),
+    ox,
+    oy,
+    activeSide,
+  };
+}
+
+// ── Tooltip
 
 interface TooltipProps {
   children: ReactNode;
-  position?: TooltipPosition;
   delayDuration?: number;
+  closeDelay?: number;
   trigger?: TooltipTriggerType;
   color?: string;
+  variant?: TooltipVariant;
   showArrow?: boolean;
   defaultOpen?: boolean;
+  open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  disabled?: boolean;
 }
 
 function Tooltip({
   children,
-  position = "top",
   delayDuration = 100,
+  closeDelay = 0,
   trigger = "hover",
   color,
+  variant = "default",
   showArrow = true,
   defaultOpen = false,
+  open,
   onOpenChange,
-  disabled = false,
 }: TooltipProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internal, setInternal] = useState(defaultOpen);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internal;
+
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (!isControlled) setInternal(next);
+      onOpenChange?.(next);
+    },
+    [isControlled, onOpenChange],
+  );
+
   const triggerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const tooltipId = useId();
 
-  const effectiveIsOpen = disabled ? false : isOpen;
+  const show = useCallback(() => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setOpen(true), delayDuration);
+  }, [delayDuration, setOpen]);
 
-  const handleOpen = useCallback(() => {
-    if (disabled) return;
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      if (!disabled) {
-        setIsOpen(true);
-        onOpenChange?.(true);
-      }
-    }, delayDuration);
-  }, [delayDuration, onOpenChange, disabled]);
-
-  const handleClose = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsOpen(false);
-    onOpenChange?.(false);
-  }, [onOpenChange]);
+  const hide = useCallback(() => {
+    clearTimeout(timerRef.current);
+    if (closeDelay > 0) {
+      timerRef.current = setTimeout(() => setOpen(false), closeDelay);
+    } else {
+      setOpen(false);
+    }
+  }, [setOpen, closeDelay]);
 
   useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
+    if (!isOpen) return;
+    return registerEscape(() => setOpen(false));
+  }, [isOpen, setOpen]);
 
-  const eventHandlers = {
-    onMouseEnter: trigger === "hover" && !disabled ? handleOpen : undefined,
-    onMouseLeave: trigger === "hover" ? handleClose : undefined,
-    onClick:
-      trigger === "click" && !disabled
-        ? () => setIsOpen((prev) => !prev)
-        : undefined,
-    onFocus: trigger === "focus" && !disabled ? handleOpen : undefined,
-    onBlur: trigger === "focus" ? handleClose : undefined,
+  useEffect(() => {
+    if (!isOpen || (trigger !== "click" && trigger !== "contextMenu")) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (
+        !triggerRef.current?.contains(e.target as Node) &&
+        !contentRef.current?.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [isOpen, trigger, setOpen, triggerRef, contentRef]);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+  const handleFocus = useCallback(
+    (e: React.FocusEvent) => {
+      // Only keyboard focus should open the tooltip. Skip the programmatic focus
+      // a modal restores to its trigger on close, so the tooltip doesn't reopen
+      // on its own after being dismissed.
+      if (isKeyboardFocus(e.target)) show();
+    },
+    [show],
+  );
+
+  const handlers = {
+    onMouseEnter: trigger === "hover" ? show : undefined,
+    onMouseLeave: trigger === "hover" ? hide : undefined,
+    onClick: trigger === "click" ? () => setOpen(!isOpen) : undefined,
+    onFocus:
+      trigger === "hover" || trigger === "focus" ? handleFocus : undefined,
+    onBlur: trigger === "hover" || trigger === "focus" ? hide : undefined,
     onContextMenu:
-      trigger === "contextMenu" && !disabled
+      trigger === "contextMenu"
         ? (e: React.MouseEvent) => {
             e.preventDefault();
-            setIsOpen((prev) => !prev);
+            setOpen(!isOpen);
           }
         : undefined,
   };
 
+  const ctxValue = useMemo(
+    () => ({
+      isOpen,
+      setOpen,
+      show,
+      hide,
+      trigger,
+      triggerRef,
+      contentRef,
+      color,
+      variant,
+      showArrow,
+      tooltipId,
+    }),
+    [
+      isOpen,
+      setOpen,
+      show,
+      hide,
+      trigger,
+      color,
+      variant,
+      showArrow,
+      tooltipId,
+    ],
+  );
+
   return (
-    <TooltipContext.Provider
-      value={{
-        isOpen: effectiveIsOpen,
-        setIsOpen,
-        triggerRef,
-        contentRef,
-        position,
-        trigger,
-        delayDuration,
-        color,
-        showArrow,
-      }}
-    >
-      <div className="relative inline-flex w-fit" {...eventHandlers}>
+    <TooltipContext.Provider value={ctxValue}>
+      <div
+        ref={triggerRef as React.RefObject<HTMLDivElement>}
+        className="inline-flex w-fit"
+        aria-describedby={isOpen ? tooltipId : undefined}
+        {...handlers}
+      >
         {children}
       </div>
     </TooltipContext.Provider>
   );
 }
 
-interface TooltipTriggerProps extends React.HTMLAttributes<HTMLElement> {
+// ── TooltipTrigger
+
+interface TooltipTriggerProps {
+  children: ReactNode;
   asChild?: boolean;
 }
-const TooltipTrigger = forwardRef<HTMLDivElement, TooltipTriggerProps>(
-  ({ children, className, ...props }, forwardedRef) => {
-    const { triggerRef } = useTooltip();
 
-    const handleRefChange = useCallback(
-      (element: HTMLDivElement | null) => {
-        triggerRef.current = element;
-        if (typeof forwardedRef === "function") {
-          forwardedRef(element);
-        } else if (forwardedRef) {
-          forwardedRef.current = element;
-        }
-      },
-      [triggerRef, forwardedRef],
-    );
-
-    // Filter out asChild so it doesn't get spread to the DOM
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { asChild, ...domProps } = props as TooltipTriggerProps;
-
-    return (
-      <div
-        ref={handleRefChange}
-        className={cn("cursor-help", className)}
-        {...domProps}
-      >
-        {children}
-      </div>
-    );
-  },
-);
-
+function TooltipTrigger({ children }: TooltipTriggerProps) {
+  return <>{children}</>;
+}
 TooltipTrigger.displayName = "TooltipTrigger";
 
-interface TooltipContentProps extends React.HTMLAttributes<HTMLDivElement> {
+// ── TooltipContent
+
+const ENTER_OFFSET: Record<TooltipSide, { x?: number; y?: number }> = {
+  top: { y: 6 },
+  bottom: { y: -6 },
+  left: { x: 6 },
+  right: { x: -6 },
+};
+
+const EXIT_OFFSET: Record<TooltipSide, { x?: number; y?: number }> = {
+  top: { y: 6 },
+  bottom: { y: -6 },
+  left: { x: 6 },
+  right: { x: -6 },
+};
+
+const ARROW: Record<TooltipSide, { pos: string; border: string }> = {
+  top: { pos: "bottom-[-4px]", border: "border-b border-r" },
+  bottom: { pos: "top-[-4px]", border: "border-t border-l" },
+  left: { pos: "right-[-4px]", border: "border-t border-r" },
+  right: { pos: "left-[-4px]", border: "border-b border-l" },
+};
+
+interface TooltipContentProps extends Omit<HTMLMotionProps<"div">, "children"> {
+  side?: TooltipSide;
+  align?: TooltipAlign;
   sideOffset?: number;
+  radius?: TooltipRadius;
+  size?: TooltipSize;
+  interactive?: boolean;
+  children?: React.ReactNode;
 }
 
-function TooltipContent(props: TooltipContentProps) {
-  const { isOpen } = useTooltip();
-  if (!isOpen) return null;
-  return <TooltipContentInternal {...props} />;
-}
-
-function TooltipContentInternal({
-  children,
+function TooltipContent({
+  side = "top",
+  align = "center",
   sideOffset = 8,
+  radius = "sm",
+  size = "md",
+  interactive = false,
+  children,
   className,
   style,
   ...props
 }: TooltipContentProps) {
-  const { contentRef, triggerRef, position, color, showArrow } = useTooltip();
-  const [coords, setCoords] = useState<TooltipCoords>({
+  const {
+    isOpen,
+    contentRef,
+    triggerRef,
+    color,
+    variant,
+    showArrow,
+    tooltipId,
+    show,
+    hide,
+    trigger,
+  } = useTooltip();
+
+  const hoverBridge =
+    interactive && trigger === "hover"
+      ? { onMouseEnter: show, onMouseLeave: hide }
+      : undefined;
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const [pos, setPos] = useState({
     top: 0,
     left: 0,
-    originX: "50%",
-    originY: "50%",
+    ox: "50%",
+    oy: "50%",
+    activeSide: side,
+    hidden: false,
+    measured: false,
   });
-  const [isPositioned, setIsPositioned] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
 
-  // Core positioning logic
   useLayoutEffect(() => {
-    if (!triggerRef.current || !contentRef.current) {
+    if (!mounted || !isOpen) {
+      setPos((p) => (p.measured ? { ...p, measured: false } : p));
       return;
     }
+    if (!triggerRef.current || !contentRef.current) return;
 
-    const updatePosition = () => {
-      if (!triggerRef.current || !contentRef.current) return;
+    let raf = 0;
+    let retries = 0;
+    const MAX_RETRIES = 8;
 
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      const content = contentRef.current;
-
-      // offsetWidth/Height are reliable early on
-      const contentWidth = content.offsetWidth;
-      const contentHeight = content.offsetHeight;
-
-      // If still not measured, wait for Next frame
-      if (contentWidth === 0 || contentHeight === 0) {
-        requestAnimationFrame(updatePosition);
-        return;
-      }
-
-      const scrollX = window.scrollX;
-      const scrollY = window.scrollY;
-
-      let top = 0;
-      let left = 0;
-      let originX = "50%";
-      let originY = "50%";
-
-      switch (position) {
-        case "top":
-          top = triggerRect.top + scrollY - contentHeight - sideOffset;
-          left =
-            triggerRect.left +
-            scrollX +
-            triggerRect.width / 2 -
-            contentWidth / 2;
-          originY = "bottom";
-          break;
-        case "topLeft":
-          top = triggerRect.top + scrollY - contentHeight - sideOffset;
-          left = triggerRect.left + scrollX;
-          originY = "bottom";
-          originX = "left";
-          break;
-        case "topRight":
-          top = triggerRect.top + scrollY - contentHeight - sideOffset;
-          left = triggerRect.right + scrollX - contentWidth;
-          originY = "bottom";
-          originX = "right";
-          break;
-        case "bottom":
-          top = triggerRect.bottom + scrollY + sideOffset;
-          left =
-            triggerRect.left +
-            scrollX +
-            triggerRect.width / 2 -
-            contentWidth / 2;
-          originY = "top";
-          break;
-        case "bottomLeft":
-          top = triggerRect.bottom + scrollY + sideOffset;
-          left = triggerRect.left + scrollX;
-          originY = "top";
-          originX = "left";
-          break;
-        case "bottomRight":
-          top = triggerRect.bottom + scrollY + sideOffset;
-          left = triggerRect.right + scrollX - contentWidth;
-          originY = "top";
-          originX = "right";
-          break;
-        case "left":
-          top =
-            triggerRect.top +
-            scrollY +
-            triggerRect.height / 2 -
-            contentHeight / 2;
-          left = triggerRect.left + scrollX - contentWidth - sideOffset;
-          originX = "right";
-          break;
-        case "leftTop":
-          top = triggerRect.top + scrollY;
-          left = triggerRect.left + scrollX - contentWidth - sideOffset;
-          originX = "right";
-          originY = "top";
-          break;
-        case "leftBottom":
-          top = triggerRect.bottom + scrollY - contentHeight;
-          left = triggerRect.left + scrollX - contentWidth - sideOffset;
-          originX = "right";
-          originY = "bottom";
-          break;
-        case "right":
-          top =
-            triggerRect.top +
-            scrollY +
-            triggerRect.height / 2 -
-            contentHeight / 2;
-          left = triggerRect.right + scrollX + sideOffset;
-          originX = "left";
-          break;
-        case "rightTop":
-          top = triggerRect.top + scrollY;
-          left = triggerRect.right + scrollX + sideOffset;
-          originX = "left";
-          originY = "top";
-          break;
-        case "rightBottom":
-          top = triggerRect.bottom + scrollY - contentHeight;
-          left = triggerRect.right + scrollX + sideOffset;
-          originX = "left";
-          originY = "bottom";
-          break;
-      }
-
-      setCoords({ top, left, originX, originY });
-      setIsPositioned(true);
+    const calc = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const tr = triggerRef.current;
+        const ct = contentRef.current;
+        if (!tr || !ct) return;
+        if (!ct.offsetWidth) {
+          if (retries < MAX_RETRIES) {
+            retries++;
+            calc();
+          }
+          return;
+        }
+        retries = 0;
+        const r = tr.getBoundingClientRect();
+        const hidden =
+          r.bottom <= 0 ||
+          r.top >= window.innerHeight ||
+          r.right <= 0 ||
+          r.left >= window.innerWidth;
+        setPos({
+          ...getCoords(
+            r,
+            ct.offsetWidth,
+            ct.offsetHeight,
+            side,
+            align,
+            sideOffset,
+          ),
+          hidden,
+          measured: true,
+        });
+      });
     };
 
-    updatePosition();
+    calc();
 
-    // Watch for size changes
-    const resizeObserver = new ResizeObserver(updatePosition);
-    if (triggerRef.current) resizeObserver.observe(triggerRef.current);
-    if (contentRef.current) resizeObserver.observe(contentRef.current);
+    const onResize = () => calc();
+    const onScroll = () => calc();
 
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition);
+    const ro = new ResizeObserver(onResize);
+    ro.observe(triggerRef.current);
+    ro.observe(contentRef.current);
+    for (
+      let el = triggerRef.current.parentElement;
+      el && el !== document.body;
+      el = el.parentElement
+    ) {
+      ro.observe(el);
+    }
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, {
+      passive: true,
+      capture: true,
+    });
 
     return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition);
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll, { capture: true });
     };
-  }, [position, sideOffset, triggerRef, contentRef]);
+  }, [mounted, isOpen, side, align, sideOffset, triggerRef, contentRef]);
 
-  // Separate effect to trigger visibility once coordinates are flushed
-  useLayoutEffect(() => {
-    if (isPositioned) {
-      const raf = requestAnimationFrame(() => {
-        setIsVisible(true);
-      });
-      return () => cancelAnimationFrame(raf);
-    }
-  }, [isPositioned]);
+  const { activeSide } = pos;
+  const isVert = activeSide === "top" || activeSide === "bottom";
+  const arrowAlign =
+    align === "center"
+      ? isVert
+        ? "left-1/2 -translate-x-1/2"
+        : "top-1/2 -translate-y-1/2"
+      : align === "start"
+        ? isVert
+          ? "left-4"
+          : "top-3"
+        : isVert
+          ? "right-4"
+          : "bottom-3";
 
-  const arrowClasses = cn(
-    "absolute w-2 h-2 rotate-45 ",
-    position.startsWith("top") && "bottom-[-4px] ",
-    position.startsWith("bottom") && "top-[-4px] ",
-    position.startsWith("left") && "right-[-4px] ",
-    position.startsWith("right") && "left-[-4px]",
-    // Top arrow positions
-    position === "top" && "left-1/2 -translate-x-1/2",
-    position === "topLeft" && "left-4",
-    position === "topRight" && "right-4",
-    // Bottom arrow positions
-    position === "bottom" && "left-1/2 -translate-x-1/2",
-    position === "bottomLeft" && "left-4",
-    position === "bottomRight" && "right-4",
-    // Left arrow positions
-    position === "left" && "top-1/2 -translate-y-1/2",
-    position === "leftTop" && "top-3",
-    position === "leftBottom" && "bottom-3",
-    // Right arrow positions
-    position === "right" && "top-1/2 -translate-y-1/2",
-    position === "rightTop" && "top-3",
-    position === "rightBottom" && "bottom-3",
-  );
+  if (!mounted) return null;
 
   return createPortal(
-    <div
-      ref={contentRef}
-      role="tooltip"
-      style={{
-        position: "absolute",
-        top: coords.top,
-        left: coords.left,
-        zIndex: 9999,
-        visibility: isVisible ? "visible" : "hidden",
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? "scale(1)" : "scale(0.8)",
-        transformOrigin: `${coords.originX} ${coords.originY}`,
-        transition: isVisible
-          ? "opacity 0.2s cubic-bezier(0.23, 1, 0.32, 1), transform 0.2s cubic-bezier(0.23, 1, 0.32, 1)"
-          : "none",
-        pointerEvents: "none",
-        backgroundColor: color || undefined,
-        borderColor: color || undefined,
-        ...style,
-      }}
-      className={cn(
-        "bg-zinc-900 dark:bg-darkBorder text-white min-w-max rounded-md px-3 py-1.5 text-sm shadow-xl",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      {showArrow && (
-        <div
-          className={arrowClasses}
-          style={{
-            backgroundColor: "inherit",
-            borderColor: "inherit",
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          key={tooltipId}
+          initial={{ opacity: 0, ...ENTER_OFFSET[side] }}
+          animate={{
+            opacity: 1,
+            x: 0,
+            y: 0,
+            transition: {
+              default: {
+                type: "spring",
+                stiffness: 480,
+                damping: 30,
+                mass: 0.5,
+              },
+              opacity: {
+                type: "tween",
+                duration: 0.16,
+                ease: [0.23, 1, 0.32, 1],
+              },
+            },
           }}
-        />
+          exit={{
+            opacity: 0,
+            ...EXIT_OFFSET[activeSide],
+            transition: {
+              duration: 0.12,
+              ease: [0.4, 0, 1, 1],
+            },
+          }}
+          style={{
+            position: "fixed",
+            top: pos.top,
+            left: pos.left,
+            zIndex: 9999,
+            pointerEvents: interactive ? "auto" : "none",
+            visibility: pos.hidden || !pos.measured ? "hidden" : "visible",
+          }}
+          {...hoverBridge}
+        >
+          <div style={{ position: "relative" }}>
+            <div
+              id={tooltipId}
+              ref={contentRef}
+              role="tooltip"
+              style={{
+                backgroundColor: color || undefined,
+                ...(style as React.CSSProperties),
+              }}
+              className={cn(
+                "max-w-xs border font-medium wrap-break-word shadow-md select-none",
+                VARIANT[variant].bubble,
+                RADIUS[radius],
+                SIZE_CLASS[size],
+                className,
+              )}
+              {...(props as React.HTMLAttributes<HTMLDivElement>)}
+            >
+              {children}
+            </div>
+            {showArrow && (
+              <div
+                className={cn(
+                  "absolute h-2 w-2 rotate-45",
+                  VARIANT[variant].arrow,
+                  ARROW[activeSide].pos,
+                  ARROW[activeSide].border,
+                  arrowAlign,
+                )}
+                style={{
+                  backgroundColor: color || undefined,
+                }}
+              />
+            )}
+          </div>
+        </motion.div>
       )}
-    </div>,
+    </AnimatePresence>,
     document.body,
   );
 }
@@ -434,7 +650,7 @@ function TooltipContentInternal({
 interface SimpleTooltipProps {
   content: ReactNode;
   children: ReactNode;
-  position?: TooltipPosition;
+  position?: TooltipSide;
   size?: TooltipSize;
   icon?: ReactNode;
   iconPosition?: "left" | "right";
@@ -469,17 +685,22 @@ function SimpleTooltip({
     return sizes[size];
   };
 
+  // Nothing to point at — render the trigger on its own rather than wiring up
+  // listeners for a bubble that can never open.
+  if (disabled) return <>{children}</>;
+
   return (
     <Tooltip
-      position={position}
       delayDuration={delayDuration}
       color={color}
       trigger={trigger}
       showArrow={showArrow}
-      disabled={disabled}
     >
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent className={cn(getSizeClasses(), contentClassName)}>
+      <TooltipTrigger>{children}</TooltipTrigger>
+      <TooltipContent
+        side={position}
+        className={cn(getSizeClasses(), contentClassName)}
+      >
         <div className="flex items-center gap-2">
           {icon && iconPosition === "left" && (
             <span className="inline-block shrink-0">{icon}</span>
@@ -499,10 +720,9 @@ function TooltipProvider({ children }: { children: ReactNode }) {
 }
 
 export {
+  SimpleTooltip,
   Tooltip,
   TooltipTrigger,
   TooltipContent,
   TooltipProvider,
-  SimpleTooltip,
 };
-export type { TooltipPosition, TooltipSize, TooltipTriggerType };

@@ -55,7 +55,7 @@ const ROLE_STYLES: Record<string, string> = {
   manager:
     "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400",
   viewer:
-    "bg-slate-500/10 text-slate-600 border-slate-400/20 dark:bg-slate-700 dark:text-slate-400",
+    "bg-muted-foreground/20 text-muted-foreground border-border dark:text-muted-foreground",
 };
 
 // ── Linked Account Card ────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ function LinkedAccountCard({
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="group relative flex items-center gap-3 p-3.5 rounded-lg border border-border/40 dark:border-darkBorder/40 bg-white dark:bg-darkBg hover:border-primary/25 dark:hover:border-primary/30 hover:shadow-sm transition-all duration-200">
+    <div className="group relative flex items-center gap-3 p-3.5 rounded-lg border border-border/40 bg-card hover:border-primary/25 dark:hover:border-primary/30 hover:shadow-sm transition-all duration-200">
       {/* Avatar */}
       <div
         className={cn(
@@ -86,7 +86,7 @@ function LinkedAccountCard({
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-semibold text-text6 dark:text-text4 truncate">
+          <p className="text-sm font-semibold text-foreground truncate">
             {account.name}
           </p>
           <span
@@ -99,17 +99,17 @@ function LinkedAccountCard({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-text5 flex items-center gap-1">
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
             <Building2 className="w-2.5 h-2.5" />
             {account.department}
           </span>
-          <span className="text-text4">·</span>
+          <span className="text-muted-foreground/70">·</span>
           <span
             className={cn(
               "text-[10px] font-medium flex items-center gap-1",
               account.isActive
                 ? "text-emerald-600 dark:text-emerald-400"
-                : "text-text5",
+                : "text-muted-foreground",
             )}
           >
             <span
@@ -117,7 +117,7 @@ function LinkedAccountCard({
                 "w-1.5 h-1.5 rounded-full",
                 account.isActive
                   ? "bg-emerald-500 animate-pulse"
-                  : "bg-slate-400 dark:bg-slate-600",
+                  : "bg-muted-foreground/20",
               )}
             />
             {account.lastSeen}
@@ -129,7 +129,7 @@ function LinkedAccountCard({
       <div className="flex items-center gap-1.5 shrink-0">
         <button
           onClick={() => onSwitch(account.id)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border border-border/60 dark:border-darkBorder text-text6 dark:text-text4 hover:border-primary/40 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded-lg border border-border/60 text-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5 dark:hover:bg-primary/10 transition-all cursor-pointer"
         >
           <LogIn className="w-3 h-3" />
           Switch
@@ -140,7 +140,7 @@ function LinkedAccountCard({
               onRevoke(account.id);
               setMenuOpen(false);
             }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center border border-red-500/50 dark:border-red-500/30 text-text5 hover:text-text6 dark:hover:text-text4 hover:bg-gray-light dark:hover:bg-darkPrimary transition-all cursor-pointer"
+            className="w-7 h-7 rounded-lg flex items-center justify-center border border-red-500/50 dark:border-red-500/30 text-muted-foreground hover:text-foreground hover:bg-gray-light transition-all cursor-pointer"
           >
             <UserX className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
           </button>
@@ -167,13 +167,13 @@ export default function ProfileTab() {
   return (
     <div className="space-y-5">
       {/* ── Identity Card ── (no cover, clean) */}
-      <div className="rounded-lg border border-border/40 dark:border-darkBorder/40 bg-gray-light/40 dark:bg-darkPrimary/30 overflow-hidden">
+      <div className="rounded-lg border border-border/40 bg-gray-light/40 overflow-hidden">
         <div className="p-5">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Avatar */}
             <div className="shrink-0">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 dark:bg-darkPrimary border border-primary/20 dark:border-darkBorder/60 flex items-center justify-center shadow-md">
-                <span className="text-xl font-semibold text-primary dark:text-darkLight">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-md">
+                <span className="text-xl font-semibold text-primary">
                   {PROFILE_INFO.name
                     .split(" ")
                     .map((w) => w[0])
@@ -188,7 +188,7 @@ export default function ProfileTab() {
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-lg font-semibold text-black dark:text-white">
+                    <h2 className="text-lg font-semibold text-foreground">
                       {PROFILE_INFO.name}
                     </h2>
                     {PROFILE_INFO.verified && (
@@ -205,15 +205,15 @@ export default function ProfileTab() {
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <AtSign className="w-3 h-3 text-text5 dark:text-text5/80" />
-                    <p className="text-xs text-text5 dark:text-text5/80">
+                    <AtSign className="w-3 h-3 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
                       {PROFILE_INFO.username}
                     </p>
                   </div>
                 </div>
                 <span
                   className={cn(
-                    "text-xs font-medium px-3 py-1 rounded-full border dark:text-darkLight",
+                    "text-xs font-medium px-3 py-1 rounded-full border",
                     ROLE_STYLES[PROFILE_INFO.roleLevel],
                   )}
                 >
@@ -221,7 +221,7 @@ export default function ProfileTab() {
                 </span>
               </div>
 
-              <p className="text-xs text-text5 dark:text-text5 leading-relaxed max-w-xl">
+              <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
                 {PROFILE_INFO.bio}
               </p>
             </div>
@@ -249,14 +249,14 @@ export default function ProfileTab() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="flex items-center gap-2 p-2.5 rounded-md bg-white dark:bg-darkPrimary border border-border/30 dark:border-darkBorder/30"
+                className="flex items-center gap-2 p-2.5 rounded-md bg-popover border border-border/30"
               >
                 <item.icon className="w-3.5 h-3.5 text-primary shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-[9px] text-text5 font-medium uppercase tracking-wide">
+                  <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wide">
                     {item.label}
                   </p>
-                  <p className="text-[11px] font-semibold text-text6 dark:text-text4 truncate">
+                  <p className="text-[11px] font-semibold text-foreground truncate">
                     {item.value}
                   </p>
                 </div>
@@ -273,7 +273,7 @@ export default function ProfileTab() {
           return (
             <div
               key={stat.label}
-              className="rounded-lg border border-border/40 dark:border-darkBorder/40 bg-white dark:bg-darkBg p-4 hover:border-primary/25 transition-colors"
+              className="rounded-lg border border-border/40 bg-card p-4 hover:border-primary/25 transition-colors"
             >
               <div className="flex items-start justify-between mb-2">
                 <div
@@ -286,10 +286,10 @@ export default function ProfileTab() {
                 </div>
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
               </div>
-              <p className="text-xl font-bold text-black dark:text-white">
-                {stat.value}
+              <p className="text-xl font-bold text-foreground">{stat.value}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {stat.label}
               </p>
-              <p className="text-[11px] text-text5 mt-0.5">{stat.label}</p>
               <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">
                 {stat.change}
               </p>
@@ -301,9 +301,9 @@ export default function ProfileTab() {
       {/* ── Bottom Grid: Activity + Permissions / Linked Accounts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
         {/* Recent Activity */}
-        <div className="lg:col-span-3 rounded-lg border border-border/40 dark:border-darkBorder/40 bg-white dark:bg-darkBg p-5">
+        <div className="lg:col-span-3 rounded-lg border border-border/40 bg-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-black dark:text-white flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-primary" />
               Recent Activity
             </h3>
@@ -317,7 +317,7 @@ export default function ProfileTab() {
               return (
                 <div
                   key={activity.id}
-                  className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-light/60 dark:hover:bg-darkPrimary/60 transition-colors group cursor-pointer"
+                  className="flex items-center gap-3 p-3 rounded-md hover:bg-gray-light/60 transition-colors group cursor-pointer"
                 >
                   <div
                     className={cn(
@@ -328,17 +328,17 @@ export default function ProfileTab() {
                     <Icon className={cn("w-3.5 h-3.5", activity.color)} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-text6 dark:text-text4 line-clamp-1">
+                    <p className="text-xs font-medium text-foreground line-clamp-1">
                       {activity.action}{" "}
                       <span className="text-primary font-semibold">
                         {activity.target}
                       </span>
                     </p>
-                    <p className="text-[10px] text-text5 mt-0.5">
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
                       {activity.time}
                     </p>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-text4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               );
             })}
@@ -348,11 +348,11 @@ export default function ProfileTab() {
         {/* Right column */}
         <div className="lg:col-span-2 space-y-4">
           {/* Permissions */}
-          <div className="rounded-lg border border-border/40 dark:border-darkBorder/40 bg-white dark:bg-darkBg p-5">
-            <h3 className="text-sm font-semibold text-black dark:text-white flex items-center gap-2 mb-3">
+          <div className="rounded-lg border border-border/40 bg-card p-5">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
               <Shield className="w-4 h-4 text-primary" />
               Permissions
-              <span className="ml-auto text-[10px] font-medium text-text5 bg-gray-light dark:bg-darkPrimary px-1.5 py-0.5 rounded-full">
+              <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-gray-light px-1.5 py-0.5 rounded-full">
                 {PROFILE_PERMISSIONS.length} granted
               </span>
             </h3>
@@ -372,28 +372,28 @@ export default function ProfileTab() {
       </div>
 
       {/* ── Linked / Other Accounts ── */}
-      <div className="rounded-lg border border-border/40 dark:border-darkBorder/40 bg-white dark:bg-darkBg p-5">
+      <div className="rounded-lg border border-border/40 bg-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-sm font-semibold text-black dark:text-white flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <User className="w-4 h-4 text-primary" />
               Linked Accounts
             </h3>
-            <p className="text-xs text-text5 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Other admin accounts associated with this platform
             </p>
           </div>
-          <span className="text-[11px] font-semibold text-text5 bg-gray-light dark:bg-darkPrimary px-4 py-1 rounded-full">
+          <span className="text-[11px] font-semibold text-muted-foreground bg-gray-light px-4 py-1 rounded-full">
             {linkedAccounts.length} accounts
           </span>
         </div>
 
         {linkedAccounts.length === 0 ? (
           <div className="py-10 text-center">
-            <div className="w-12 h-12 rounded-xl bg-gray-light dark:bg-darkPrimary flex items-center justify-center mx-auto mb-3">
-              <User className="w-5 h-5 text-text4" />
+            <div className="w-12 h-12 rounded-xl bg-gray-light flex items-center justify-center mx-auto mb-3">
+              <User className="w-5 h-5 text-muted-foreground/70" />
             </div>
-            <p className="text-sm text-text5">No linked accounts</p>
+            <p className="text-sm text-muted-foreground">No linked accounts</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import { SupportChatbotQnA, SupportResource } from "../../_types/support.types";
-import { Input, Modal } from "@/components/ui";
-import { Select } from "@/components/ui/select/Select";
+import { Dialog, Field, FieldError, FieldLabel, Input } from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
 import { X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea/Textarea";
@@ -92,7 +98,7 @@ export default function ChatbotQnAModal({
   }));
 
   return (
-    <Modal
+    <Dialog
       open
       onClose={onClose}
       title={qna ? "Edit Q&A" : "Add Q&A"}
@@ -116,36 +122,67 @@ export default function ChatbotQnAModal({
       <form id="chatbot-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Resource + Priority */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select
-            label="Resource Category"
-            options={resourceOptions}
-            value={formData.resourceId}
-            onValueChange={(val) => {
-              setFormData((p) => ({ ...p, resourceId: val }));
-              if (errors.resourceId)
-                setErrors((p) => ({ ...p, resourceId: "" }));
-            }}
-            className={`w-full dark:border-darkBorder ${errors.resourceId ? "border-red-500" : ""}`}
-            error={errors.resourceId}
-          />
+          <Field>
+            <FieldLabel id="qna-resource-label" htmlFor="qna-resource">
+              Resource Category
+            </FieldLabel>
+            <Select
+              id="qna-resource"
+              value={formData.resourceId}
+              onValueChange={(val) => {
+                setFormData((p) => ({ ...p, resourceId: val }));
+                if (errors.resourceId)
+                  setErrors((p) => ({ ...p, resourceId: "" }));
+              }}
+            >
+              <SelectTrigger error={!!errors.resourceId}>
+                <SelectValue
+                  placeholder="Select a resource"
+                  options={resourceOptions}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={resourceOptions} />
+              </SelectContent>
+            </Select>
+            {errors.resourceId && <FieldError>{errors.resourceId}</FieldError>}
+          </Field>
 
-          <Select
-            label="Priority"
-            options={PRIORITY_OPTIONS}
-            value={String(formData.priority)}
-            onValueChange={(val) =>
-              setFormData((p) => ({ ...p, priority: Number(val) }))
-            }
-            className="w-full dark:border-darkBorder"
-          />
+          <Field>
+            <FieldLabel id="qna-priority-label" htmlFor="qna-priority">
+              Priority
+            </FieldLabel>
+            <Select
+              id="qna-priority"
+              value={String(formData.priority)}
+              onValueChange={(val) =>
+                setFormData((p) => ({ ...p, priority: Number(val) }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder="Select priority"
+                  options={PRIORITY_OPTIONS}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={PRIORITY_OPTIONS} />
+              </SelectContent>
+            </Select>
+          </Field>
         </div>
 
         {/* Question */}
-        <div className="space-y-1.5">
+        <Field>
+          <FieldLabel htmlFor="qna-question">
+            Question
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Textarea
-            label="Question"
-            required
-            requiredSign
+            id="qna-question"
+            name="question"
             rows={2}
             value={formData.question}
             onChange={(e) => {
@@ -153,16 +190,23 @@ export default function ChatbotQnAModal({
               if (errors.question) setErrors((p) => ({ ...p, question: "" }));
             }}
             placeholder="e.g. How do I reset my password?"
-            error={errors.question}
+            invalid={!!errors.question}
+            className="bg-transparent"
           />
-        </div>
+          {errors.question && <FieldError>{errors.question}</FieldError>}
+        </Field>
 
         {/* Answer */}
-        <div className="space-y-1.5">
+        <Field>
+          <FieldLabel htmlFor="qna-answer">
+            Answer
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Textarea
-            label="Answer"
-            required
-            requiredSign
+            id="qna-answer"
+            name="answer"
             rows={5}
             value={formData.answer}
             onChange={(e) => {
@@ -170,20 +214,26 @@ export default function ChatbotQnAModal({
               if (errors.answer) setErrors((p) => ({ ...p, answer: "" }));
             }}
             placeholder="Provide a clear, helpful answer..."
-            error={errors.answer}
+            invalid={!!errors.answer}
+            className="bg-transparent"
           />
-        </div>
+          {errors.answer && <FieldError>{errors.answer}</FieldError>}
+        </Field>
 
         {/* Keywords */}
-        <div className="space-y-1.5">
+        <Field>
+          <FieldLabel htmlFor="qna-keywords">
+            Keywords
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <div className="flex items-end gap-3">
             <Input
-              label="Keywords"
-              required
-              requiredSign
-              type="text"
+              id="qna-keywords"
+              name="keywords"
               value={kwInput}
-              onChange={(e) => setKwInput(e.target.value)}
+              onValueChange={setKwInput}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -191,13 +241,12 @@ export default function ChatbotQnAModal({
                 }
               }}
               placeholder="Type keyword & press Enter"
-              fullWidth
-              className="dark:border-darkBorder dark:focus:border-darkLight/50"
+              className="flex-1 bg-transparent"
             />
             <Button
               type="button"
               variant="outline"
-              className="h-11 px-4 text-sm"
+              className="h-10 px-4 text-sm"
               onClick={addKeyword}
             >
               Add
@@ -209,13 +258,13 @@ export default function ChatbotQnAModal({
               {formData.keywords.map((kw) => (
                 <span
                   key={kw}
-                  className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary dark:text-blue-400"
+                  className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary"
                 >
                   {kw}
                   <button
                     type="button"
                     onClick={() => removeKeyword(kw)}
-                    className="hover:text-rose-500 transition-colors cursor-pointer"
+                    className="hover:text-destructive transition-colors cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -223,15 +272,13 @@ export default function ChatbotQnAModal({
               ))}
             </div>
           )}
-        </div>
+        </Field>
 
         {/* Active toggle */}
-        <div className="flex items-center justify-between p-3 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-gray-50/50 dark:bg-darkPrimary/20">
+        <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/40">
           <div>
-            <p className="text-sm font-medium text-black dark:text-white">
-              Active Status
-            </p>
-            <p className="text-xs text-text5">
+            <p className="text-sm font-medium text-foreground">Active Status</p>
+            <p className="text-xs text-muted-foreground">
               Inactive Q&As will not appear in chatbot responses
             </p>
           </div>
@@ -241,9 +288,7 @@ export default function ChatbotQnAModal({
               setFormData((p) => ({ ...p, isActive: !p.isActive }))
             }
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 cursor-pointer ${
-              formData.isActive
-                ? "bg-primary"
-                : "bg-gray-300 dark:bg-darkBorder"
+              formData.isActive ? "bg-primary" : "bg-muted-foreground/40"
             }`}
           >
             <span
@@ -254,6 +299,6 @@ export default function ChatbotQnAModal({
           </button>
         </div>
       </form>
-    </Modal>
+    </Dialog>
   );
 }

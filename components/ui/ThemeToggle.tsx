@@ -1,53 +1,71 @@
 "use client";
 
-import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
-import { SunIcon, MoonIcon } from "@/components/icons/Icons";
+import { MoonIcon, SunIcon } from "@/components/icons/Icons";
+import { useTheme } from "@/components/providers/ThemeProvider";
+
+import { Button } from "./button/Button";
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
 
+  const revealTheme = (nextTheme: "light" | "dark") => {
+    if (typeof window === "undefined") {
+      setTheme(nextTheme);
+      return;
+    }
+
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => { ready: Promise<void> };
+    };
+
+    if (!doc.startViewTransition) {
+      setTheme(nextTheme);
+      return;
+    }
+
+    doc.startViewTransition(() => {
+      setTheme(nextTheme);
+    });
+  };
+
   const cycleTheme = () => {
-    // Simple toggle between light and dark only
     if (resolvedTheme === "light") {
-      setTheme("dark");
+      revealTheme("dark");
     } else {
-      setTheme("light");
+      revealTheme("light");
     }
   };
 
   return (
-    <button
+    <Button
+      type="button"
+      size="icon-sm"
+      variant="secondary"
       onClick={cycleTheme}
-      className={cn(
-        "relative size-9 rounded-[11px] center cursor-pointer",
-        "bg-gray-light dark:bg-darkPrimary hover:bg-gray-medium/20 dark:hover:bg-primary/20",
-        "border border-border dark:border-darkBorder hover:border-border/70 dark:hover:border-primary/50",
-        "transition-all duration-200",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-      )}
       title={`Current: ${resolvedTheme}`}
       aria-label="Toggle theme"
+      className="size-8.5 rounded-lg"
     >
       {/* Sun Icon */}
       <SunIcon
         className={cn(
-          "size-4.5 absolute transition-all duration-300 text-black",
+          "absolute size-4.5 text-black transition-all duration-300",
           resolvedTheme === "light"
-            ? "opacity-100 rotate-0 scale-100"
-            : "opacity-0 rotate-90 scale-0",
+            ? "scale-100 rotate-0 opacity-100"
+            : "scale-0 rotate-90 opacity-0",
         )}
       />
 
       {/* Moon Icon */}
       <MoonIcon
         className={cn(
-          "size-4 absolute transition-all duration-300",
+          "absolute size-4.5 transition-all duration-300",
           resolvedTheme === "dark"
-            ? "opacity-100 rotate-0 scale-100"
-            : "opacity-0 -rotate-90 scale-0",
+            ? "scale-100 rotate-0 opacity-100"
+            : "scale-0 -rotate-90 opacity-0",
         )}
       />
-    </button>
+    </Button>
   );
 }

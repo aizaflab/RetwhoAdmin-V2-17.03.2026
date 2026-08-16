@@ -1,14 +1,15 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Pagination } from "../pagination/Pagination";
+
+import { TablePagination } from "./TablePagination";
 
 // Column Type Definition
 export interface Column<T> {
-  id: keyof T; // Column id should be a key of the data row
-  header: string;
-  accessor?: (row: T) => unknown; // Accessor function to fetch the value (allow any type)
-  cell?: (value: unknown, row: T, rowIndex?: number) => React.ReactNode;
+  id: keyof T;
+  header: React.ReactNode;
+  accessor?: (row: T) => unknown;
+  cell?: (value: unknown, row: T, rowIndex: number) => React.ReactNode;
   width?: string | number;
   minWidth?: string | number;
   maxWidth?: string | number;
@@ -17,8 +18,8 @@ export interface Column<T> {
 
 // Data Row Type (Generic)
 interface TableProps<T> {
-  data: T[]; // Data can be any type
-  columns: Column<T>[]; // Columns can be dynamic, typed with T
+  data: T[];
+  columns: Column<T>[];
   pagination?: boolean;
   page?: number;
   setPage?: (page: number) => void;
@@ -67,16 +68,15 @@ const Table = <T,>({
   // Render table header
   const renderTableHeader = () => (
     <thead
-      className={`${headerColor} bg-gray-50/80 dark:bg-darkPrimary/50 text-muted-foreground border-b border-border/50 dark:border-darkBorder/50`}
+      className={`${headerColor} border-b border-border/50 bg-muted text-muted-foreground`}
     >
       <tr>
         {columns.map((column) => (
           <th
             key={String(column.id)}
             className={cn(
-              "px-4 py-4 text-left text-sm font-medium whitespace-nowrap",
-              bordered &&
-                "border-r last:border-r-0 border-border/50 dark:border-darkBorder/50",
+              "px-4 py-3 text-left text-sm font-medium whitespace-nowrap",
+              bordered && "border-r border-border/50 last:border-r-0",
               column.className,
             )}
             style={{
@@ -98,15 +98,12 @@ const Table = <T,>({
 
   // Render table rows
   const renderTableRows = () => (
-    <tbody className="divide-y divide-gray-100 dark:divide-darkBorder/50">
+    <tbody className="divide-y divide-border/50">
       {data.length > 0 ? (
         data.map((row, rowIndex) => (
           <tr
             key={rowIndex}
-            className={cn(
-              "hover:bg-secondary dark:hover:bg-darkBorder/10",
-              onRowClick && "cursor-pointer",
-            )}
+            className={cn("hover:bg-muted", onRowClick && "cursor-pointer")}
             onClick={() => onRowClick && onRowClick(row)}
           >
             {columns.map((column) => (
@@ -115,8 +112,7 @@ const Table = <T,>({
                 className={cn(
                   "px-4 py-3 text-sm whitespace-nowrap",
                   rowClass,
-                  bordered &&
-                    "border-r last:border-r-0 border-border/50 dark:border-darkBorder/50",
+                  bordered && "border-r border-border/50 last:border-r-0",
                 )}
                 style={{
                   ...(column.width != null ? { width: column.width } : {}),
@@ -137,7 +133,7 @@ const Table = <T,>({
         <tr>
           <td
             colSpan={columns.length + (actions ? 1 : 0)}
-            className="px-4 py-8 text-center text-muted-foreground whitespace-nowrap"
+            className="px-4 py-8 text-center whitespace-nowrap text-muted-foreground"
           >
             {loading ? "Loading data..." : emptyMessage}
           </td>
@@ -146,40 +142,36 @@ const Table = <T,>({
     </tbody>
   );
 
-  // Handle page size change
-  const handlePageSizeChange = (size: number) => {
-    setLimit?.(size);
-    setPage?.(1);
-  };
+  const currentPage = page ?? 1;
+
+  const showPagination = pagination && !!setPage && !!setLimit && totalData > 0;
 
   return (
     <div className={cn("w-full", className)}>
-      {/* Table */}
-      <div className="w-full border border-border/50 dark:border-darkBorder/50 rounded-md overflow-x-auto ">
-        <table
-          className={cn(
-            "w-full",
-            bordered && "border-collapse",
-            tableClassName,
-          )}
-        >
-          {renderTableHeader()}
-          {renderTableRows()}
-        </table>
+      {/* One bordered card holding the scrollable table and its footer. */}
+      <div className="w-full rounded-md border border-border/50">
+        <div className="w-full overflow-x-auto">
+          <table
+            className={cn(
+              "w-full",
+              bordered && "border-collapse",
+              tableClassName,
+            )}
+          >
+            {renderTableHeader()}
+            {renderTableRows()}
+          </table>
+        </div>
       </div>
-
-      {/* Pagination */}
-      {pagination && setPage && setLimit && (
-        <div className={`mt-5 ${paginationClass}`}>
-          <Pagination
-            totalItems={totalData ?? 0}
-            pageSize={limit ?? 10}
-            currentPage={page ?? 1}
-            onPageChange={(p: number) => setPage(p)}
-            onPageSizeChange={handlePageSizeChange}
-            showPageSizeOptions={true}
-            align="end"
-            size="small"
+      {/* Pagination footer — below the table card. */}
+      {showPagination && (
+        <div className={cn("pt-5", paginationClass)}>
+          <TablePagination
+            page={currentPage}
+            setPage={setPage}
+            limit={limit ?? 10}
+            setLimit={setLimit}
+            totalData={totalData}
           />
         </div>
       )}

@@ -12,12 +12,10 @@ export function Section({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-black dark:text-white">
-          {title}
-        </h3>
-        {desc && <p className="text-xs text-text5 mt-0.5">{desc}</p>}
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {desc && <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>}
       </div>
-      <div className="h-px bg-border/50 dark:bg-darkBorder/50" />
+      <div className="h-px bg-border/50" />
       {children}
     </div>
   );

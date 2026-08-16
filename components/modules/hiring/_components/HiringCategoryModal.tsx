@@ -2,9 +2,33 @@
 
 import { useState } from "react";
 import { HiringCategory, CategoryType } from "../_types/hiring.types";
-import { Input, Modal } from "@/components/ui";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Dialog,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Input,
+} from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+  type SelectOption,
+} from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
+
+const TYPE_OPTIONS: SelectOption[] = [
+  { value: "job", label: "Job" },
+  { value: "service", label: "Service" },
+];
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
 
 interface HiringCategoryModalProps {
   category: HiringCategory | null;
@@ -62,7 +86,7 @@ export default function HiringCategoryModal({
   };
 
   return (
-    <Modal
+    <Dialog
       open
       onClose={onClose}
       title={category ? "Edit Category" : "Add Hiring Category"}
@@ -84,59 +108,105 @@ export default function HiringCategoryModal({
       }
     >
       <form id="hiring-cat-form" onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Category Name"
-          placeholder="e.g. Software Engineering"
-          value={formData.name}
-          onValueChange={handleNameChange}
-          error={errors.name}
-          requiredSign
-          className="dark:border-darkBorder"
-        />
+        <Field>
+          <FieldLabel htmlFor="hiring-category-name">
+            Category Name
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="hiring-category-name"
+            name="name"
+            placeholder="e.g. Software Engineering"
+            value={formData.name}
+            onValueChange={handleNameChange}
+            aria-invalid={errors.name ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.name && <FieldError>{errors.name}</FieldError>}
+        </Field>
 
-        <Input
-          label="Slug"
-          placeholder="e.g. software-engineering"
-          value={formData.slug}
-          onValueChange={(val) => {
-            setFormData((prev) => ({ ...prev, slug: val }));
-            if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
-          }}
-          error={errors.slug}
-          requiredSign
-          helperText="Auto-generated from name. Edit if needed."
-          className="dark:border-darkBorder"
-        />
+        <Field>
+          <FieldLabel htmlFor="hiring-category-slug">
+            Slug
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="hiring-category-slug"
+            name="slug"
+            placeholder="e.g. software-engineering"
+            value={formData.slug}
+            onValueChange={(val) => {
+              setFormData((prev) => ({ ...prev, slug: val }));
+              if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
+            }}
+            aria-invalid={errors.slug ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.slug ? (
+            <FieldError>{errors.slug}</FieldError>
+          ) : (
+            <FieldDescription>
+              Auto-generated from the name. Edit if needed.
+            </FieldDescription>
+          )}
+        </Field>
 
-        <Select
-          label="Category Type"
-          options={[
-            { value: "job", label: "Job" },
-            { value: "service", label: "Service" },
-          ]}
-          value={formData.type}
-          onValueChange={(val) =>
-            setFormData((prev) => ({ ...prev, type: val as CategoryType }))
-          }
-          className="w-full"
-        />
+        <Field>
+          <FieldLabel
+            id="hiring-category-type-label"
+            htmlFor="hiring-category-type"
+          >
+            Category Type
+          </FieldLabel>
+          <Select
+            id="hiring-category-type"
+            value={formData.type}
+            onValueChange={(val) =>
+              setFormData((prev) => ({ ...prev, type: val as CategoryType }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select type" options={TYPE_OPTIONS} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItems options={TYPE_OPTIONS} />
+            </SelectContent>
+          </Select>
+        </Field>
 
-        <Select
-          label="Status"
-          options={[
-            { value: "active", label: "Active" },
-            { value: "inactive", label: "Inactive" },
-          ]}
-          value={formData.status}
-          onValueChange={(val) =>
-            setFormData((prev) => ({
-              ...prev,
-              status: val as "active" | "inactive",
-            }))
-          }
-          className="w-full"
-        />
+        <Field>
+          <FieldLabel
+            id="hiring-category-status-label"
+            htmlFor="hiring-category-status"
+          >
+            Status
+          </FieldLabel>
+          <Select
+            id="hiring-category-status"
+            value={formData.status}
+            onValueChange={(val) =>
+              setFormData((prev) => ({
+                ...prev,
+                status: val as "active" | "inactive",
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue
+                placeholder="Select status"
+                options={STATUS_OPTIONS}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItems options={STATUS_OPTIONS} />
+            </SelectContent>
+          </Select>
+        </Field>
       </form>
-    </Modal>
+    </Dialog>
   );
 }

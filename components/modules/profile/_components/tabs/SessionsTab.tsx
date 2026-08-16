@@ -37,27 +37,27 @@ export default function SessionsTab({ sessions, onChange }: SessionsTabProps) {
                   "flex items-center gap-4 p-4 rounded-lg border transition-all",
                   session.current
                     ? "border-primary/30 bg-primary/5 dark:bg-primary/10"
-                    : "border-border/40 dark:border-darkBorder/40 hover:border-border/70 dark:hover:border-darkBorder/70",
+                    : "border-border/40 hover:border-border/70",
                 )}
               >
                 <div
                   className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-                    session.current
-                      ? "bg-primary/15"
-                      : "bg-gray-light dark:bg-darkPrimary",
+                    session.current ? "bg-primary/15" : "bg-gray-light",
                   )}
                 >
                   <Icon
                     className={cn(
                       "w-5 h-5",
-                      session.current ? "text-primary" : "text-text5",
+                      session.current
+                        ? "text-primary"
+                        : "text-muted-foreground",
                     )}
                   />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-text6 dark:text-text4">
+                    <p className="text-sm font-semibold text-foreground">
                       {session.device}
                     </p>
                     {session.current && (
@@ -66,14 +66,14 @@ export default function SessionsTab({ sessions, onChange }: SessionsTabProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-text5 mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {session.browser} · {session.location}
                   </p>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[10px] font-mono text-text5">
+                    <span className="text-[10px] font-mono text-muted-foreground">
                       {session.ip}
                     </span>
-                    <span className="text-[10px] text-text5 flex items-center gap-0.5">
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                       <Clock className="w-2.5 h-2.5" /> {session.lastActive}
                     </span>
                   </div>

@@ -5,10 +5,24 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button/Button";
 import { Product } from "../_types/product.types";
 import { UploadCloud, Tag as TagIcon, X, ArrowLeftIcon } from "lucide-react";
-import { Input } from "@/components/ui";
-import { Select } from "@/components/ui/select/Select";
+import { Field, FieldLabel, Input } from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+  type SelectOption,
+} from "@/components/ui/select/Select";
 import { Textarea } from "@/components/ui/textarea/Textarea";
 import Link from "next/link";
+
+const UNIT_OPTIONS: SelectOption[] = [
+  { label: "Piece (pcs)", value: "pcs" },
+  { label: "Kilogram (kg)", value: "kg" },
+  { label: "Box", value: "box" },
+  { label: "Pack", value: "pack" },
+];
 
 export default function ProductAddForm() {
   const router = useRouter();
@@ -95,133 +109,190 @@ export default function ProductAddForm() {
       >
         {/* Core Details */}
         <section>
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-4">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
             Core Details
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Product Name"
-              requiredSign
-              placeholder="e.g. Organic Coffee Beans"
-              value={formData.name || ""}
-              onValueChange={(val) => handleChange("name", val)}
-              className="dark:border-darkBorder dark:focus:border-darkLight/50"
-            />
-            <Input
-              label="Product Slug"
-              requiredSign
-              placeholder="e.g. organic-coffee-beans"
-              value={formData.slug || ""}
-              onValueChange={(val) => handleChange("slug", val)}
-              className="dark:border-darkBorder dark:focus:border-darkLight/50"
-            />
-            <div className="md:col-span-2">
+            <Field>
+              <FieldLabel htmlFor="product-name">
+                Product Name
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
+              <Input
+                id="product-name"
+                name="name"
+                placeholder="e.g. Organic Coffee Beans"
+                value={formData.name || ""}
+                onValueChange={(val) => handleChange("name", val)}
+                className="bg-transparent"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="product-slug">
+                Product Slug
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
+              <Input
+                id="product-slug"
+                name="slug"
+                placeholder="e.g. organic-coffee-beans"
+                value={formData.slug || ""}
+                onValueChange={(val) => handleChange("slug", val)}
+                className="bg-transparent"
+              />
+            </Field>
+
+            <Field className="md:col-span-2">
+              <FieldLabel htmlFor="product-short-description">
+                Short Description
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
               <Textarea
-                label="Short Description"
-                requiredSign
+                id="product-short-description"
+                name="shortDescription"
                 rows={3}
                 placeholder="Enter a brief product description..."
                 value={formData.shortDescription || ""}
                 onChange={(e) =>
                   handleChange("shortDescription", e.target.value)
                 }
-                className="dark:focus:border-darkLight/50"
+                className="bg-transparent"
               />
-            </div>
+            </Field>
           </div>
         </section>
 
-        <div className="h-px bg-border dark:bg-darkBorder/50 w-full" />
+        <div className="h-px bg-border w-full" />
 
         {/* Identifiers & Inventory */}
         <section>
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-4">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
             Identifiers & Packaging
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Input
-              label="SKU (Stock Keeping Unit)"
-              requiredSign
-              placeholder="e.g. COF-ORG-1KG"
-              value={formData.sku || ""}
-              onValueChange={(val) => handleChange("sku", val)}
-              className="dark:border-darkBorder uppercase dark:focus:border-darkLight/50"
-            />
-            <Input
-              label="Unit UPC"
-              requiredSign
-              placeholder="12-digit barcode"
-              value={formData.upc || ""}
-              onValueChange={(val) => handleChange("upc", val)}
-              className="dark:border-darkBorder dark:focus:border-darkLight/50"
-            />
-            <Input
-              label="Box UPC"
-              placeholder="14-digit barcode"
-              value={formData.boxUpc || ""}
-              onValueChange={(val) => handleChange("boxUpc", val)}
-              className="dark:border-darkBorder dark:focus:border-darkLight/50"
-            />
-            <div className="md:col-span-1">
+            <Field>
+              <FieldLabel htmlFor="product-sku">
+                SKU (Stock Keeping Unit)
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
+              <Input
+                id="product-sku"
+                name="sku"
+                placeholder="e.g. COF-ORG-1KG"
+                value={formData.sku || ""}
+                onValueChange={(val) => handleChange("sku", val)}
+                className="uppercase bg-transparent"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="product-upc">
+                Unit UPC
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
+              <Input
+                id="product-upc"
+                name="upc"
+                placeholder="12-digit barcode"
+                value={formData.upc || ""}
+                onValueChange={(val) => handleChange("upc", val)}
+                className="bg-transparent"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="product-box-upc">Box UPC</FieldLabel>
+              <Input
+                id="product-box-upc"
+                name="boxUpc"
+                placeholder="14-digit barcode"
+                value={formData.boxUpc || ""}
+                onValueChange={(val) => handleChange("boxUpc", val)}
+                className="bg-transparent"
+              />
+            </Field>
+
+            <Field className="md:col-span-1">
+              <FieldLabel id="product-unit-label" htmlFor="product-unit">
+                Selling Unit
+              </FieldLabel>
               <Select
-                label="Selling Unit"
-                options={[
-                  { label: "Piece (pcs)", value: "pcs" },
-                  { label: "Kilogram (kg)", value: "kg" },
-                  { label: "Box", value: "box" },
-                  { label: "Pack", value: "pack" },
-                ]}
+                id="product-unit"
                 value={formData.unit || "pcs"}
                 onValueChange={(val) => handleChange("unit", val)}
-                className="w-full "
-                fieldClass="h-11!"
-              />
-            </div>
-            <div className="md:col-span-2">
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder="Select unit"
+                    options={UNIT_OPTIONS}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItems options={UNIT_OPTIONS} />
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field className="md:col-span-2">
+              <FieldLabel htmlFor="product-modifier">
+                Modifier / Variant
+              </FieldLabel>
               <Input
-                label="Modifier / Variant"
+                id="product-modifier"
+                name="modifier"
                 placeholder="e.g. Dark Roast, 500ml"
                 value={formData.modifier || ""}
                 onValueChange={(val) => handleChange("modifier", val)}
-                className="dark:border-darkBorder dark:focus:border-darkLight/50"
+                className="bg-transparent"
               />
-            </div>
+            </Field>
           </div>
         </section>
 
-        <div className="h-px bg-border dark:bg-darkBorder/50 w-full" />
+        <div className="h-px bg-border w-full" />
 
         {/* Media & Metadata */}
         <section>
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-4">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
             Media & Metadata
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5 cursor-pointer">
-                Product Image URL
-              </label>
-              <div className="flex items-center gap-3">
-                <Input
-                  placeholder="https://images.unsplash.com/..."
-                  value={formData.image || ""}
-                  onValueChange={(val) => handleChange("image", val)}
-                  className="dark:border-darkBorder w-full dark:focus:border-darkLight/50"
-                  startIcon={<UploadCloud className="w-4 h-4" />}
-                  fullWidth
-                />
-              </div>
-            </div>
-
-            <div>
+            <Field>
+              <FieldLabel htmlFor="product-image">Product Image URL</FieldLabel>
               <Input
-                label="Product Tags"
+                id="product-image"
+                name="image"
+                type="url"
+                placeholder="https://images.unsplash.com/..."
+                value={formData.image || ""}
+                onValueChange={(val) => handleChange("image", val)}
+                startIcon={<UploadCloud className="w-4 h-4" />}
+                className="bg-transparent"
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="product-tags">Product Tags</FieldLabel>
+              <Input
+                id="product-tags"
+                name="tag"
                 placeholder="Type a tag and press Enter"
                 value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
+                onValueChange={setTagInput}
                 onKeyDown={handleAddTag}
-                className="dark:border-darkBorder dark:focus:border-darkLight/50"
                 startIcon={<TagIcon className="w-4 h-4" />}
+                className="bg-transparent"
               />
               {formData.tag && formData.tag.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
@@ -234,7 +305,7 @@ export default function ProductAddForm() {
                       <button
                         type="button"
                         onClick={() => removeTag(t)}
-                        className="hover:text-red-500 transition-colors focus:outline-none"
+                        className="hover:text-destructive transition-colors focus:outline-none"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -242,11 +313,11 @@ export default function ProductAddForm() {
                   ))}
                 </div>
               )}
-            </div>
+            </Field>
           </div>
         </section>
 
-        <div className="flex items-center justify-end gap-3 pt-6 border-t border-border dark:border-darkBorder/50">
+        <div className="flex items-center justify-end gap-3 pt-6 border-t border-border">
           <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>

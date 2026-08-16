@@ -1,92 +1,96 @@
+"use client";
+
+import { forwardRef, type HTMLAttributes } from "react";
+
 import { cn } from "@/lib/utils";
 
-interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "text" | "circular" | "rectangular";
-  width?: string | number;
-  height?: string | number;
-  animation?: "pulse" | "wave" | "none";
+/* -------------------------------------------------------------------------- */
+/*                                   TYPES                                    */
+/* -------------------------------------------------------------------------- */
+
+export type SkeletonShape = "rect" | "text" | "circle";
+export type SkeletonAnimation = "pulse" | "shimmer" | "none";
+
+interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
+  shape?: SkeletonShape;
+  animation?: SkeletonAnimation;
+  /** Number of stacked text lines (text shape only). Last line is shortened. */
+  lines?: number;
 }
 
-export function Skeleton({
-  className,
-  variant = "rectangular",
-  width,
-  height,
-  animation = "pulse",
-  ...props
-}: SkeletonProps) {
-  return (
-    <div
-      className={cn(
-        "bg-zinc-200 dark:bg-zinc-800",
-        animation === "pulse" && "animate-pulse",
-        animation === "wave" &&
-          "animate-[wave_2s_ease-in-out_infinite] bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200 dark:from-zinc-800 dark:via-zinc-700 dark:to-zinc-800",
-        variant === "text" && "h-4 rounded",
-        variant === "circular" && "rounded-full",
-        variant === "rectangular" && "rounded-md",
-        className,
-      )}
-      style={{
-        ...(width && { width }),
-        ...(height && { height }),
-      }}
-      {...props}
-    />
-  );
-}
+/** Shared surface colour for every skeleton primitive. */
+const BASE = "bg-muted dark:bg-secondary";
 
-export function TableSkeleton({ rows = 5 }: { rows?: number }) {
-  return (
-    <div className="w-full space-y-3">
-      {/* Header */}
-      <div className="flex gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 flex-1" />
-        ))}
-      </div>
-      {/* Rows */}
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex gap-4">
-          {Array.from({ length: 4 }).map((_, j) => (
-            <Skeleton key={j} className="h-12 flex-1" />
+const SHAPE: Record<SkeletonShape, string> = {
+  rect: "rounded-md",
+  text: "h-4 rounded",
+  circle: "rounded-full",
+};
+
+const ANIMATION: Record<SkeletonAnimation, string> = {
+  // Respect users who ask for reduced motion — freeze on a static surface.
+  pulse: "animate-pulse motion-reduce:animate-none",
+  // Shimmer sweep — a soft highlight band driven across the element by the
+  // `skeleton-shimmer` keyframes (see globals.css). A wide, low-opacity
+  // gradient keeps the colour ramp gentle; `linear` timing sweeps at an even
+  // pace instead of easing (which reads as a pause) at the edges.
+  shimmer:
+    "relative overflow-hidden after:absolute after:inset-0 after:animate-[skeleton-shimmer_1.8s_linear_infinite] after:bg-gradient-to-r after:from-transparent after:via-foreground/10 after:to-transparent dark:after:via-foreground/[0.14] motion-reduce:after:hidden",
+  none: "",
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                 COMPONENT                                  */
+/* -------------------------------------------------------------------------- */
+
+const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
+  (
+    { className, shape = "rect", animation = "pulse", lines, ...props },
+    ref,
+  ) => {
+    // Loading placeholders are noise for screen readers — hide them and let
+    // the consumer announce loading state on the region (aria-busy).
+    if (shape === "text" && lines && lines > 1) {
+      return (
+        <div
+          ref={ref}
+          aria-hidden="true"
+          className={cn("flex w-full flex-col gap-2", className)}
+          {...props}
+        >
+          {Array.from({ length: lines }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                BASE,
+                SHAPE.text,
+                ANIMATION[animation],
+                // Shorten the last line so the block reads like real prose.
+                i === lines - 1 ? "w-3/5" : "w-full",
+              )}
+            />
           ))}
         </div>
-      ))}
-    </div>
-  );
-}
+      );
+    }
 
-export function CardSkeleton() {
-  return (
-    <div className="w-full space-y-3 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
-      <Skeleton className="h-6 w-3/4" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-5/6" />
-      <div className="flex gap-2 pt-4">
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-24" />
-      </div>
-    </div>
-  );
-}
+    return (
+      <div
+        ref={ref}
+        aria-hidden="true"
+        className={cn(
+          BASE,
+          shape === "circle" && "aspect-square",
+          SHAPE[shape],
+          ANIMATION[animation],
+          className,
+        )}
+        {...props}
+      />
+    );
+  },
+);
 
-export function FormSkeleton() {
-  return (
-    <div className="w-full space-y-4">
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-11 w-full" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-11 w-full" />
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-24 w-full" />
-      </div>
-      <Skeleton className="h-11 w-32" />
-    </div>
-  );
-}
+Skeleton.displayName = "Skeleton";
+
+export { Skeleton };

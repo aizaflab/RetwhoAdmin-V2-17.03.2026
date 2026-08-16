@@ -5,7 +5,6 @@ export default function LoginPage() {
   return (
     <main className="fixed inset-0 h-dvh flex overflow-hidden">
       <LoginSidebar />
-      {/* LoginForm reads ?callbackUrl via useSearchParams. */}
       <Suspense fallback={<div className="flex-1" />}>
         <LoginForm />
       </Suspense>

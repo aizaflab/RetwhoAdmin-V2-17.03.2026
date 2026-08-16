@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { UserIcon } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { Input, ThemeToggle } from "@/components/ui";
+import { FieldError, Input, Label, ThemeToggle } from "@/components/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button/Button";
 import { EyeIcon, EyeOffIcon } from "@/components/icons/Icons";
@@ -97,38 +97,44 @@ export default function LoginForm() {
 
         {/* Form */}
         <form className="space-y-5 z-100" onSubmit={handleSubmit} noValidate>
-          <Input
-            label="Email address"
-            name="email"
-            type="text"
-            inputMode="email"
-            value={values.email}
-            onChange={handleChange}
-            error={errors.email}
-            placeholder="you@example.com"
-            fullWidth
-          />
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              name="email"
+              type="text"
+              inputMode="email"
+              value={values.email}
+              onChange={handleChange}
+              aria-invalid={errors.email ? true : undefined}
+              placeholder="you@example.com"
+            />
+            {errors.email && <FieldError>{errors.email}</FieldError>}
+          </div>
 
-          <Input
-            label="Password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            value={values.password}
-            onChange={handleChange}
-            error={errors.password}
-            placeholder="Enter your password"
-            fullWidth
-            endIcon={
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="transition-colors cursor-pointer text-foreground hover:text-primary"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
-            }
-          />
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={values.password}
+              onChange={handleChange}
+              aria-invalid={errors.password ? true : undefined}
+              placeholder="Enter your password"
+              endIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="transition-colors cursor-pointer text-foreground hover:text-primary"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              }
+            />
+            {errors.password && <FieldError>{errors.password}</FieldError>}
+          </div>
 
           <div className="flex justify-end">
             <Link

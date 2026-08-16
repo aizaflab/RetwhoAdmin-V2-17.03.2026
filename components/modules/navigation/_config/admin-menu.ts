@@ -117,29 +117,11 @@ export const ADMIN_MENU: AdminMenuItem[] = [
   {
     id: "employee",
     title: "Employee",
-    type: "group",
+    type: "item",
     icon: Link2,
-    requiredPermissions: [
-      PERMISSIONS.EMPLOYEE_LIST,
-      PERMISSIONS.EMPLOYEE_CREATE,
-    ],
+    path: "/employee/manage",
+    requiredPermissions: [PERMISSIONS.EMPLOYEE_LIST],
     order: 5,
-    children: [
-      {
-        id: "employee-add",
-        title: "Add Employee",
-        type: "item",
-        path: "/employee/add",
-        requiredPermissions: [PERMISSIONS.EMPLOYEE_CREATE],
-      },
-      {
-        id: "employee-manage",
-        title: "Manage Employee",
-        type: "item",
-        path: "/employee/manage",
-        requiredPermissions: [PERMISSIONS.EMPLOYEE_LIST],
-      },
-    ],
   },
 
   {

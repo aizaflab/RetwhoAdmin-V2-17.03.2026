@@ -2,13 +2,32 @@
 
 import { useState, useRef } from "react";
 import { BlogPost, BlogCategory } from "../_types/blog.types";
-import { Input } from "@/components/ui";
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+  Textarea,
+} from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
 import { useRouter } from "next/navigation";
-import TextEditor from "@/components/ui/editor/TextEditor";
-import { CloudUploadIcon } from "lucide-react";
+import { CloudUploadIcon, XIcon } from "lucide-react";
 import Image from "next/image";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+  type SelectOption,
+} from "@/components/ui/select/Select";
+import TextEditor from "@/components/ui/editor/TextEditor";
+
+const STATUS_OPTIONS: SelectOption[] = [
+  { value: "published", label: "Published" },
+  { value: "draft", label: "Draft" },
+  { value: "archived", label: "Archived" },
+];
 
 interface BlogPostFormProps {
   initialData?: BlogPost | null;
@@ -31,7 +50,7 @@ export default function BlogPostForm({
       reader.onload = () => {
         const result = reader.result;
         if (typeof result === "string") {
-          setFormData((prev) => ({ ...prev, bannerImage: result }));
+          setFormData((prev) => ({ ...prev, image: result }));
         }
       };
       reader.readAsDataURL(file);
@@ -42,9 +61,10 @@ export default function BlogPostForm({
     title: initialData?.title || "",
     slug: initialData?.slug || "",
     categoryId: initialData?.categoryId || "",
-    bannerImage: initialData?.bannerImage || "",
+    image: initialData?.image || "",
     altText: initialData?.altText || "",
     imageTitle: initialData?.imageTitle || "",
+    tags: initialData?.tags || [],
     metaTitle: initialData?.metaTitle || "",
     metaDescription: initialData?.metaDescription || "",
     content: initialData?.content || "",
@@ -52,6 +72,24 @@ export default function BlogPostForm({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [tagDraft, setTagDraft] = useState("");
+
+  /** Commits the draft as a tag; duplicates and blanks are ignored. */
+  const addTag = () => {
+    const tag = tagDraft.trim().replace(/,$/, "");
+    if (!tag) return;
+    setFormData((prev) =>
+      prev.tags.includes(tag) ? prev : { ...prev, tags: [...prev.tags, tag] },
+    );
+    setTagDraft("");
+  };
+
+  const removeTag = (tag: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((t) => t !== tag),
+    }));
+  };
 
   const handleTitleChange = (val: string) => {
     setFormData((prev) => ({
@@ -93,37 +131,37 @@ export default function BlogPostForm({
     } as Partial<BlogPost>);
   };
 
-  const categoryOptions = categories.map((c) => ({
+  const categoryOptions: SelectOption[] = categories.map((c) => ({
     value: c.id,
     label: c.name,
   }));
 
-  const statusOptions = [
-    { value: "published", label: "Published" },
-    { value: "draft", label: "Draft" },
-    { value: "archived", label: "Archived" },
-  ];
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Top Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-card p-3 sm:p-5 rounded-xl border border-border/50">
         {/* Left Column */}
         <div className="space-y-4">
-          <Input
-            label="Blog Title *"
-            placeholder="Enter blog title"
-            value={formData.title}
-            onValueChange={handleTitleChange}
-            error={errors.title}
-            fullWidth
-            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
-          />
+          <Field>
+            <FieldLabel htmlFor="post-title">Blog Title</FieldLabel>
+            <Input
+              id="post-title"
+              name="title"
+              placeholder="Enter blog title"
+              value={formData.title}
+              onValueChange={handleTitleChange}
+              aria-invalid={errors.title ? true : undefined}
+              className="bg-transparent"
+            />
+            {errors.title && <FieldError>{errors.title}</FieldError>}
+          </Field>
 
-          <div>
+          <Field>
+            <FieldLabel id="post-category-label" htmlFor="post-category">
+              Blog Category
+            </FieldLabel>
             <Select
-              label="Blog Category"
-              options={categoryOptions}
+              id="post-category"
               value={formData.categoryId}
               onValueChange={(val) => {
                 setFormData((prev) => ({
@@ -133,15 +171,26 @@ export default function BlogPostForm({
                 if (errors.categoryId)
                   setErrors((prev) => ({ ...prev, categoryId: "" }));
               }}
-              className={`h-11 w-full bg-white dark:bg-darkBg ${errors.categoryId ? "border-red-500" : "border-border dark:border-[#424242]"}`}
-              error={errors.categoryId}
-            />
-          </div>
+            >
+              <SelectTrigger error={!!errors.categoryId}>
+                <SelectValue
+                  placeholder="Select a category"
+                  options={categoryOptions}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={categoryOptions} />
+              </SelectContent>
+            </Select>
+            {errors.categoryId && <FieldError>{errors.categoryId}</FieldError>}
+          </Field>
 
-          <div className="py-6">
+          <Field>
+            <FieldLabel id="post-status-label" htmlFor="post-status">
+              Blog Status
+            </FieldLabel>
             <Select
-              label="Blog Status"
-              options={statusOptions}
+              id="post-status"
               value={formData.status}
               onValueChange={(val) => {
                 setFormData((prev) => ({
@@ -149,56 +198,74 @@ export default function BlogPostForm({
                   status: val as "published" | "draft" | "archived",
                 }));
               }}
-              className="h-11 w-full bg-white dark:bg-darkBg border-border dark:border-[#424242]"
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder="Select status"
+                  options={STATUS_OPTIONS}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={STATUS_OPTIONS} />
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="post-alt-text">Alternative Text</FieldLabel>
+            <Input
+              id="post-alt-text"
+              name="altText"
+              placeholder="Enter blog alternative text"
+              value={formData.altText}
+              onValueChange={(val) =>
+                setFormData((prev) => ({ ...prev, altText: val }))
+              }
+              className="bg-transparent"
             />
-          </div>
+          </Field>
 
-          <Input
-            label="Alternative Text"
-            placeholder="Enter blog alternative text"
-            value={formData.altText}
-            onValueChange={(val) =>
-              setFormData((prev) => ({ ...prev, altText: val }))
-            }
-            fullWidth
-            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
-          />
-
-          <Input
-            label="Image Title"
-            placeholder="Enter blog image title"
-            value={formData.imageTitle}
-            onValueChange={(val) =>
-              setFormData((prev) => ({ ...prev, imageTitle: val }))
-            }
-            fullWidth
-            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
-          />
+          <Field>
+            <FieldLabel htmlFor="post-image-title">Image Title</FieldLabel>
+            <Input
+              id="post-image-title"
+              name="imageTitle"
+              placeholder="Enter blog image title"
+              value={formData.imageTitle}
+              onValueChange={(val) =>
+                setFormData((prev) => ({ ...prev, imageTitle: val }))
+              }
+              className="bg-transparent"
+            />
+          </Field>
         </div>
 
         {/* Right Column */}
         <div className="flex flex-col h-full space-y-4">
-          <Input
-            label="Slug"
-            placeholder="Enter blog slug"
-            value={formData.slug}
-            onValueChange={(val) => {
-              setFormData((prev) => ({ ...prev, slug: val }));
-              if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
-            }}
-            error={errors.slug}
-            fullWidth
-            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
-          />
+          <Field>
+            <FieldLabel htmlFor="post-slug">Slug</FieldLabel>
+            <Input
+              id="post-slug"
+              name="slug"
+              placeholder="Enter blog slug"
+              value={formData.slug}
+              onValueChange={(val) => {
+                setFormData((prev) => ({ ...prev, slug: val }));
+                if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
+              }}
+              aria-invalid={errors.slug ? true : undefined}
+              className="bg-transparent"
+            />
+            {errors.slug && <FieldError>{errors.slug}</FieldError>}
+          </Field>
 
-          <div className="space-y-1.5 flex-1 flex flex-col">
-            <label className="text-sm font-medium dark:font-[350] text-[#344054] dark:text-gray-100 block">
-              Featured Image
-            </label>
+          <Field className="flex-1">
+            <FieldLabel htmlFor="post-banner">Featured Image</FieldLabel>
             <div
+              id="post-banner"
               role="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative border-2 border-dashed border-[#EAECF0] dark:border-darkBorder rounded-lg p-6 flex flex-col items-center justify-center flex-1 cursor-pointer hover:border-[#6C63FF]  bg-white dark:bg-darkBg min-h-45"
+              className="relative border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center flex-1 cursor-pointer hover:border-primary/50 transition-colors bg-transparent min-h-45"
             >
               <input
                 type="file"
@@ -207,10 +274,10 @@ export default function BlogPostForm({
                 accept="image/*"
                 onChange={handleFileChange}
               />
-              {formData.bannerImage ? (
+              {formData.image ? (
                 <div className="absolute inset-2 rounded-md overflow-hidden animate-fadeIn">
                   <Image
-                    src={formData.bannerImage}
+                    src={formData.image}
                     className="w-full h-full object-cover"
                     alt="Preview"
                     width={100}
@@ -220,7 +287,7 @@ export default function BlogPostForm({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setFormData((prev) => ({ ...prev, bannerImage: "" }));
+                      setFormData((prev) => ({ ...prev, image: "" }));
                     }}
                     className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 shadow"
                   >
@@ -243,67 +310,128 @@ export default function BlogPostForm({
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-center space-y-2">
-                  <div className="p-2 border border-[#EAECF0] rounded-lg bg-white dark:bg-darkBorder/50 dark:border-darkBorder shadow-sm">
-                    <CloudUploadIcon className="h-6 w-6 text-[#667085] dark:text-white" />
+                  <div className="p-2 border border-border rounded-lg bg-card shadow-sm">
+                    <CloudUploadIcon className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm text-[#475467] font-medium">
-                      <span className="text-[#6C63FF]">Click to upload</span> or
+                    <p className="text-sm text-foreground font-medium">
+                      <span className="text-primary">Click to upload</span> or
                       drag and drop
                     </p>
-                    <p className="text-xs text-[#667085]">
+                    <p className="text-xs text-muted-foreground">
                       SVG, PNG, JPG or GIF (MAX. 800x400px)
                     </p>
                   </div>
                 </div>
               )}
             </div>
-          </div>
+          </Field>
         </div>
       </div>
 
       {/* SEO Section */}
-      <div className="bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder space-y-4">
-        <div className="relative">
+      <div className="bg-card p-3 sm:p-5 rounded-xl border border-border/50 space-y-4">
+        <Field>
+          <FieldLabel htmlFor="post-tags">
+            Tags
+            <span className="text-xs font-normal text-muted-foreground">
+              press Enter to add
+            </span>
+          </FieldLabel>
           <Input
-            label={`Meta Title (Characters: ${formData.metaTitle.length}/60)`}
+            id="post-tags"
+            name="tags"
+            placeholder="e.g. web, frontend"
+            value={tagDraft}
+            onValueChange={setTagDraft}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === ",") {
+                // Enter would submit the form — the key adds a tag instead.
+                e.preventDefault();
+                addTag();
+              } else if (e.key === "Backspace" && !tagDraft) {
+                setFormData((prev) => ({
+                  ...prev,
+                  tags: prev.tags.slice(0, -1),
+                }));
+              }
+            }}
+            onBlur={addTag}
+            className="bg-transparent"
+          />
+          {formData.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {formData.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    aria-label={`Remove ${tag}`}
+                    className="cursor-pointer text-muted-foreground transition-colors hover:text-destructive"
+                  >
+                    <XIcon className="size-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="post-meta-title">
+            Meta Title
+            <span className="text-xs font-normal text-muted-foreground">
+              {formData.metaTitle.length}/60
+            </span>
+          </FieldLabel>
+          <Input
+            id="post-meta-title"
+            name="metaTitle"
             placeholder="Enter blog meta title"
             value={formData.metaTitle}
             onValueChange={(val) =>
               setFormData((prev) => ({ ...prev, metaTitle: val }))
             }
-            error={errors.metaTitle}
-            fullWidth
-            className="dark:border-darkBorder dark:focus:border-[#1b2241]"
+            aria-invalid={errors.metaTitle ? true : undefined}
+            className="bg-transparent"
           />
-        </div>
+          {errors.metaTitle && <FieldError>{errors.metaTitle}</FieldError>}
+        </Field>
 
-        <div className="relative">
-          <label className="text-sm font-medium dark:font-[350] text-[#344054] dark:text-gray-100 block mb-1">
-            {`Meta Description (Characters: ${formData.metaDescription.length}/160)`}
-          </label>
-          <textarea
+        <Field>
+          <FieldLabel htmlFor="post-meta-description">
+            Meta Description
+            <span className="text-xs font-normal text-muted-foreground">
+              {formData.metaDescription.length}/160
+            </span>
+          </FieldLabel>
+          <Textarea
+            id="post-meta-description"
+            name="metaDescription"
             value={formData.metaDescription}
             onChange={(e) =>
               setFormData({ ...formData, metaDescription: e.target.value })
             }
             rows={3}
-            className={`w-full rounded-md border ${formData.metaDescription.length > 160 ? "border-red-500" : "border-border dark:border-[#424242]"} p-3 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 placeholder:text-gray-400 dark:border-darkBorder dark:focus:border-[#1b2241]`}
+            invalid={
+              !!errors.metaDescription || formData.metaDescription.length > 160
+            }
             placeholder="Enter blog meta description"
+            className="bg-transparent"
           />
           {errors.metaDescription && (
-            <p className="text-xs text-red-500 mt-1">
-              {errors.metaDescription}
-            </p>
+            <FieldError>{errors.metaDescription}</FieldError>
           )}
-        </div>
+        </Field>
       </div>
 
       {/* Content Section */}
-      <div className="bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder ">
-        <label className="text-sm font-medium dark:font-[350] text-[#344054] dark:text-gray-100 block mb-1.5">
-          Content
-        </label>
+      <div className="bg-card p-3 sm:p-5 rounded-xl border border-border/50">
+        <FieldLabel className="mb-1.5">Content</FieldLabel>
 
         <TextEditor
           value={formData.content}
@@ -314,17 +442,14 @@ export default function BlogPostForm({
 
       {/* Footer Buttons */}
       <div className="flex items-center justify-end gap-5">
-        <Button
-          type="submit"
-          className="px-8 bg-[#0284c7] hover:bg-[#0284c7]/90 text-white"
-        >
+        <Button type="submit" className="px-8">
           Save
         </Button>
         <Button
           type="button"
           variant="outline"
           onClick={() => router.back()}
-          className="px-7  text-gray-500"
+          className="px-7 text-muted-foreground"
         >
           Cancel
         </Button>

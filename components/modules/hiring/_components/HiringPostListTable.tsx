@@ -28,7 +28,13 @@ import {
   ImageIcon,
 } from "@/components/icons/Icons";
 import { Button } from "@/components/ui/button/Button";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -45,7 +51,7 @@ const STATUS_STYLES: Record<HiringStatus, string> = {
   active:
     "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
   inactive:
-    "bg-slate-50 text-slate-600 dark:bg-slate-800/30 dark:text-slate-400",
+    "bg-muted/50 text-muted-foreground dark:bg-muted dark:text-muted-foreground",
   closed: "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400",
   draft: "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
 };
@@ -109,7 +115,7 @@ export default function HiringPostListTable({
         const cat = categories.find((c) => c.id === row.categoryId);
         return (
           <div className="flex items-center gap-3">
-            <div className="relative w-11 h-11 rounded-lg bg-gray-100 dark:bg-darkBorder overflow-hidden shrink-0">
+            <div className="relative w-11 h-11 rounded-lg bg-muted overflow-hidden shrink-0">
               {row.bannerImage ? (
                 <Image
                   src={row.bannerImage}
@@ -118,17 +124,17 @@ export default function HiringPostListTable({
                   className="object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-text5">
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   <ImageIcon className="w-5 h-5" />
                 </div>
               )}
             </div>
             <div className="max-w-[220px]">
-              <p className="text-sm font-semibold text-black dark:text-white truncate">
+              <p className="text-sm font-semibold text-foreground truncate">
                 {row.title}
               </p>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <span className="text-[10px] text-text5 truncate">
+                <span className="text-[10px] text-muted-foreground truncate">
                   {row.companyName}
                 </span>
                 {cat && (
@@ -160,11 +166,11 @@ export default function HiringPostListTable({
       className: "hidden md:table-cell",
       cell: (_, row) => (
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-black dark:text-white">
+          <span className="text-sm font-semibold text-foreground">
             {row.currency} {row.salaryMin.toLocaleString()}
             {row.salaryMax ? ` – ${row.salaryMax.toLocaleString()}` : "+"}
           </span>
-          <span className="text-[10px] text-text5 capitalize">
+          <span className="text-[10px] text-muted-foreground capitalize">
             /{row.salaryType}
           </span>
         </div>
@@ -176,7 +182,7 @@ export default function HiringPostListTable({
       className: "text-center hidden sm:table-cell",
       cell: (_, row) => (
         <div className="inline-flex items-center justify-center gap-1">
-          <span className="text-sm font-bold text-black dark:text-white">
+          <span className="text-sm font-bold text-foreground">
             {row.applicationCount}
           </span>
         </div>
@@ -187,7 +193,7 @@ export default function HiringPostListTable({
       header: "Deadline",
       className: "hidden xl:table-cell",
       cell: (_, row) => (
-        <span className="text-xs text-text6 dark:text-text5">
+        <span className="text-xs text-foreground">
           {row.deadline
             ? format(new Date(row.deadline), "dd MMM yyyy")
             : "Ongoing"}
@@ -218,7 +224,7 @@ export default function HiringPostListTable({
                 e.stopPropagation();
                 router.push(`/hiring/edit/${row.id}`);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all"
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
@@ -234,7 +240,7 @@ export default function HiringPostListTable({
             >
               <DropdownTrigger asChild showChevron={false}>
                 <button
-                  className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-rose-400/50 hover:text-rose-500 transition-all"
+                  className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-rose-400/50 hover:text-rose-500 transition-all"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreIcon className="w-4 h-4" />
@@ -249,7 +255,7 @@ export default function HiringPostListTable({
                   e.stopPropagation();
                   router.push(`/hiring/view/${row.id}`);
                 }}
-                className="text-text6 dark:text-text5 text-xs rounded-sm py-2 cursor-pointer"
+                className="text-foreground text-xs rounded-sm py-2 cursor-pointer"
               >
                 View Details
               </DropdownItem>
@@ -260,7 +266,7 @@ export default function HiringPostListTable({
                   e.stopPropagation();
                   router.push(`/hiring/applications?jobId=${row.id}`);
                 }}
-                className="text-text6 dark:text-text5 text-xs rounded-sm py-2 cursor-pointer"
+                className="text-foreground text-xs rounded-sm py-2 cursor-pointer"
               >
                 View Applications
               </DropdownItem>
@@ -268,7 +274,7 @@ export default function HiringPostListTable({
               {onUpdateStatus && (
                 <>
                   <DropdownSeparator />
-                  <DropdownLabel className="text-[9px] items-center gap-1.5 uppercase tracking-wider text-text5 py-1.5 pb-2 pl-0 flex">
+                  <DropdownLabel className="text-[9px] items-center gap-1.5 uppercase tracking-wider text-muted-foreground py-1.5 pb-2 pl-0 flex">
                     Status Actions
                   </DropdownLabel>
 
@@ -315,7 +321,7 @@ export default function HiringPostListTable({
                         e.stopPropagation();
                         onUpdateStatus(row.id, "inactive");
                       }}
-                      className="text-slate-600 dark:text-slate-400 text-xs rounded-sm py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/20"
+                      className="text-muted-foreground text-xs rounded-sm py-2 cursor-pointer hover:bg-muted/50 dark:hover:bg-muted"
                     >
                       Set Inactive
                     </DropdownItem>
@@ -347,10 +353,10 @@ export default function HiringPostListTable({
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+          <h1 className="sm:text-2xl text-xl font-medium text-foreground">
             Manage Hirings
           </h1>
-          <p className="text-xs text-text5 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {filtered.length} post{filtered.length !== 1 ? "s" : ""} found
           </p>
         </div>
@@ -361,27 +367,34 @@ export default function HiringPostListTable({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search title, company..."
-              startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full  dark:border-darkBorder/80  dark:focus:border-darkLight/80"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 w-full"
             />
           </div>
           <div className="w-44">
-            <Select
-              options={categoryOptions}
-              value={categoryFilter}
-              onValueChange={setCategoryFilter}
-              className="w-full"
-              fieldClass="h-10!"
-            />
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="h-10">
+                <SelectValue
+                  options={categoryOptions}
+                  placeholder="All Categories"
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={categoryOptions} />
+              </SelectContent>
+            </Select>
           </div>
           <div className="w-28">
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-              className="w-full"
-              fieldClass="h-10!"
-            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10">
+                <SelectValue options={statusOptions} placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={statusOptions} />
+              </SelectContent>
+            </Select>
           </div>
           <Button
             onClick={() => router.push("/hiring/add")}
@@ -404,7 +417,7 @@ export default function HiringPostListTable({
         limit={limit}
         setLimit={setLimit}
         emptyMessage="No hiring posts found"
-        headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
+        headerColor="bg-muted/50"
       />
 
       {/* Delete Modal */}

@@ -273,12 +273,12 @@ export function DropdownTrigger({
       type="button"
       className={cn(
         "flex items-center gap-2 px-3 py-1.5 text-sm font-medium cursor-pointer",
-        "bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white",
-        "border border-gray-200 dark:border-white/10 rounded-md",
-        "hover:bg-gray-50 dark:hover:bg-white/5",
-        "focus:outline-none focus:border-border",
+        "bg-background text-foreground",
+        "border border-border rounded-md",
+        "hover:bg-accent hover:text-accent-foreground",
+        "outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring/10",
         "transition-all duration-200 ease-out",
-        "shadow-[0_1px_2px_rgba(0,0,0,0.05)]",
+        "shadow-xs",
         showChevron ? "justify-between" : "justify-center",
         disabled && "opacity-50 cursor-not-allowed",
         className,
@@ -298,7 +298,7 @@ export function DropdownTrigger({
       {showChevron && (
         <ChevronDownIcon
           className={cn(
-            "h-3.5 w-3.5 text-gray-400 transition-transform duration-300 ease-out",
+            "h-3.5 w-3.5 text-muted-foreground transition-transform duration-300 ease-out",
             isOpen && "transform rotate-180",
           )}
           aria-hidden="true"
@@ -429,16 +429,17 @@ function calculatePosition(
     }
   }
 
-  // Boundary constraints
-  if (side === "top" || side === "bottom") {
-    const minLeft = scrollX + offset;
-    const maxLeft = scrollX + viewport.width - menuWidth - offset;
-    left = Math.max(minLeft, Math.min(left, maxLeft));
-  } else {
-    const minTop = scrollY + offset;
-    const maxTop = scrollY + viewport.height - menuHeight - offset;
-    top = Math.max(minTop, Math.min(top, maxTop));
-  }
+  // Boundary constraints. Both axes are clamped on every side: the cross axis
+  // is the usual alignment overflow, and the main axis matters too — a menu
+  // that spills past the viewport when it had no room to flip would otherwise
+  // stretch the document and add a scrollbar.
+  const minLeft = scrollX + offset;
+  const maxLeft = scrollX + viewport.width - menuWidth - offset;
+  left = Math.max(minLeft, Math.min(left, maxLeft));
+
+  const minTop = scrollY + offset;
+  const maxTop = scrollY + viewport.height - menuHeight - offset;
+  top = Math.max(minTop, Math.min(top, maxTop));
 
   return {
     style: {
@@ -449,6 +450,19 @@ function calculatePosition(
     effectiveSide: finalSide,
   };
 }
+
+/**
+ * Where the menu sits before it has been measured. Without explicit offsets an
+ * `absolute` element falls back to its static position — the end of `<body>`,
+ * since it is portaled there — which stretches the document and flashes a
+ * scrollbar for the frame or two before the real coordinates land. Parking it
+ * at the document origin keeps it inside the existing scroll area.
+ */
+const UNMEASURED_POSITION: CSSProperties = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+};
 
 // Dropdown menu component with portal
 interface DropdownMenuProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -470,7 +484,8 @@ export function DropdownMenu({
   const { isOpen, menuRef, triggerRef } = useContext(DropdownContext);
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
-  const [positionStyle, setPositionStyle] = useState<CSSProperties>({});
+  const [positionStyle, setPositionStyle] =
+    useState<CSSProperties>(UNMEASURED_POSITION);
   const [effectiveSide, setEffectiveSide] = useState<DropdownSide>(
     side as DropdownSide,
   );
@@ -523,7 +538,9 @@ export function DropdownMenu({
       timer = setTimeout(() => {
         if (!isActive) return;
         setShouldRender(false);
-        setPositionStyle({}); // Reset position immediately when fully hidden
+        // Reset so the next open starts from a safe spot instead of the stale
+        // coordinates of wherever the trigger used to be.
+        setPositionStyle(UNMEASURED_POSITION);
       }, 150);
     }
 
@@ -568,10 +585,14 @@ export function DropdownMenu({
     <div
       className={cn(
         "absolute z-50 overflow-hidden rounded-md",
-        "bg-white dark:bg-darkPrimary",
-        "border border-gray-200 dark:border-darkBorder/80",
+        "bg-popover text-popover-foreground",
+        "border border-border",
         "shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)]",
-        "transition-all duration-150 ease-out",
+        // Plain `transition` — its default property list covers opacity,
+        // translate and scale but not `top` / `left`. `transition-all` would
+        // tween the coordinates too, making the menu slide across the page from
+        // wherever it was last positioned to the trigger.
+        "transition duration-150 ease-out",
         effectiveSide === "top" && "origin-bottom",
         effectiveSide === "bottom" && "origin-top",
         effectiveSide === "left" && "origin-right",
@@ -658,11 +679,19 @@ export function DropdownItem({
         "text-left outline-none select-none",
         "transition-colors duration-150 ease-out",
         destructive
-          ? "text-red-600 dark:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/20"
-          : "text-gray-700 dark:text-gray-300 focus:bg-gray-100 dark:focus:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/5",
+          ? "text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+          : "text-popover-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
         disabled && "opacity-50 cursor-not-allowed pointer-events-none",
-        selected && !destructive && "bg-gray-100 dark:bg-white/10 font-medium",
-        activeIndex === itemIndex && !disabled && "bg-gray-100 dark:bg-white/5",
+        selected &&
+          !destructive &&
+          "bg-accent text-accent-foreground font-medium",
+        // Keyboard highlight mirrors hover — tinted for destructive items so the
+        // row still reads as dangerous while it is focused.
+        activeIndex === itemIndex &&
+          !disabled &&
+          (destructive
+            ? "bg-destructive/10"
+            : "bg-accent text-accent-foreground"),
         className,
       )}
       role="menuitem"
@@ -706,7 +735,7 @@ export function DropdownSeparator({
 }: DropdownSeparatorProps) {
   return (
     <div
-      className={cn("h-px my-1.5 bg-gray-100 dark:bg-white/10", className)}
+      className={cn("h-px my-1.5 bg-border", className)}
       role="separator"
       {...props}
     />
@@ -727,7 +756,7 @@ export function DropdownLabel({
   return (
     <div
       className={cn(
-        "px-3 py-1.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.05em]",
+        "px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.05em]",
         className,
       )}
       {...props}

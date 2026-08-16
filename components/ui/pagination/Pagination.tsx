@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import type React from "react";
+import { createContext, useContext } from "react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -8,389 +9,402 @@ import {
   ChevronRightIcon,
   EllipsisIcon,
 } from "@/components/icons/Icons";
-import { Select } from "../select/Select";
 
-interface PaginationProps {
-  totalItems: number;
-  pageSize: number;
-  currentPage: number;
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number) => void;
-  pageSizeOptions?: number[];
-  showPageSizeOptions: boolean;
-  showPageNumbers?: boolean;
-  showPrevNextButtons?: boolean;
-  showingLabel?: string;
-  ofLabel?: string;
-  variant?: "default" | "floating" | "gradient" | "pill";
-  size?: "small" | "default" | "large";
-  color?: "primary" | "secondary" | "accent" | "custom";
-  className?: string;
-  align?: "start" | "center" | "end";
-  siblingCount?: number;
-  showPageInfo?: boolean;
+import { Button } from "../button/Button";
+
+/**
+ * Composable, themeable pagination (shadcn-style + variants).
+ *
+ *   <Pagination variant="pill" size="lg">
+ *     <PaginationContent>
+ *       <PaginationItem><PaginationPrevious onClick={prev} disabled={…} /></PaginationItem>
+ *       <PaginationItem><PaginationLink isActive>1</PaginationLink></PaginationItem>
+ *       <PaginationItem><PaginationEllipsis /></PaginationItem>
+ *       <PaginationItem><PaginationNext onClick={next} disabled={…} /></PaginationItem>
+ *     </PaginationContent>
+ *   </Pagination>
+ *
+ * `variant`/`size` are set once on <Pagination> and flow to every child via
+ * context — no prop-drilling, full composability.
+ */
+
+type PaginationVariant = "default" | "outline" | "ghost" | "pill" | "floating";
+type PaginationSize = "sm" | "default" | "medium" | "lg";
+
+interface PaginationCtx {
+  variant: PaginationVariant;
+  size: PaginationSize;
+  /** Raw CSS color for the active page (and active-aware variants). */
+  color?: string;
+  /** Text color on top of `color`. Override when `color` is light. */
+  colorForeground?: string;
 }
 
-const Pagination = ({
-  totalItems = 0,
-  pageSize = 10,
-  currentPage = 1,
-  onPageChange,
-  onPageSizeChange,
-  pageSizeOptions = [10, 25, 50, 100],
-  showPageSizeOptions = false,
-  showPageNumbers = true,
-  showPrevNextButtons = true,
-  showingLabel = "Showing",
-  ofLabel = "of",
-  variant = "default",
-  size = "default",
-  color = "primary",
-  className,
-  align = "center",
-  siblingCount = 1,
-  showPageInfo = true,
-}: PaginationProps) => {
-  const [page, setPage] = useState(currentPage);
-  const [perPage, setPerPage] = useState(pageSize);
+const PaginationContext = createContext<PaginationCtx>({
+  variant: "default",
+  size: "default",
+});
 
-  // Calculate total pages
-  const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+const usePagination = () => useContext(PaginationContext);
 
-  // Update internal state when props change
-  useEffect(() => {
-    setPage(currentPage);
-  }, [currentPage]);
+type ButtonVariant = React.ComponentProps<typeof Button>["variant"];
+type ButtonSize = React.ComponentProps<typeof Button>["size"];
+type ButtonRounded = React.ComponentProps<typeof Button>["rounded"];
 
-  useEffect(() => {
-    setPerPage(pageSize);
-  }, [pageSize]);
-
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages || newPage === page) return;
-    setPage(newPage);
-    onPageChange?.(newPage);
-  };
-
-  // Handle page size change (for Select component)
-  const handlePageSizeChange = (newSizeStr: string) => {
-    const newSize = Number(newSizeStr);
-    setPerPage(newSize);
-    setPage(1); // Reset to page 1 when page size changes
-    onPageSizeChange?.(newSize);
-  };
-
-  // Generate page numbers to display
-  const getPageNumbers = () => {
-    // If less than 6 pages, just show all page numbers without ellipsis
-    if (totalPages < 6) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
-    const pageNumbers = [];
-    pageNumbers.push(1);
-
-    const leftSiblingIndex = Math.max(2, page - siblingCount);
-    const rightSiblingIndex = Math.min(totalPages - 1, page + siblingCount);
-
-    const shouldShowLeftDots = leftSiblingIndex > 2;
-    const shouldShowRightDots = rightSiblingIndex < totalPages - 1;
-
-    if (shouldShowLeftDots && !shouldShowRightDots) {
-      const leftItemCount = 3 + 2 * siblingCount;
-      const leftRange = Array.from(
-        { length: leftItemCount },
-        (_, i) => totalPages - leftItemCount + i + 1,
-      );
-      return [1, "leftDots", ...leftRange];
-    }
-
-    if (!shouldShowLeftDots && shouldShowRightDots) {
-      const rightItemCount = 3 + 2 * siblingCount;
-      const rightRange = Array.from(
-        { length: rightItemCount },
-        (_, i) => i + 1,
-      );
-      return [...rightRange, "rightDots", totalPages];
-    }
-
-    if (shouldShowLeftDots && shouldShowRightDots) {
-      const middleRange = Array.from(
-        { length: rightSiblingIndex - leftSiblingIndex + 1 },
-        (_, i) => leftSiblingIndex + i,
-      );
-      return [1, "leftDots", ...middleRange, "rightDots", totalPages];
-    }
-
-    const range = Array.from({ length: totalPages }, (_, i) => i + 1);
-    return range;
-  };
-
-  // Size styles - applied to buttons
-  const getSizeClasses = () => {
-    switch (size) {
-      case "small":
-        return {
-          button: "size-8 text-xs",
-          text: "text-xs",
-          gap: "gap-0.5",
-        };
-      case "large":
-        return {
-          button: "size-11 text-base",
-          text: "text-base",
-          gap: "gap-1.5",
-        };
-      default:
-        return {
-          button: "size-9 text-sm",
-          text: "text-sm",
-          gap: "gap-1",
-        };
-    }
-  };
-
-  // Color styles for active button
-  const getColorClasses = () => {
-    switch (color) {
-      case "secondary":
-        return "!bg-zinc-700 !border-zinc-700 !text-white dark:!text-white hover:!bg-zinc-600";
-      case "accent":
-        return "!bg-violet-600 !border-violet-600 !text-white dark:!text-white hover:!bg-violet-500";
-      case "custom":
-        return "!bg-blue-600 !border-blue-600 !text-white dark:!text-white hover:!bg-blue-500";
-      default:
-        return "!bg-primary !border-primary !text-white dark:!text-black hover:!bg-primary/90";
-    }
-  };
-
-  // Variant styles
-  const getVariantClasses = () => {
-    switch (variant) {
-      case "floating":
-        return {
-          wrapper: "bg-white dark:bg-zinc-800 p-1 rounded-full shadow-lg",
-          button:
-            "border-0 bg-transparent hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-full",
-          activeButton: "shadow-inner rounded-full",
-        };
-      case "gradient":
-        return {
-          wrapper: "bg-white dark:bg-zinc-800 shadow-md rounded-lg p-1",
-          button:
-            "border-0 bg-transparent hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md",
-          activeButton: "bg-gradient-to-r shadow-md rounded-md",
-        };
-      case "pill":
-        return {
-          wrapper: "",
-          button:
-            "rounded-full border-0 bg-gray-100 dark:bg-zinc-700 hover:bg-gray-200 dark:hover:bg-zinc-600",
-          activeButton: "shadow-md rounded-full",
-        };
-      default:
-        return {
-          wrapper: "",
-          button:
-            "border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 rounded-lg",
-          activeButton: "shadow-md rounded-lg",
-        };
-    }
-  };
-
-  const sizeClasses = getSizeClasses();
-  const colorClasses = getColorClasses();
-  const variantClasses = getVariantClasses();
-
-  // Calculate start and end item numbers
-  const startItem = totalItems === 0 ? 0 : (page - 1) * perPage + 1;
-  const endItem = Math.min(page * perPage, totalItems);
-
-  return (
-    <div
-      className={cn(
-        "flex w-full flex-col gap-2.5",
-        align === "start"
-          ? "items-start"
-          : align === "end"
-            ? "items-end"
-            : "items-center",
-        className,
-      )}
-    >
-      <div
-        className={cn(
-          "flex flex-wrap items-center gap-3 sm:gap-4 w-full",
-          showPageInfo && "lg:justify-between",
-          !showPageInfo || align !== "center"
-            ? align === "start"
-              ? "justify-start"
-              : align === "end"
-                ? "justify-end"
-                : "justify-center"
-            : "justify-center",
-        )}
-      >
-        {/* Page info */}
-        {showPageInfo && (
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "text-slate-500 dark:text-zinc-400 font-medium whitespace-nowrap hidden sm:block",
-                sizeClasses.text,
-              )}
-            >
-              {showingLabel}{" "}
-              <span className="font-semibold text-slate-900 dark:text-zinc-200">
-                {startItem} - {endItem}
-              </span>{" "}
-              {ofLabel}{" "}
-              <span className="font-semibold text-slate-900 dark:text-zinc-200">
-                {totalItems}
-              </span>
-            </div>
-            |
-            <div
-              className={cn(
-                "text-slate-400 font-medium whitespace-nowrap hidden sm:block",
-                sizeClasses.text,
-              )}
-            >
-              Page{" "}
-              <span className="font-bold text-slate-600 dark:text-zinc-300">
-                {page}
-              </span>{" "}
-              of {totalPages}
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 sm:gap-4">
-          {/* Pagination controls */}
-          {totalPages > 1 && (
-            <div
-              className={cn(
-                "flex items-center",
-                sizeClasses.gap,
-                variantClasses.wrapper,
-              )}
-            >
-              {/* Previous Button */}
-              {showPrevNextButtons && (
-                <button
-                  type="button"
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 1}
-                  className={cn(
-                    "flex items-center justify-center transition-all duration-200",
-                    variantClasses.button,
-                    sizeClasses.button,
-                    page === 1 && "opacity-40 cursor-not-allowed",
-                    "dark:text-zinc-300",
-                  )}
-                  aria-label="Previous page"
-                >
-                  <ChevronLeftIcon className="size-4" />
-                </button>
-              )}
-
-              {/* Page Numbers */}
-              {showPageNumbers && (
-                <div className={cn("flex items-center", sizeClasses.gap)}>
-                  {getPageNumbers().map((pageNumber, index) => {
-                    if (
-                      pageNumber === "leftDots" ||
-                      pageNumber === "rightDots"
-                    ) {
-                      return (
-                        <span
-                          key={`dots-${index}`}
-                          className={cn(
-                            "hidden sm:flex items-center justify-center text-slate-400",
-                            sizeClasses.button,
-                          )}
-                        >
-                          <EllipsisIcon className="size-4" />
-                        </span>
-                      );
-                    }
-
-                    const isActive = page === pageNumber;
-                    const isDistant =
-                      index > 0 &&
-                      index < getPageNumbers().length - 1 &&
-                      Math.abs((pageNumber as number) - page) > 1;
-
-                    return (
-                      <button
-                        type="button"
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber as number)}
-                        className={cn(
-                          "flex items-center justify-center transition-all duration-200 font-medium",
-                          variantClasses.button,
-                          sizeClasses.button,
-                          "dark:text-zinc-300",
-                          isActive && variantClasses.activeButton,
-                          isActive && colorClasses,
-                          isDistant && "hidden md:flex",
-                          !isActive &&
-                            index !== 0 &&
-                            index !== getPageNumbers().length - 1 &&
-                            "hidden sm:flex",
-                        )}
-                        aria-label={`Page ${pageNumber}`}
-                        aria-current={isActive ? "page" : undefined}
-                      >
-                        {pageNumber}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Next Button */}
-              {showPrevNextButtons && (
-                <button
-                  type="button"
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page === totalPages}
-                  className={cn(
-                    "flex items-center justify-center transition-all duration-200",
-                    variantClasses.button,
-                    sizeClasses.button,
-                    page === totalPages && "opacity-40 cursor-not-allowed",
-                    "dark:text-zinc-300",
-                  )}
-                  aria-label="Next page"
-                >
-                  <ChevronRightIcon className="size-4" />
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Page size options & Total Pages */}
-          {showPageSizeOptions && (
-            <div className="flex items-center gap-2">
-              <Select
-                value={String(perPage)}
-                onValueChange={handlePageSizeChange}
-                options={pageSizeOptions.map((opt) => ({
-                  value: String(opt),
-                  label: `${opt}/pg`,
-                }))}
-                className="w-[90px]"
-                fieldClass="!h-8 !py-1 text-xs bg-muted"
-                placeholder="Select"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+// Per-size token map → square page links, wide prev/next, ellipsis box.
+const SIZE_MAP: Record<
+  PaginationSize,
+  { link: ButtonSize; control: ButtonSize; controlHeight: string; box: string }
+> = {
+  sm: { link: "icon-xs", control: "xs", controlHeight: "h-7", box: "size-7" },
+  default: {
+    link: "icon",
+    control: "default",
+    controlHeight: "h-[33px]",
+    box: "size-9",
+  },
+  medium: {
+    link: "icon-md",
+    control: "default",
+    controlHeight: "h-9",
+    box: "size-9",
+  },
+  lg: { link: "icon-lg", control: "lg", controlHeight: "h-12", box: "size-12" },
 };
 
-export { Pagination };
+/**
+ * Per-variant resolver → the Button props + extra classes for one page link.
+ *
+ * Borders and fills come from Button's own `variant` (its own classes, so no
+ * tailwind-merge conflicts). `className` only carries additive, non-conflicting
+ * utilities. The active page is always a solid `default` fill; the variants
+ * differ in how the *inactive* pages look.
+ */
+function resolveVariant(
+  variant: PaginationVariant,
+  isActive: boolean,
+): { variant: ButtonVariant; rounded: ButtonRounded; className: string } {
+  const active = "font-semibold";
+
+  switch (variant) {
+    // Every page sits in a bordered box; the active page is filled.
+    case "outline":
+      return isActive
+        ? { variant: "default", rounded: "default", className: active }
+        : {
+            variant: "outline",
+            rounded: "default",
+            className: "hover:bg-primary/5 hover:text-primary",
+          };
+    // Inactive pages carry a faint tint; the active page is filled.
+    case "ghost":
+      return isActive
+        ? { variant: "default", rounded: "default", className: active }
+        : {
+            variant: "ghost",
+            rounded: "default",
+            className: "bg-primary/5 hover:bg-primary/10",
+          };
+    case "pill":
+      return isActive
+        ? { variant: "default", rounded: "full", className: active }
+        : { variant: "ghost", rounded: "full", className: "" };
+    case "floating":
+      return isActive
+        ? { variant: "default", rounded: "full", className: active }
+        : { variant: "ghost", rounded: "full", className: "" };
+    default:
+      return isActive
+        ? { variant: "default", rounded: "default", className: active }
+        : { variant: "ghost", rounded: "default", className: "" };
+  }
+}
+
+/** Landmark wrapper — sets the variant/size context for all children. */
+function Pagination({
+  className,
+  variant = "default",
+  size = "default",
+  color,
+  colorForeground = "#fff",
+  ...props
+}: React.ComponentProps<"nav"> & {
+  variant?: PaginationVariant;
+  size?: PaginationSize;
+  color?: string;
+  colorForeground?: string;
+}) {
+  return (
+    <PaginationContext.Provider
+      value={{ variant, size, color, colorForeground }}
+    >
+      <nav
+        aria-label="pagination"
+        data-slot="pagination"
+        data-variant={variant}
+        data-size={size}
+        className={cn("mx-auto flex w-full justify-center", className)}
+        {...props}
+      />
+    </PaginationContext.Provider>
+  );
+}
+
+/** The horizontal list; gains a card shell in the `floating` variant. */
+function PaginationContent({
+  className,
+  ...props
+}: React.ComponentProps<"ul">) {
+  const { variant } = usePagination();
+  return (
+    <ul
+      data-slot="pagination-content"
+      className={cn(
+        "flex flex-row items-center",
+        variant === "pill" ? "gap-1.5" : "gap-1",
+        variant === "floating" &&
+          "rounded-full border border-border bg-card p-1 py-0.5 shadow-md",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/** A single list item — wrap each link/ellipsis in one. */
+function PaginationItem({ ...props }: React.ComponentProps<"li">) {
+  return <li data-slot="pagination-item" {...props} />;
+}
+
+type PaginationLinkProps = {
+  isActive?: boolean;
+  /** Override the context size for this one control. */
+  size?: ButtonSize;
+} & Omit<React.ComponentProps<typeof Button>, "size" | "variant">;
+
+/** A clickable page button. Mark the current page with `isActive`. */
+function PaginationLink({
+  className,
+  isActive = false,
+  size,
+  style,
+  ...props
+}: PaginationLinkProps) {
+  const ctx = usePagination();
+  const styles = resolveVariant(ctx.variant, isActive);
+
+  // A custom `color` paints the active page as a solid fill in that color;
+  // an inline style always wins over Button's variant classes.
+  const colorActive = Boolean(ctx.color && isActive);
+  const colorStyle: React.CSSProperties | undefined = colorActive
+    ? {
+        backgroundColor: ctx.color,
+        borderColor: ctx.color,
+        color: ctx.colorForeground,
+      }
+    : undefined;
+
+  return (
+    <Button
+      type="button"
+      aria-current={isActive ? "page" : undefined}
+      data-slot="pagination-link"
+      data-active={isActive}
+      variant={styles.variant}
+      rounded={styles.rounded}
+      size={size ?? SIZE_MAP[ctx.size].link}
+      style={{ ...colorStyle, ...style }}
+      className={cn("font-medium", styles.className, className)}
+      {...props}
+    />
+  );
+}
+
+/** Previous-page control — icon plus a label that hides on small screens. */
+function PaginationPrevious({
+  className,
+  label = "Previous",
+  ...props
+}: PaginationLinkProps & { label?: string }) {
+  const { size } = usePagination();
+  return (
+    <PaginationLink
+      aria-label="Go to previous page"
+      size={label ? SIZE_MAP[size].control : SIZE_MAP[size].link}
+      className={cn(
+        label && `gap-1 px-2.5 ${SIZE_MAP[size].controlHeight}`,
+        className,
+      )}
+      {...props}
+    >
+      <ChevronLeftIcon className="size-4" />
+      {label && <span className="hidden sm:block">{label}</span>}
+    </PaginationLink>
+  );
+}
+
+/** Next-page control — label that hides on small screens plus an icon. */
+function PaginationNext({
+  className,
+  label = "Next",
+  ...props
+}: PaginationLinkProps & { label?: string }) {
+  const { size } = usePagination();
+  return (
+    <PaginationLink
+      aria-label="Go to next page"
+      size={label ? SIZE_MAP[size].control : SIZE_MAP[size].link}
+      className={cn(
+        label && `gap-1 px-2.5 ${SIZE_MAP[size].controlHeight}`,
+        className,
+      )}
+      {...props}
+    >
+      {label && <span className="hidden sm:block">{label}</span>}
+      <ChevronRightIcon className="size-4" />
+    </PaginationLink>
+  );
+}
+
+/** A non-interactive gap marker for skipped pages. */
+function PaginationEllipsis({
+  className,
+  ...props
+}: React.ComponentProps<"span">) {
+  const { size } = usePagination();
+  return (
+    <span
+      data-slot="pagination-ellipsis"
+      className={cn(
+        "flex items-center justify-center text-muted-foreground",
+        SIZE_MAP[size].box,
+        className,
+      )}
+      {...props}
+    >
+      {/* Hide the glyph, not the span: `aria-hidden` on the parent would bury
+          the sr-only text with it, and screen readers would skip the gap. */}
+      <EllipsisIcon aria-hidden="true" className="size-4" />
+      <span className="sr-only">More pages</span>
+    </span>
+  );
+}
+
+/** Stacked chevrons — there is no double-chevron glyph in the icon set. */
+function DoubleChevron({ dir }: { dir: "left" | "right" }) {
+  const Icon = dir === "left" ? ChevronLeftIcon : ChevronRightIcon;
+  return (
+    <span aria-hidden="true" className="flex items-center">
+      <Icon className="size-4" />
+      <Icon className="-ml-2.5 size-4" />
+    </span>
+  );
+}
+
+/** Jump to the first page. Pass `label` to show text beside the chevrons. */
+function PaginationFirst({
+  className,
+  label,
+  ...props
+}: PaginationLinkProps & { label?: string }) {
+  const { size } = usePagination();
+  return (
+    <PaginationLink
+      aria-label="Go to first page"
+      size={label ? SIZE_MAP[size].control : SIZE_MAP[size].link}
+      className={cn(label && "gap-1 px-2.5", className)}
+      {...props}
+    >
+      <DoubleChevron dir="left" />
+      {label && <span>{label}</span>}
+    </PaginationLink>
+  );
+}
+
+/** Jump to the last page. Pass `label` to show text beside the chevrons. */
+function PaginationLast({
+  className,
+  label,
+  ...props
+}: PaginationLinkProps & { label?: string }) {
+  const { size } = usePagination();
+  return (
+    <PaginationLink
+      aria-label="Go to last page"
+      size={label ? SIZE_MAP[size].control : SIZE_MAP[size].link}
+      className={cn(label && "gap-1 px-2.5", className)}
+      {...props}
+    >
+      {label && <span>{label}</span>}
+      <DoubleChevron dir="right" />
+    </PaginationLink>
+  );
+}
+
+type PageItem = number | "left-ellipsis" | "right-ellipsis";
+
+/** Inclusive integer range, `from`…`to`. */
+const range = (from: number, to: number) =>
+  Array.from({ length: to - from + 1 }, (_, i) => from + i);
+
+/**
+ * Build the list of page tokens to render, inserting ellipsis markers where
+ * pages are skipped. Returns page numbers plus "left"/"right" ellipsis tokens.
+ *
+ * Every branch emits exactly `siblings * 2 + 5` items once the page count
+ * exceeds that budget — near an edge the window grows inward to spend the slot
+ * the missing ellipsis freed up. A varying item count would make the whole bar
+ * change width as the user pages through, which reads as a layout glitch.
+ */
+function getPageItems(
+  current: number,
+  total: number,
+  siblings = 1,
+): PageItem[] {
+  // first + last + current + 2*siblings + 2 ellipses
+  const totalSlots = siblings * 2 + 5;
+  if (total <= totalSlots) return range(1, total);
+
+  const leftSibling = Math.max(current - siblings, 1);
+  const rightSibling = Math.min(current + siblings, total);
+
+  // An ellipsis only earns its slot when it hides more than one page — with a
+  // single page hidden, showing the page itself costs the same width.
+  const showLeft = leftSibling > 2;
+  const showRight = rightSibling < total - 1;
+
+  // Pages shown on the side that has no ellipsis.
+  const edgeCount = siblings * 2 + 3;
+
+  if (!showLeft && showRight) {
+    return [...range(1, edgeCount), "right-ellipsis", total];
+  }
+
+  if (showLeft && !showRight) {
+    return [1, "left-ellipsis", ...range(total - edgeCount + 1, total)];
+  }
+
+  return [
+    1,
+    "left-ellipsis",
+    ...range(leftSibling, rightSibling),
+    "right-ellipsis",
+    total,
+  ];
+}
+
+export {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationFirst,
+  PaginationLast,
+  PaginationEllipsis,
+  getPageItems,
+  type PaginationVariant,
+  type PaginationSize,
+  type PageItem,
+};

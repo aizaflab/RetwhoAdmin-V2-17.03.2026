@@ -1,4 +1,5 @@
 import { DeleteIcon, LoaderIcon } from "@/components/icons/Icons";
+import { Button } from "../button/Button";
 
 export interface DeleteModalProps<T = unknown> {
   title: string;
@@ -30,34 +31,37 @@ export default function DeleteModal<T = unknown>({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`sm:w-96 w-[94%] bg-white dark:bg-[#040614] p-5 rounded-xl border border-slate-200/60 dark:border-darkBorder/70 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 flex-col center py-8 ${
+        className={`sm:w-96 w-[94%] bg-card p-5 rounded-xl border border-border absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 flex-col center py-8 ${
           deleteModal
             ? "opacity-100 visible scale-100"
             : "opacity-0 invisible scale-95"
         }`}
       >
-        <div className="size-[4.8rem] rounded-full bg-[#FFE7E7] dark:bg-darkBorder/50 center mb-5">
-          <DeleteIcon className="size-9 text-[#FF0000]" />
+        <div className="size-[4.8rem] rounded-full bg-destructive/20 center mb-5">
+          <DeleteIcon className="size-9 text-destructive" />
         </div>
 
-        <h3 className="text-lg font-medium text-center">{title}</h3>
+        <h3 className="text-lg font-medium text-center text-foreground">
+          {title}
+        </h3>
 
-        <p className="sm:px-5 text-[#989898] text-sm text-center mt-2 mb-6">
+        <p className="sm:px-5 text-muted-foreground text-sm text-center mt-2 mb-6">
           {text}
         </p>
 
         <div className="flex justify-end gap-3">
-          <button
+          <Button
             onClick={() => setDeleteModal(false)}
-            className="px-4 py-2 text-sm rounded-md bg-[#F6F6F6] dark:bg-darkBorder/50 dark:text-white text-[#1A1A1A] hover:bg-gray-200 dark:hover:bg-darkBorder/70 dark:hover:text-white/80 font-medium cursor-pointer"
+            variant="outline"
+            disabled={isLoading}
           >
             No, Keep It!
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => handleDelete(selectedRow)}
             disabled={isLoading}
-            className="px-4 py-2 text-sm rounded-md bg-primary text-white hover:bg-red-700 font-medium disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+            variant="destructive"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
@@ -67,7 +71,7 @@ export default function DeleteModal<T = unknown>({
             ) : (
               "Yes, Delete It!"
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

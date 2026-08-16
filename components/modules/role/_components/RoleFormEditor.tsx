@@ -1,26 +1,49 @@
 "use client";
 
-import { PERMISSIONS } from "@/components/modules/access-control/_config/permission";
-import { Role, RoleStatus } from "../_types/role.types";
-import PermissionMatrix from "./PermissionMatrix";
 import { useState } from "react";
-import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HugeCalender, DateRange } from "@/components/ui/calender/HugeCalender";
-import { Select } from "@/components/ui/select/Select";
-import { Input } from "@/components/ui";
-import { Textarea } from "@/components/ui/textarea/Textarea";
+import { ArrowLeftIcon } from "lucide-react";
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+  Textarea,
+} from "@/components/ui";
+import { Button } from "@/components/ui/button/Button";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+  type SelectOption,
+} from "@/components/ui/select/Select";
 
-type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+import PermissionMatrix from "./PermissionMatrix";
+import { emptyPermissions, normalizePermissions } from "../_data/role-pages";
+import type {
+  Role,
+  RolePayload,
+  RolePermission,
+  RoleStatus,
+} from "../_types/role.types";
 
 interface RoleFormEditorProps {
+  /** Present in edit mode; omit to create a new role. */
   initialRole?: Role;
-  onSave?: (
-    role: Omit<Role, "id" | "createdAt" | "updatedAt" | "userCount">,
-  ) => void;
+  onSave?: (payload: RolePayload) => void | Promise<void>;
 }
 
+const STATUS_OPTIONS: SelectOption[] = [
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+];
+
+type FormErrors = Partial<Record<"name" | "description", string>>;
+
+/** Create / edit a role — a full page, with the permission matrix alongside. */
 export default function RoleFormEditor({
   initialRole,
   onSave,
@@ -28,6 +51,7 @@ export default function RoleFormEditor({
   const router = useRouter();
   const isEdit = !!initialRole;
 
+  // Field names match the API body, so this state object is the payload.
   const [name, setName] = useState(initialRole?.name ?? "");
   const [description, setDescription] = useState(
     initialRole?.description ?? "",
@@ -35,201 +59,157 @@ export default function RoleFormEditor({
   const [status, setStatus] = useState<RoleStatus>(
     initialRole?.status ?? "active",
   );
-  const [selected, setSelected] = useState<Set<PermissionKey>>(
-    new Set(
-      (initialRole?.permissions ?? []).map((p) => p.key as PermissionKey),
-    ),
+  const [permissions, setPermissions] = useState<RolePermission[]>(
+    initialRole
+      ? normalizePermissions(initialRole.permissions)
+      : emptyPermissions(),
   );
-  const [dateRange, setDateRange] = useState<DateRange>({
-    start: null,
-    end: null,
-  });
-  const [commission, setCommission] = useState("");
-  const [rewardRole, setRewardRole] = useState("");
 
-  const [errors, setErrors] = useState<{ name?: string }>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
 
-  const validate = () => {
-    const errs: { name?: string } = {};
-    if (!name.trim()) errs.name = "Role name is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+  const validate = (): FormErrors => {
+    const next: FormErrors = {};
+    if (!name.trim()) next.name = "Role name is required";
+    if (!description.trim()) next.description = "Description is required";
+    return next;
   };
 
-  const handleSave = async () => {
-    if (!validate()) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const found = validate();
+    if (Object.keys(found).length > 0) {
+      setErrors(found);
+      return;
+    }
+
     setSaving(true);
-    // Simulate async
-    await new Promise((r) => setTimeout(r, 600));
-    onSave?.({
-      name: name.trim(),
-      description: description.trim(),
-      status,
-      assignedUserIds: initialRole?.assignedUserIds ?? [],
-      permissions: Array.from(selected).map((key) => ({
-        key,
-        scope: "global" as const,
-      })),
-    });
-    setSaving(false);
-    router.push("/admin/role/manage");
+    try {
+      await onSave?.({
+        name: name.trim(),
+        description: description.trim(),
+        permissions,
+        status,
+      });
+      router.push("/role/manage");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/admin/role/manage"
-          className="flex items-center justify-center w-9 h-9 rounded-xl border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-200"
+          href="/role/manage"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-all duration-200 hover:border-primary/50 hover:text-primary"
         >
-          <ArrowLeftIcon className="w-4 h-4" />
+          <ArrowLeftIcon className="h-4 w-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-semibold text-black dark:text-white">
+          <h1 className="text-xl font-semibold text-foreground">
             {isEdit ? `Edit Role: ${initialRole.name}` : "Create New Role"}
           </h1>
-          <p className="text-sm text-text5 mt-0.5">
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
             {isEdit
-              ? "Update role details and permission assignments"
-              : "Define a new role with specific permissions"}
+              ? "Update the role details and its page permissions"
+              : "Define a new role and pick what it can do on each page"}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left — Role Details */}
-        <div className="lg:col-span-1 space-y-5">
-          <div className="rounded-xl border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg p-5 space-y-5">
-            {/* Name */}
-            <div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left — Role details */}
+        <div className="space-y-5 lg:col-span-1">
+          <div className="space-y-5 rounded-xl border border-border bg-card p-5">
+            <Field>
+              <FieldLabel htmlFor="role-name">Role Name</FieldLabel>
               <Input
-                label="Role Name"
+                id="role-name"
+                name="name"
+                placeholder="e.g. Operations Supervisor"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
-                  if (errors.name) setErrors({});
+                  if (errors.name)
+                    setErrors((p) => ({ ...p, name: undefined }));
                 }}
-                placeholder="e.g. Marketing Lead"
-                className="h-10 dark:border-darkBorder focus:dark:border-primary"
-                error={errors.name}
+                aria-invalid={errors.name ? true : undefined}
+                className="bg-transparent"
               />
-            </div>
+              {errors.name && <FieldError>{errors.name}</FieldError>}
+            </Field>
 
-            {/* Description */}
-            <div>
+            <Field>
+              <FieldLabel htmlFor="role-description">Description</FieldLabel>
               <Textarea
-                label="Description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the role's purpose..."
+                id="role-description"
+                name="description"
+                placeholder="Describe what this role is responsible for..."
                 rows={5}
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  if (errors.description)
+                    setErrors((p) => ({ ...p, description: undefined }));
+                }}
+                invalid={!!errors.description}
+                className="bg-transparent"
               />
-            </div>
+              {errors.description && (
+                <FieldError>{errors.description}</FieldError>
+              )}
+            </Field>
 
-            {/* Status */}
-            <div>
+            <Field>
+              <FieldLabel id="role-status-label" htmlFor="role-status">
+                Status
+              </FieldLabel>
               <Select
-                label="Status"
+                id="role-status"
                 value={status}
-                onValueChange={(value) => setStatus(value as RoleStatus)}
-                placeholder="Select Status"
-                fullWidth
-                fieldClass="h-10"
-                className="w-full"
-                options={[
-                  { value: "active", label: "Active" },
-                  { value: "inactive", label: "Inactive" },
-                  { value: "draft", label: "Draft" },
-                ]}
-              />
-            </div>
-
-            {/* Date */}
-            <div>
-              <HugeCalender
-                label="Select Date"
-                value={dateRange}
-                onChange={setDateRange}
-                fullWidth
-              />
-            </div>
-
-            {/* Commission (%) */}
-            <div>
-              <Input
-                label="Refer Commission (%)"
-                type="number"
-                value={commission}
-                onChange={(e) => setCommission(e.target.value)}
-                placeholder="e.g. 5"
-                className="h-10 dark:border-darkBorder focus:dark:border-primary"
-              />
-            </div>
-
-            {/* Commission Reward Role */}
-            <div>
-              <Select
-                label="Commission Reward Role"
-                value={rewardRole}
-                onValueChange={setRewardRole}
-                placeholder="Select a role"
-                fullWidth
-                fieldClass="h-10"
-                className="w-full"
-                options={[
-                  { value: "wholeseller", label: "Wholeseller" },
-                  { value: "retailer", label: "Retailer" },
-                  { value: "consumer", label: "Consumer" },
-                ]}
-              />
-            </div>
+                onValueChange={(val) => setStatus(val as RoleStatus)}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder="Select status"
+                    options={STATUS_OPTIONS}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItems options={STATUS_OPTIONS} />
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
 
-          {/* Save button */}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-2.5 rounded-md text-sm font-semibold text-white bg-primary hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            {saving ? (
-              <>
-                <svg
-                  className="animate-spin w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    className="opacity-25"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                    className="opacity-75"
-                  />
-                </svg>
-                Saving...
-              </>
-            ) : isEdit ? (
-              "Update Role"
-            ) : (
-              "Create Role"
-            )}
-          </button>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              fullWidth
+              onClick={() => router.push("/role/manage")}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              fullWidth
+              loading={saving}
+              loadingText="Saving..."
+            >
+              {isEdit ? "Update Role" : "Create Role"}
+            </Button>
+          </div>
         </div>
 
-        {/* Right — Permission Matrix */}
-        <div className="lg:col-span-2 rounded-xl p-3 sm:p-5 border border-border/70 dark:border-darkBorder/50 bg-white dark:bg-darkBg ">
-          <PermissionMatrix selected={selected} onChange={setSelected} />
+        {/* Right — Permission matrix */}
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-5 lg:col-span-2">
+          <PermissionMatrix value={permissions} onChange={setPermissions} />
         </div>
       </div>
-    </div>
+    </form>
   );
 }

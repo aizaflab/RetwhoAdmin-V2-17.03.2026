@@ -1,13 +1,23 @@
 export { default as RoleStats } from "./_components/RoleStats";
 export { default as RoleListTable } from "./_components/RoleListTable";
 export { default as RoleFormEditor } from "./_components/RoleFormEditor";
+export { default as RoleViewDrawer } from "./_components/RoleViewDrawer";
 export { default as PermissionMatrix } from "./_components/PermissionMatrix";
-export { default as RoleUserAssignment } from "./_components/RoleUserAssignment";
 export { MOCK_ROLES } from "./_data/mock-roles";
-export { MOCK_ADMIN_USERS } from "./_data/mock-admin-users";
+export {
+  ROLE_PAGES,
+  PERMISSION_ACTIONS,
+  emptyPermissions,
+  normalizePermissions,
+  countGrants,
+  getPageLabel,
+  type PermissionAction,
+} from "./_data/role-pages";
 export type {
   Role,
   RoleStatus,
-  RolePermissionEntry,
-  AdminUser,
+  RolePermission,
+  RolePayload,
+  RoleListMeta,
+  RoleListResponse,
 } from "./_types/role.types";

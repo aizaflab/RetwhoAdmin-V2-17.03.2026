@@ -39,14 +39,14 @@ export default function EditPromotionPage() {
   }
 
   return (
-    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
+    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+        <h1 className="sm:text-2xl text-xl font-medium text-foreground">
           Edit Promotion
         </h1>
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full dark:bg-darkLight bg-primary animate-pulse" />
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
             Edit Promotion Entry
           </span>
         </div>

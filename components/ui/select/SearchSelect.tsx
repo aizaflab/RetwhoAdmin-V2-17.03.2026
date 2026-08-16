@@ -476,11 +476,10 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
     ) => (
       <div
         className={cn(
-          "flex items-center justify-between text-sm px-3 py-2.5 cursor-pointer rounded w-full",
-          isSelected
-            ? "dark:bg-darkBorder bg-text4/40 dark:text-white text-black"
-            : "hover:bg-text4/30 dark:hover:bg-darkBorder/30 dark:text-text5",
-          isHighlighted && !isSelected ? "dark:bg-darkBorder bg-text5" : "",
+          "flex w-full cursor-pointer items-center justify-between rounded-sm px-3 py-2.5 text-sm transition-colors select-none",
+          isSelected && "bg-muted",
+          !isSelected && isHighlighted && "bg-muted",
+          !isSelected && !isHighlighted && "text-foreground/90",
         )}
       >
         <div className="flex items-center">
@@ -510,10 +509,12 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
         )}
       >
         {label && (
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+          <label className="cursor-pointer text-sm font-medium text-foreground">
             {label}
             {(requiredSign || required) && (
-              <span className="text-red-500 ml-1">*</span>
+              <span className="ml-1 text-destructive" aria-hidden="true">
+                *
+              </span>
             )}
           </label>
         )}
@@ -522,9 +523,11 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
           <button
             type="button"
             className={cn(
-              "flex sm:h-11 h-10 w-full items-center justify-between rounded-md border border-border dark:border-darkBorder bg-background px-3 py-2 text-sm focus:outline-none focus:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer transition-all",
+              "flex h-10 w-full cursor-pointer items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm transition-colors",
+              "focus:outline-none focus-visible:ring focus-visible:ring-ring",
+              "disabled:cursor-not-allowed disabled:opacity-50",
               startIcon ? "pl-10" : "",
-              error ? "border-destructive" : "",
+              error ? "border-destructive focus-visible:ring-destructive" : "",
             )}
             onClick={() => (isOpen ? closeDropdown() : openDropdown())}
             onKeyDown={onButtonKeyDown}
@@ -544,7 +547,7 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
           >
             <div className="flex items-center">
               {startIcon && (
-                <span className="absolute left-3 flex items-center pointer-events-none text-gray-500 dark:text-gray-300">
+                <span className="pointer-events-none absolute left-3 flex items-center text-muted-foreground">
                   {startIcon}
                 </span>
               )}
@@ -560,14 +563,14 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
             {endIcon ? (
               <span
                 className={cn(
-                  "flex items-center text-gray-500 dark:text-gray-300 ani3 text-lg",
+                  "ani3 flex items-center text-lg text-muted-foreground",
                   isOpen ? "rotate-0" : "rotate-180",
                 )}
               >
                 {endIcon}
               </span>
             ) : (
-              <span className="flex items-center text-gray-500">
+              <span className="flex items-center text-muted-foreground">
                 <CaretUpOutlineIcon
                   className={cn(
                     "ani3 size-7",
@@ -605,7 +608,7 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
                 transformOrigin: placement === "top" ? "top" : "bottom",
               }}
               className={cn(
-                "absolute z-9999 rounded-md border border-border dark:border-darkBorder/80 dark:bg-darkPrimary bg-white shadow-md p-1.5 min-w-[200px] max-w-full transition duration-150 ease-in-out will-change-transform",
+                "absolute z-9999 min-w-50 max-w-full rounded-md border border-border bg-card p-1.5 text-card-foreground shadow-lg transition duration-150 ease-in-out will-change-transform",
                 isVisible
                   ? "opacity-100 translate-y-0 scale-100"
                   : placement === "top"
@@ -624,13 +627,13 @@ const SearchSelect = forwardRef<HTMLButtonElement, SearchSelectProps>(
                     setHighlightedIndex(-1);
                   }}
                   onKeyDown={onSearchKeyDown}
-                  className="w-full px-3 py-2.5 text-sm rounded-md border border-border dark:border-darkBorder dark:bg-darkPrimary bg-white text-foreground placeholder-muted-foreground focus:outline-none focus:border-muted-foreground/50 transition-all"
+                  className="w-full rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring focus-visible:ring-ring"
                 />
               </div>
 
               <div
                 ref={listboxRef}
-                className="max-h-60 overflow-auto rounded-md space-y-1 bg-popover sideBar"
+                className="select-scrollbar max-h-60 space-y-0.5 overflow-y-auto rounded-sm pr-1"
               >
                 {filteredOptions.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-muted-foreground">

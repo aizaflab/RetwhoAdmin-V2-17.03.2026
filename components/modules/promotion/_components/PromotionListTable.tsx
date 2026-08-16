@@ -33,7 +33,13 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import Image from "next/image";
 import PromotionViewDrawer from "./PromotionViewDrawer";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 
 interface PromotionListTableProps {
   promotions: Promotion[];
@@ -46,7 +52,7 @@ const STATUS_STYLES: Record<PromotionStatus, string> = {
   active:
     "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50",
   inactive:
-    "bg-slate-50 text-slate-600 dark:bg-slate-800/30 dark:text-slate-400 border-slate-100 dark:border-slate-700/50",
+    "bg-muted/50 text-muted-foreground dark:bg-muted dark:text-muted-foreground border-border",
   scheduled:
     "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 border-blue-100 dark:border-blue-900/50",
   expired:
@@ -91,7 +97,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       header: "Promotion & Wholesaler",
       cell: (value, row) => (
         <div className="flex items-center gap-3">
-          <div className="relative size-11 rounded-lg bg-gray-100 dark:bg-darkBorder overflow-hidden shrink-0">
+          <div className="relative size-11 rounded-lg bg-muted overflow-hidden shrink-0">
             {row.bannerImage ? (
               <Image
                 src={row.bannerImage}
@@ -100,13 +106,13 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
                 fill
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400">
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                 <ImageIcon className="w-5 h-5" />
               </div>
             )}
           </div>
           <div className="max-w-50 sm:max-w-xs">
-            <p className="text-sm font-semibold text-black dark:text-white truncate">
+            <p className="text-sm font-semibold text-foreground truncate">
               {row.title}
             </p>
             <div className="flex items-center gap-2 mt-0.5">
@@ -114,8 +120,8 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
                 <span className="text-[11px] opacity-50">
                   {row.wholesalerName}
                 </span>
-                <span className="flex items-center gap-1 text-[11px] font-medium  text-primary dark:text-darkLight ">
-                  <div className="size-1 rounded-full bg-primary dark:bg-darkLight"></div>
+                <span className="flex items-center gap-1 text-[11px] font-medium text-primary">
+                  <div className="size-1 rounded-full bg-primary"></div>
                   <span className="ml-0.5">{row.adType}</span>
                 </span>
               </span>
@@ -129,7 +135,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       header: "Target",
       className: "hidden lg:table-cell",
       cell: (value, row) => (
-        <span className="inline-flex items-center  justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 dark:bg-darkBorder/30 dark:text-indigo-300 border border-indigo-100 dark:border-darkBorder capitalize ">
+        <span className="inline-flex items-center justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 dark:text-indigo-300 border border-indigo-100 capitalize">
           {row.targetAudience}
         </span>
       ),
@@ -139,7 +145,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       header: "Priority",
       className: "text-center hidden sm:table-cell",
       cell: (value, row) => (
-        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-xs font-semibold text-yellow-600 dark:text-yellow-300 border border-yellow-100 dark:border-yellow-800/50 ">
+        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-xs font-semibold text-yellow-600 dark:text-yellow-300 border border-yellow-100 dark:border-yellow-800/50">
           {row.priority}
         </div>
       ),
@@ -149,7 +155,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       header: "Validity",
       className: "hidden xl:table-cell",
       cell: (value, row) => (
-        <div className="flex flex-col text-[11px] text-gray-500">
+        <div className="flex flex-col text-[11px] text-muted-foreground">
           <div className="flex items-center gap-1">
             <span className="text-emerald-500 font-medium w-6">S:</span>
             <span>
@@ -190,7 +196,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
           <SimpleTooltip content="Edit" position="top">
             <button
               onClick={() => router.push(`/promotion/edit/${row.id}`)}
-              className="center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-[#0284c7] hover:text-[#0284c7] transition-all cursor-pointer"
+              className="center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-[#0284c7] hover:text-[#0284c7] transition-all cursor-pointer"
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
@@ -205,13 +211,13 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
               disabled={openDropdownId === row.id}
             >
               <DropdownTrigger asChild showChevron={false}>
-                <button className="center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer">
+                <button className="center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:bg-muted/50 dark:hover:bg-card transition-all cursor-pointer">
                   <MoreIcon className="w-4 h-4" />
                 </button>
               </DropdownTrigger>
             </SimpleTooltip>
 
-            <DropdownMenu className="min-w-40 p-1 " align="right">
+            <DropdownMenu className="min-w-40 p-1" align="right">
               <DropdownItem
                 icon={<EyeIcon className="w-4 h-4" />}
                 onClick={() => setViewingPromotion(row)}
@@ -257,7 +263,7 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
     <div className="space-y-5">
       {/* Header & Toolbar */}
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+        <h1 className="sm:text-2xl text-xl font-medium text-foreground">
           Manage Promotion
         </h1>
 
@@ -268,29 +274,33 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search title, wholesaler..."
-              startIcon={<SearchIcon className="w-4 h-4 text-gray-400" />}
-              className="h-10 dark:border-darkBorder dark:focus:border-primary"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 dark:focus:border-primary"
             />
           </div>
 
           <div className="w-32">
-            <Select
-              options={typeOptions}
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className=" dark:border-darkBorder dark:focus:border-primary"
-              fieldClass="h-10!"
-            />
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="h-10">
+                <SelectValue options={typeOptions} placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={typeOptions} />
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="w-32">
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className=" w-full"
-              fieldClass="h-10!"
-            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10">
+                <SelectValue options={statusOptions} placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={statusOptions} />
+              </SelectContent>
+            </Select>
           </div>
 
           <Button

@@ -1,269 +1,180 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { Loader2Icon, CircleXIcon } from "@/components/icons/Icons";
 import {
-  useState,
   forwardRef,
-  useRef,
-  type ReactNode,
-  type ChangeEvent,
-  type TextareaHTMLAttributes,
-  useEffect,
   useCallback,
-  useImperativeHandle,
-  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FocusEvent,
+  type PointerEvent,
+  type TextareaHTMLAttributes,
 } from "react";
 
-export type TextareaSize = "sm" | "md" | "lg";
-export type TextareaVariant = "default" | "filled" | "outline" | "ghost";
+import { cn } from "@/lib/utils";
 
-export interface TextareaProps extends Omit<
+/* -------------------------------------------------------------------------- */
+/*                                   TYPES                                    */
+/* -------------------------------------------------------------------------- */
+
+export type TextareaVariant = "default" | "filled" | "ghost";
+export type TextareaSize = "sm" | "md" | "lg";
+export type TextareaResize = "none" | "vertical" | "auto";
+
+interface TextareaProps extends Omit<
   TextareaHTMLAttributes<HTMLTextAreaElement>,
-  "onChange"
+  "size"
 > {
-  label?: ReactNode;
-  helperText?: ReactNode;
-  error?: ReactNode;
-  fullWidth?: boolean;
-  startIcon?: ReactNode;
-  endIcon?: ReactNode;
-  onValueChange?: (value: string) => void;
-  onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
-  requiredSign?: boolean;
-  minRows?: number;
-  maxRows?: number;
-  autoResize?: boolean;
-  maxLength?: number;
-  showCount?: boolean;
-  clearable?: boolean;
-  loading?: boolean;
-  size?: TextareaSize;
   variant?: TextareaVariant;
+  size?: TextareaSize;
+  /** `auto` grows with content (up to maxRows). */
+  resize?: TextareaResize;
+  maxRows?: number;
+  /** Character counter — requires `maxLength`. */
+  showCount?: boolean;
+  invalid?: boolean;
 }
+
+/* -------------------------------------------------------------------------- */
+/*                               DESIGN TOKENS                                */
+/* -------------------------------------------------------------------------- */
+
+const VARIANT: Record<TextareaVariant, string> = {
+  default: "border-border bg-background",
+  filled: "border-transparent bg-muted focus:bg-background",
+  ghost: "border-transparent bg-transparent hover:bg-muted/60",
+};
+
+const SIZE: Record<TextareaSize, string> = {
+  sm: "px-2.5 py-1.5 text-xs",
+  md: "px-3 py-2 text-sm",
+  lg: "px-4 py-3 text-base",
+};
+
+const RESIZE: Record<TextareaResize, string> = {
+  none: "resize-none",
+  vertical: "resize-y",
+  auto: "resize-none overflow-hidden",
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                 COMPONENT                                  */
+/* -------------------------------------------------------------------------- */
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   (
     {
       className,
-      label,
-      helperText,
-      error,
-      fullWidth = false,
-      startIcon,
-      endIcon,
-      onValueChange,
-      onChange,
-      value,
-      defaultValue,
-      requiredSign = false,
-      required = false,
-      minRows = 3,
-      maxRows = 10,
-      autoResize = false,
-      maxLength,
-      showCount = false,
-      clearable = false,
-      loading = false,
-      size = "md",
       variant = "default",
-      id,
-      disabled,
+      size = "md",
+      resize = "vertical",
+      maxRows = 10,
+      rows = 3,
+      showCount = false,
+      invalid = false,
+      maxLength,
+      onChange,
+      onFocus,
+      onBlur,
+      onPointerDown,
+      defaultValue,
+      value,
       ...props
     },
     ref,
   ) => {
-    // State for controlled/uncontrolled value
-    const [internalValue, setInternalValue] = useState<string>(
-      (value as string) || (defaultValue as string) || "",
-    );
-    const isControlled = value !== undefined;
-    const currentValue = isControlled ? (value as string) : internalValue;
     const innerRef = useRef<HTMLTextAreaElement | null>(null);
+    const [count, setCount] = useState(
+      String(value ?? defaultValue ?? "").length,
+    );
 
-    // Combine refs
-    useImperativeHandle(ref, () => innerRef.current!);
+    // Match Input: the focus ring is a keyboard affordance. A pointer press
+    // right before focus means the focus came from the mouse — show only the
+    // border, no ring.
+    const pointerFocus = useRef(false);
+    const [keyboardFocus, setKeyboardFocus] = useState(false);
 
-    // Unique IDs for accessibility
-    const uniqueId = useId();
-    const inputId = id || `textarea-${uniqueId}`;
-    const descriptionId = `${inputId}-description`;
-    const errorId = `${inputId}-error`;
+    const handlePointerDown = (e: PointerEvent<HTMLTextAreaElement>) => {
+      pointerFocus.current = true;
+      onPointerDown?.(e);
+    };
+    const handleFocus = (e: FocusEvent<HTMLTextAreaElement>) => {
+      setKeyboardFocus(!pointerFocus.current);
+      pointerFocus.current = false;
+      onFocus?.(e);
+    };
+    const handleBlur = (e: FocusEvent<HTMLTextAreaElement>) => {
+      setKeyboardFocus(false);
+      onBlur?.(e);
+    };
 
-    // Auto-resize logic
-    const adjustHeight = useCallback(() => {
-      const element = innerRef.current;
-      if (!element || !autoResize) return;
+    const setRefs = (node: HTMLTextAreaElement | null) => {
+      innerRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) ref.current = node;
+    };
 
-      element.style.height = "auto";
-      const lineHeight = parseInt(getComputedStyle(element).lineHeight) || 20;
-      const minHeight =
-        minRows * lineHeight + (size === "sm" ? 12 : size === "md" ? 18 : 24); // approx padding
-      const maxHeight =
-        maxRows * lineHeight + (size === "sm" ? 12 : size === "md" ? 18 : 24);
+    const autoGrow = useCallback(
+      (el: HTMLTextAreaElement) => {
+        if (resize !== "auto") return;
+        el.style.height = "auto";
+        const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 20;
+        const max = lineHeight * maxRows;
+        el.style.height = `${Math.min(el.scrollHeight, max)}px`;
+        el.style.overflowY = el.scrollHeight > max ? "auto" : "hidden";
+      },
+      [resize, maxRows],
+    );
 
-      const newHeight = Math.max(
-        minHeight,
-        Math.min(element.scrollHeight, maxHeight),
-      );
-      element.style.height = `${newHeight}px`;
-    }, [autoResize, minRows, maxRows, size]);
-
-    // Effect to adjust height controlled value changes
-    useEffect(() => {
-      adjustHeight();
-    }, [currentValue, adjustHeight]);
-
-    // Handle change
     const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
-      const newValue = e.target.value;
-      if (!isControlled) {
-        setInternalValue(newValue);
-      }
+      autoGrow(e.target);
+      if (showCount) setCount(e.target.value.length);
       onChange?.(e);
-      onValueChange?.(newValue);
     };
 
-    // Handle clear
-    const handleClear = () => {
-      if (!isControlled) {
-        setInternalValue("");
-      }
-      onValueChange?.("");
-      if (innerRef.current) {
-        innerRef.current.value = "";
-        innerRef.current.focus();
-      }
-    };
-
-    // Styles
-    const sizeClasses = {
-      sm: "px-2.5 py-1.5 text-xs min-h-[60px]",
-      md: "px-3 py-2 text-sm min-h-[80px]",
-      lg: "px-4 py-3 text-base min-h-[100px]",
-    };
-
-    const variantClasses = {
-      default:
-        "border-border dark:border-darkBorder bg-background ring-offset-background",
-      filled:
-        "border-transparent bg-muted/50 hover:bg-muted/70 focus:bg-background focus:border-primary",
-      outline:
-        "border-2 border-border dark:border-darkBorder bg-transparent hover:border-accent-foreground/20 focus:border-primary",
-      ghost:
-        "border-transparent bg-transparent hover:bg-muted/50 focus:bg-background shadow-none",
-    };
-
-    // Character count
-    const charCount = currentValue.length;
-    const isOverLimit = maxLength && charCount > maxLength;
+    const counter = showCount && maxLength !== undefined;
 
     return (
-      <div
-        className={cn(
-          "flex flex-col gap-1.5",
-          fullWidth ? "w-full" : "w-auto",
-          className,
-        )}
-      >
-        {/* Label */}
-        {label && (
-          <label
-            htmlFor={inputId}
+      <div className={cn("relative w-full", counter && "pb-1")}>
+        <textarea
+          ref={setRefs}
+          rows={rows}
+          maxLength={maxLength}
+          data-focus-visible={keyboardFocus ? "true" : undefined}
+          aria-invalid={invalid || undefined}
+          onChange={handleChange}
+          onPointerDown={handlePointerDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          defaultValue={defaultValue}
+          value={value}
+          className={cn(
+            "flex w-full min-w-0 rounded-md border shadow-xs transition-[color,box-shadow] outline-none",
+            "selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground",
+            "focus:border-primary/50 data-[focus-visible=true]:ring-2 data-[focus-visible=true]:ring-ring/10",
+            "aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            VARIANT[variant],
+            SIZE[size],
+            RESIZE[resize],
+            className,
+          )}
+          {...props}
+        />
+
+        {counter && (
+          <span
+            aria-live="polite"
             className={cn(
-              "peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm font-medium  cursor-pointer",
-              "text-gray-700 dark:text-gray-300",
-              error && "text-red-500",
+              "pointer-events-none absolute right-1 -bottom-4 font-mono text-2xs tabular-nums",
+              count >= (maxLength ?? Infinity)
+                ? "text-destructive"
+                : "text-muted-foreground/70",
             )}
           >
-            {label}
-            {(required || requiredSign) && (
-              <span className="text-red-500 ml-1">*</span>
-            )}
-          </label>
+            {count}/{maxLength}
+          </span>
         )}
-
-        <div className="relative group">
-          {/* Start Icon */}
-          {startIcon && (
-            <div className="absolute left-3 top-3 text-muted-foreground pointer-events-none z-10 font-bold">
-              {startIcon}
-            </div>
-          )}
-
-          {/* Textarea */}
-          <textarea
-            id={inputId}
-            ref={innerRef}
-            className={cn(
-              "flex w-full rounded-md border text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus:border-gray-400 dark:focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200 dark:border-darkBorder",
-              sizeClasses[size],
-              variantClasses[variant],
-              startIcon && "pl-9",
-              (endIcon || clearable || loading) && "pr-9",
-              error && "border-red-500 focus-visible:ring-red-500",
-              !autoResize && "resize-y",
-              autoResize && "resize-none overflow-hidden",
-            )}
-            value={currentValue}
-            onChange={handleChange}
-            maxLength={maxLength}
-            disabled={disabled || loading}
-            aria-invalid={!!error}
-            aria-describedby={
-              error ? errorId : helperText ? descriptionId : undefined
-            }
-            rows={minRows}
-            {...props}
-          />
-
-          {/* End Actions (Icon / Clear / Loading) */}
-          <div className="absolute right-3 top-3 flex items-center gap-2 text-muted-foreground">
-            {loading ? (
-              <Loader2Icon className="animate-spin h-4 w-4 text-gray-400" />
-            ) : clearable && currentValue && !disabled ? (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="hover:text-foreground transition-colors focus:outline-none"
-                aria-label="Clear text"
-              >
-                <CircleXIcon className="h-4 w-4" />
-              </button>
-            ) : endIcon ? (
-              <div className="pointer-events-none">{endIcon}</div>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Footer: Helper Text / Error + Counter */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            {error ? (
-              <p
-                id={errorId}
-                className="text-xs font-medium text-red-500 flex items-center gap-1 mt-0.5"
-              >
-                {error}
-              </p>
-            ) : helperText ? (
-              <p id={descriptionId} className="text-xs text-gray-500 mt-0.5">
-                {helperText}
-              </p>
-            ) : null}
-          </div>
-
-          {showCount && (
-            <p
-              className={cn(
-                "text-xs text-gray-500 tabular-nums whitespace-nowrap mt-0.5",
-                isOverLimit && "text-red-500 font-medium",
-              )}
-            >
-              {charCount} {maxLength && `/ ${maxLength}`}
-            </p>
-          )}
-        </div>
       </div>
     );
   },

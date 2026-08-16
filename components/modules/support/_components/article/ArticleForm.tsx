@@ -2,8 +2,21 @@
 
 import { useState } from "react";
 import { SupportArticle, SupportResource } from "../../_types/support.types";
-import { Input } from "@/components/ui";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Input,
+  Textarea,
+} from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
 import TextEditor from "@/components/ui/editor/TextEditor";
 import { useRouter } from "next/navigation";
@@ -103,98 +116,149 @@ export default function ArticleForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Main Info Card */}
-      <div className="bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder space-y-4">
+      <div className="bg-card p-3 sm:p-5 rounded-xl border border-border/50 space-y-4">
         {/* Title */}
-        <Input
-          label="Article Title"
-          placeholder="e.g. How to Create Your First Order"
-          value={formData.title}
-          onValueChange={handleTitleChange}
-          error={errors.title}
-          requiredSign
-          fullWidth
-          className="dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel htmlFor="article-form-title">
+            Article Title
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="article-form-title"
+            name="title"
+            placeholder="e.g. How to Create Your First Order"
+            value={formData.title}
+            onValueChange={handleTitleChange}
+            aria-invalid={errors.title ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.title && <FieldError>{errors.title}</FieldError>}
+        </Field>
 
         {/* Slug */}
-        <Input
-          label="Slug"
-          placeholder="e.g. how-to-create-first-order"
-          value={formData.slug}
-          onValueChange={(val) => {
-            setFormData((p) => ({ ...p, slug: val }));
-            if (errors.slug) setErrors((p) => ({ ...p, slug: "" }));
-          }}
-          error={errors.slug}
-          requiredSign
-          helperText="Auto-generated from title."
-          fullWidth
-          className="dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel htmlFor="article-form-slug">
+            Slug
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="article-form-slug"
+            name="slug"
+            placeholder="e.g. how-to-create-first-order"
+            value={formData.slug}
+            onValueChange={(val) => {
+              setFormData((p) => ({ ...p, slug: val }));
+              if (errors.slug) setErrors((p) => ({ ...p, slug: "" }));
+            }}
+            aria-invalid={errors.slug ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.slug ? (
+            <FieldError>{errors.slug}</FieldError>
+          ) : (
+            <FieldDescription>Auto-generated from the title.</FieldDescription>
+          )}
+        </Field>
 
         {/* Resource + Status row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select
-            label="Resource Category"
-            options={resourceOptions}
-            value={formData.resourceId}
-            onValueChange={(val) => {
-              setFormData((p) => ({ ...p, resourceId: val }));
-              if (errors.resourceId)
-                setErrors((p) => ({ ...p, resourceId: "" }));
-            }}
-            className={`w-full dark:border-darkBorder ${errors.resourceId ? "border-red-500" : ""}`}
-            error={errors.resourceId}
-          />
+          <Field>
+            <FieldLabel
+              id="article-form-resource-label"
+              htmlFor="article-form-resource"
+            >
+              Resource Category
+            </FieldLabel>
+            <Select
+              id="article-form-resource"
+              value={formData.resourceId}
+              onValueChange={(val) => {
+                setFormData((p) => ({ ...p, resourceId: val }));
+                if (errors.resourceId)
+                  setErrors((p) => ({ ...p, resourceId: "" }));
+              }}
+            >
+              <SelectTrigger error={!!errors.resourceId}>
+                <SelectValue
+                  placeholder="Select a resource"
+                  options={resourceOptions}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={resourceOptions} />
+              </SelectContent>
+            </Select>
+            {errors.resourceId && <FieldError>{errors.resourceId}</FieldError>}
+          </Field>
 
-          <Select
-            label="Status"
-            options={STATUS_OPTIONS}
-            value={formData.status}
-            onValueChange={(val) =>
-              setFormData((p) => ({
-                ...p,
-                status: val as "published" | "draft" | "archived",
-              }))
-            }
-            className="w-full dark:border-darkBorder"
-          />
+          <Field>
+            <FieldLabel
+              id="article-form-status-label"
+              htmlFor="article-form-status"
+            >
+              Status
+            </FieldLabel>
+            <Select
+              id="article-form-status"
+              value={formData.status}
+              onValueChange={(val) =>
+                setFormData((p) => ({
+                  ...p,
+                  status: val as "published" | "draft" | "archived",
+                }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder="Select status"
+                  options={STATUS_OPTIONS}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={STATUS_OPTIONS} />
+              </SelectContent>
+            </Select>
+          </Field>
         </div>
 
         {/* Excerpt */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
-            Excerpt <span className="text-red-500">*</span>
-          </label>
-          <textarea
+        <Field>
+          <FieldLabel htmlFor="article-form-excerpt">
+            Excerpt
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Textarea
+            id="article-form-excerpt"
+            name="excerpt"
             rows={2}
+            resize="none"
             value={formData.excerpt}
             onChange={(e) => {
               setFormData((p) => ({ ...p, excerpt: e.target.value }));
               if (errors.excerpt) setErrors((p) => ({ ...p, excerpt: "" }));
             }}
             placeholder="Short description shown in search results..."
-            className={`w-full rounded-md border p-3 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 placeholder:text-gray-400 dark:text-white resize-none transition-colors ${
-              errors.excerpt
-                ? "border-red-500"
-                : "border-border dark:border-darkBorder dark:focus:border-primary"
-            }`}
+            invalid={!!errors.excerpt}
+            className="bg-transparent"
           />
-          {errors.excerpt && (
-            <p className="text-xs text-red-500">{errors.excerpt}</p>
-          )}
-        </div>
+          {errors.excerpt && <FieldError>{errors.excerpt}</FieldError>}
+        </Field>
 
         {/* Tags */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-[#344054] dark:text-gray-100">
-            Tags
-          </label>
+        <Field>
+          <FieldLabel htmlFor="article-form-tags">Tags</FieldLabel>
           <div className="flex gap-2">
-            <input
-              type="text"
+            <Input
+              id="article-form-tags"
+              name="tags"
               value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
+              onValueChange={setTagInput}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -202,7 +266,7 @@ export default function ArticleForm({
                 }
               }}
               placeholder="Type tag & press Enter"
-              className="flex-1 rounded-md border border-border dark:border-darkBorder px-3 py-2 text-sm bg-white dark:bg-darkBg outline-none focus:border-gray-400 dark:focus:border-primary placeholder:text-gray-400 dark:text-white"
+              className="flex-1 bg-transparent"
             />
             <Button
               type="button"
@@ -218,13 +282,13 @@ export default function ArticleForm({
               {formData.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary dark:text-blue-400"
+                  className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="hover:text-rose-500 transition-colors"
+                    className="hover:text-destructive transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -232,14 +296,12 @@ export default function ArticleForm({
               ))}
             </div>
           )}
-        </div>
+        </Field>
       </div>
 
       {/* Content Editor Card */}
-      <div className="bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder">
-        <label className="text-sm font-medium text-[#344054] dark:text-gray-100 block mb-3">
-          Content
-        </label>
+      <div className="bg-card p-3 sm:p-5 rounded-xl border border-border/50">
+        <FieldLabel className="mb-3">Content</FieldLabel>
         <TextEditor
           value={formData.content}
           onChange={(val) => setFormData((p) => ({ ...p, content: val }))}
@@ -252,7 +314,7 @@ export default function ArticleForm({
         <Button
           type="button"
           variant="outline"
-          className="px-7 text-gray-500"
+          className="px-7 text-muted-foreground"
           onClick={() => router.back()}
         >
           Cancel

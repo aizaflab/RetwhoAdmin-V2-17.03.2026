@@ -13,7 +13,7 @@ export default function ForgotPasswordSidebarStep({ item, isActive }: Props) {
       {/* Step number bubble */}
       <div className="relative shrink-0">
         <div
-          className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border transition-colors ${
+          className={`size-9 rounded-full flex items-center justify-center text-sm font-semibold border transition-colors ${
             isActive
               ? "bg-primary border-primary text-primary-foreground"
               : "bg-primary/10 border-border text-primary"

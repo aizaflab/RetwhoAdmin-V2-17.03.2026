@@ -2,8 +2,21 @@
 
 import { useState } from "react";
 import { SupportResource } from "../../_types/support.types";
-import { Input, Modal } from "@/components/ui";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Dialog,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Input,
+} from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
 import { Textarea } from "@/components/ui/textarea/Textarea";
 
@@ -84,7 +97,7 @@ export default function ResourceModal({
   };
 
   return (
-    <Modal
+    <Dialog
       open
       onClose={onClose}
       title={resource ? "Edit Resource" : "Add Resource"}
@@ -107,38 +120,66 @@ export default function ResourceModal({
     >
       <form id="resource-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Name */}
-        <Input
-          label="Resource Name"
-          placeholder="e.g. Getting Started"
-          value={formData.name}
-          onValueChange={handleNameChange}
-          error={errors.name}
-          requiredSign
-          className="dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel htmlFor="resource-name">
+            Resource Name
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="resource-name"
+            name="name"
+            placeholder="e.g. Getting Started"
+            value={formData.name}
+            onValueChange={handleNameChange}
+            aria-invalid={errors.name ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.name && <FieldError>{errors.name}</FieldError>}
+        </Field>
 
         {/* Slug */}
-        <Input
-          label="Slug"
-          placeholder="e.g. getting-started"
-          value={formData.slug}
-          onValueChange={(val) => {
-            setFormData((p) => ({ ...p, slug: val }));
-            if (errors.slug) setErrors((p) => ({ ...p, slug: "" }));
-          }}
-          error={errors.slug}
-          requiredSign
-          helperText="URL-friendly identifier. Auto-generated from name."
-          className="dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel htmlFor="resource-slug">
+            Slug
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="resource-slug"
+            name="slug"
+            placeholder="e.g. getting-started"
+            value={formData.slug}
+            onValueChange={(val) => {
+              setFormData((p) => ({ ...p, slug: val }));
+              if (errors.slug) setErrors((p) => ({ ...p, slug: "" }));
+            }}
+            aria-invalid={errors.slug ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.slug ? (
+            <FieldError>{errors.slug}</FieldError>
+          ) : (
+            <FieldDescription>
+              URL-friendly identifier. Auto-generated from the name.
+            </FieldDescription>
+          )}
+        </Field>
 
         {/* Description */}
-        <div className="space-y-1.5">
+        <Field>
+          <FieldLabel htmlFor="resource-description">
+            Description
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Textarea
+            id="resource-description"
+            name="description"
             rows={3}
-            label="Description"
-            required
-            requiredSign
             value={formData.description}
             onChange={(e) => {
               setFormData((p) => ({ ...p, description: e.target.value }));
@@ -146,24 +187,39 @@ export default function ResourceModal({
                 setErrors((p) => ({ ...p, description: "" }));
             }}
             placeholder="Brief description of this resource category..."
-            error={errors.description}
+            invalid={!!errors.description}
+            className="bg-transparent"
           />
-        </div>
+          {errors.description && <FieldError>{errors.description}</FieldError>}
+        </Field>
 
         {/* Status */}
-        <Select
-          label="Status"
-          options={STATUS_OPTIONS}
-          value={formData.status}
-          onValueChange={(val) =>
-            setFormData((p) => ({
-              ...p,
-              status: val as "active" | "inactive",
-            }))
-          }
-          className="w-full dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel id="resource-status-label" htmlFor="resource-status">
+            Status
+          </FieldLabel>
+          <Select
+            id="resource-status"
+            value={formData.status}
+            onValueChange={(val) =>
+              setFormData((p) => ({
+                ...p,
+                status: val as "active" | "inactive",
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue
+                placeholder="Select status"
+                options={STATUS_OPTIONS}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItems options={STATUS_OPTIONS} />
+            </SelectContent>
+          </Select>
+        </Field>
       </form>
-    </Modal>
+    </Dialog>
   );
 }

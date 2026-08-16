@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Modal } from "@/components/ui/modal/Modal";
+
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -14,6 +14,7 @@ import {
   CornerDownLeft,
 } from "lucide-react";
 import Link from "next/link";
+import { Dialog } from "@/components/ui";
 
 // Accent per shortcut. Alpha backgrounds sit on whatever surface is behind
 // them, so one class works in both themes.
@@ -126,7 +127,7 @@ export function GlobalSearchModal() {
       </div>
 
       {/* Modal Portal */}
-      <Modal
+      <Dialog
         open={isOpen}
         onClose={handleClose}
         size="xlarge"
@@ -271,7 +272,7 @@ export function GlobalSearchModal() {
             </span>
           </div>
         </div>
-      </Modal>
+      </Dialog>
     </>
   );
 }

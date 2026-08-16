@@ -293,7 +293,6 @@ export default function ChatbotListTable({
               value={resourceFilter}
               onChange={(val) => setResourceFilter(val)}
               className="h-10 rounded-md bg-white dark:bg-darkBg"
-              arrowClass="size-6"
             />
           </div>
 
@@ -303,7 +302,6 @@ export default function ChatbotListTable({
               value={activeFilter}
               onChange={(val) => setActiveFilter(val)}
               className="h-10 rounded-md bg-white dark:bg-darkBg"
-              arrowClass="size-6"
             />
           </div>
 

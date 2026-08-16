@@ -1,4 +1,4 @@
-import { BlogCategory, BlogPost } from "../_types/blog.types";
+﻿import { BlogCategory, BlogPost } from "../_types/blog.types";
 
 export const MOCK_BLOG_CATEGORIES: BlogCategory[] = [
   {
@@ -41,9 +41,10 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
     title: "The Future of Web Development",
     slug: "future-of-web-development",
     categoryId: "cat_1",
-    bannerImage: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
+    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
     altText: "Laptop on desk",
     imageTitle: "Web Development",
+    tags: ["web", "frontend", "2026"],
     metaTitle: "The Future of Web Development in 2026",
     metaDescription: "Exploring the upcoming trends in web development...",
     content:
@@ -57,9 +58,10 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
     title: "10 Marketing Strategies for Startups",
     slug: "10-marketing-strategies",
     categoryId: "cat_3",
-    bannerImage: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0",
+    image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0",
     altText: "Marketing team meeting",
     imageTitle: "Marketing Strategies",
+    tags: ["marketing", "startup"],
     metaTitle: "10 Best Marketing Strategies for Beginners",
     metaDescription: "Learn how to market your new startup efficiently.",
     content: "<p>Startups need robust marketing strategies. Here are 10...</p>",
@@ -72,9 +74,10 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
     title: "Effective Supply Chain Management",
     slug: "supply-chain-management",
     categoryId: "cat_2",
-    bannerImage: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
+    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
     altText: "Warehouse operations",
     imageTitle: "Supply Chain",
+    tags: ["logistics"],
     metaTitle: "How to optimize your supply chain",
     metaDescription: "A practical guide to supply chain opimization.",
     content: "<p>Managing supply chains is critical. Here is how...</p>",

@@ -17,7 +17,7 @@ export default function AddHiringPage() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
+    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
       <HiringPostForm categories={MOCK_HIRING_CATEGORIES} onSave={handleSave} />
     </div>
   );

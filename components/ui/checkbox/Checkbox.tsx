@@ -1,203 +1,222 @@
 "use client";
 
-import { useState, forwardRef, type ReactNode, type ChangeEvent } from "react";
+import { forwardRef, useEffect, useRef, type ChangeEvent } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+
+import { mergeRefs } from "@/lib/merge-refs";
+import { useControllableState } from "@/lib/use-controllable-state";
 import { cn } from "@/lib/utils";
-import { CheckIcon } from "@/components/icons/Icons";
+
+export type CheckboxVariant =
+  | "primary"
+  | "success"
+  | "warning"
+  | "destructive"
+  | "info";
+export type CheckboxRadius = "none" | "xs" | "sm" | "md" | "lg" | "full";
 
 interface CheckboxProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
-  "onChange" | "size"
+  "onChange" | "size" | "color"
 > {
   className?: string;
-  label?: string;
-  helperText?: string;
-  error?: string;
-  fullWidth?: boolean;
   disabled?: boolean;
   indeterminate?: boolean;
   checked?: boolean;
   defaultChecked?: boolean;
-  onValueChange?: (checked: boolean) => void;
+  onCheckedChange?: (checked: boolean) => void;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
-  id?: string;
   size?: "sm" | "md" | "lg";
-  border?: string;
-  children?: ReactNode;
+  variant?: CheckboxVariant;
+  color?: string;
+  radius?: CheckboxRadius;
 }
+
+const boxSize = {
+  sm: "size-4",
+  md: "size-5",
+  lg: "size-6",
+} as const;
+
+const markSize = {
+  sm: "size-2.5",
+  md: "size-3.5",
+  lg: "size-4",
+} as const;
+
+// Per-variant classes: `on` is applied while marked, `hover` while unmarked.
+const VARIANT: Record<CheckboxVariant, { on: string; hover: string }> = {
+  primary: {
+    on: "border-primary bg-primary text-white",
+    hover: "hover:border-primary/50",
+  },
+  success: {
+    on: "border-success bg-success text-white",
+    hover: "hover:border-success/50",
+  },
+  warning: {
+    on: "border-warning bg-warning text-black",
+    hover: "hover:border-warning/60",
+  },
+  destructive: {
+    on: "border-destructive bg-destructive text-destructive-foreground",
+    hover: "hover:border-destructive/50",
+  },
+  info: {
+    on: "border-info bg-info text-white",
+    hover: "hover:border-info/50",
+  },
+} as const;
+
+const RADIUS: Record<CheckboxRadius, string> = {
+  none: "rounded-none",
+  xs: "rounded-xs",
+  sm: "rounded-sm",
+  md: "rounded-md",
+  lg: "rounded-lg",
+  full: "rounded-full",
+} as const;
 
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   (
     {
       className,
-      label,
-      helperText,
-      error,
-      fullWidth = false,
       disabled = false,
       indeterminate = false,
       checked,
       defaultChecked = false,
-      onValueChange,
+      onCheckedChange,
       onChange,
-      id,
       size = "md",
-      border,
-      children,
+      variant = "primary",
+      color,
+      radius = "md",
       ...props
     },
     ref,
   ) => {
-    const [isChecked, setIsChecked] = useState<boolean>(
-      checked !== undefined ? checked : defaultChecked,
-    );
+    const [isChecked, setChecked] = useControllableState({
+      value: checked,
+      defaultValue: defaultChecked,
+      onChange: onCheckedChange,
+    });
+    const innerRef = useRef<HTMLInputElement>(null);
 
-    // Sync checked state from props
-    if (checked !== undefined && isChecked !== checked) {
-      setIsChecked(checked);
-    }
+    useEffect(() => {
+      if (innerRef.current) innerRef.current.indeterminate = indeterminate;
+    }, [indeterminate]);
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-      const newChecked = e.target.checked;
+    // the box click.
+    const toggle = (e?: ChangeEvent<HTMLInputElement>) => {
+      if (disabled) return;
+      const next = !isChecked;
 
-      if (checked === undefined) {
-        setIsChecked(newChecked);
-      }
+      setChecked(next);
 
-      // Call both callbacks if provided
       if (onChange) {
-        onChange(e);
-      }
-
-      if (onValueChange) {
-        onValueChange(newChecked);
+        if (e) {
+          onChange(e);
+        } else {
+          onChange({
+            target: {
+              checked: next,
+              name: props.name,
+              id: props.id,
+              type: "checkbox",
+            },
+          } as unknown as ChangeEvent<HTMLInputElement>);
+        }
       }
     };
 
+    const showMark = isChecked || indeterminate;
+
     return (
-      <div className={cn("flex", fullWidth && "w-full", className)}>
-        <div className="flex items-start">
-          <div
-            className={cn(
-              "flex items-center h-5",
-              helperText && !error && "mt-[3px]",
-              error && "mt-[3px]",
-            )}
-          >
-            <input
-              type="checkbox"
-              className="sr-only"
-              id={id}
-              checked={isChecked}
-              disabled={disabled}
-              onChange={handleChange}
-              ref={ref}
-              {...props}
-            />
-            <div
-              className={cn(
-                "flex items-center justify-center size-[1.15rem] border rounded transition-colors cursor-pointer",
-                size === "sm" && "size-4",
-                size === "lg" && "size-6",
-                size === "md" && "size-5",
-                isChecked || indeterminate
-                  ? "bg-primary border-primary text-white"
-                  : `bg-background dark:bg-transparent dark:border-primary ${border ? border : "border-input"} `,
-                disabled && "opacity-50 cursor-not-allowed",
-                error && "border-red-500",
-                !disabled && !isChecked && "hover:border-primary/50",
-              )}
-              onClick={() => {
-                if (!disabled) {
-                  const newChecked = !isChecked;
+      <span className="relative inline-flex shrink-0">
+        {/* Real input owns semantics, focus & form value; visually hidden. */}
+        <input
+          type="checkbox"
+          className="peer sr-only"
+          checked={isChecked}
+          disabled={disabled}
+          onChange={toggle}
+          ref={mergeRefs(ref, innerRef)}
+          {...props}
+        />
 
-                  if (checked === undefined) {
-                    setIsChecked(newChecked);
-                  }
-
-                  if (onChange) {
-                    const event = new Event("change", { bubbles: true });
-                    Object.defineProperty(event, "target", {
-                      writable: false,
-                      value: {
-                        checked: newChecked,
-                        name: props.name,
-                        id: id,
-                        type: "checkbox",
-                        value: newChecked,
-                      },
-                    });
-                    onChange(event as unknown as ChangeEvent<HTMLInputElement>);
-                  }
-
-                  if (onValueChange) {
-                    onValueChange(newChecked);
-                  }
-                }
-              }}
-            >
-              {isChecked && !indeterminate && (
-                <CheckIcon
-                  className={cn(
-                    "w-3.5 h-3.5 text-primary-foreground",
-                    size === "sm" && "w-2.5 h-2.5",
-                    size === "md" && "w-3.5 h-3.5",
-                    size === "lg" && "w-4 h-4",
-                  )}
-                />
-              )}
-              {indeterminate && (
-                <div className="w-2.5 h-0.5 bg-primary-foreground rounded-full" />
-              )}
-            </div>
-          </div>
-
-          {(label || children) && (
-            <div className="ml-2.5 text-sm">
-              <label
-                className={cn(
-                  "font-medium text-gray-700 dark:text-gray-200 cursor-pointer select-none",
-                  disabled && "opacity-50 cursor-not-allowed",
-                  size === "sm" && "text-sm",
-                )}
-                onClick={() => {
-                  if (!disabled) {
-                    const newChecked = !isChecked;
-
-                    if (checked === undefined) {
-                      setIsChecked(newChecked);
-                    }
-
-                    if (onChange) {
-                      const event = new Event("change", { bubbles: true });
-                      Object.defineProperty(event, "target", {
-                        writable: false,
-                        value: { checked: newChecked },
-                      });
-                      onChange(
-                        event as unknown as ChangeEvent<HTMLInputElement>,
-                      );
-                    }
-
-                    if (onValueChange) {
-                      onValueChange(newChecked);
-                    }
-                  }
-                }}
-              >
-                {label || children}
-              </label>
-
-              {helperText && !error && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {helperText}
-                </p>
-              )}
-
-              {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-            </div>
+        <motion.div
+          aria-hidden="true"
+          onClick={() => {
+            toggle();
+            innerRef.current?.focus();
+          }}
+          whileTap={disabled ? undefined : { scale: 0.85 }}
+          transition={{ type: "spring", stiffness: 500, damping: 28 }}
+          style={
+            showMark && color
+              ? { backgroundColor: color, borderColor: color }
+              : undefined
+          }
+          className={cn(
+            "flex items-center justify-center border transition-colors",
+            "peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
+            "peer-aria-invalid:border-red-500",
+            boxSize[size],
+            RADIUS[radius],
+            showMark
+              ? color
+                ? "text-white"
+                : VARIANT[variant].on
+              : "border-input bg-background dark:border-primary dark:bg-transparent",
+            disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+            !disabled &&
+              !showMark &&
+              (color ? "hover:border-foreground/40" : VARIANT[variant].hover),
+            className,
           )}
-        </div>
-      </div>
+        >
+          {/* Indeterminate bar — mounts only while indeterminate. */}
+          <AnimatePresence initial={false}>
+            {indeterminate && (
+              <motion.span
+                key="indeterminate"
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                exit={{ scaleX: 0, opacity: 0 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="h-0.5 w-2.5 rounded-full bg-current"
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Check mark stays mounted and animates toward the current state —
+              no mount/unmount race, so rapid toggling always settles right. */}
+          {!indeterminate && (
+            <motion.svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={markSize[size]}
+              initial={false}
+              animate={{
+                scale: isChecked ? 1 : 0.4,
+                opacity: isChecked ? 1 : 0,
+              }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+            >
+              <motion.path
+                d="M4 12l5 5L20 6"
+                initial={false}
+                animate={{ pathLength: isChecked ? 1 : 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              />
+            </motion.svg>
+          )}
+        </motion.div>
+      </span>
     );
   },
 );

@@ -5,8 +5,21 @@ import {
   SupportLearningVideo,
   SupportResource,
 } from "../../_types/support.types";
-import { Input, Modal } from "@/components/ui";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Dialog,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Input,
+} from "@/components/ui";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
 import { X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea/Textarea";
@@ -97,7 +110,7 @@ export default function VideoModal({
   }));
 
   return (
-    <Modal
+    <Dialog
       open
       onClose={onClose}
       title={video ? "Edit Learning Video" : "Add Learning Video"}
@@ -120,91 +133,157 @@ export default function VideoModal({
     >
       <form id="video-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Title */}
-        <Input
-          label="Video Title"
-          placeholder="e.g. Getting Started in 5 Minutes"
-          value={formData.title}
-          onValueChange={(val) => {
-            setFormData((p) => ({ ...p, title: val }));
-            if (errors.title) setErrors((p) => ({ ...p, title: "" }));
-          }}
-          error={errors.title}
-          requiredSign
-          className="dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel htmlFor="video-title">
+            Video Title
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="video-title"
+            name="title"
+            placeholder="e.g. Getting Started in 5 Minutes"
+            value={formData.title}
+            onValueChange={(val) => {
+              setFormData((p) => ({ ...p, title: val }));
+              if (errors.title) setErrors((p) => ({ ...p, title: "" }));
+            }}
+            aria-invalid={errors.title ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.title && <FieldError>{errors.title}</FieldError>}
+        </Field>
 
         {/* Resource + Status */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select
-            label="Resource Category"
-            options={resourceOptions}
-            value={formData.resourceId}
-            onValueChange={(val) => {
-              setFormData((p) => ({ ...p, resourceId: val }));
-              if (errors.resourceId)
-                setErrors((p) => ({ ...p, resourceId: "" }));
-            }}
-            className={`w-full dark:border-darkBorder ${errors.resourceId ? "border-red-500" : ""}`}
-            error={errors.resourceId}
-          />
-          <Select
-            label="Status"
-            options={STATUS_OPTIONS}
-            value={formData.status}
-            onValueChange={(val) =>
-              setFormData((p) => ({
-                ...p,
-                status: val as "published" | "draft",
-              }))
-            }
-            className="w-full dark:border-darkBorder"
-          />
+          <Field>
+            <FieldLabel id="video-resource-label" htmlFor="video-resource">
+              Resource Category
+            </FieldLabel>
+            <Select
+              id="video-resource"
+              value={formData.resourceId}
+              onValueChange={(val) => {
+                setFormData((p) => ({ ...p, resourceId: val }));
+                if (errors.resourceId)
+                  setErrors((p) => ({ ...p, resourceId: "" }));
+              }}
+            >
+              <SelectTrigger error={!!errors.resourceId}>
+                <SelectValue
+                  placeholder="Select a resource"
+                  options={resourceOptions}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={resourceOptions} />
+              </SelectContent>
+            </Select>
+            {errors.resourceId && <FieldError>{errors.resourceId}</FieldError>}
+          </Field>
+
+          <Field>
+            <FieldLabel id="video-status-label" htmlFor="video-status">
+              Status
+            </FieldLabel>
+            <Select
+              id="video-status"
+              value={formData.status}
+              onValueChange={(val) =>
+                setFormData((p) => ({
+                  ...p,
+                  status: val as "published" | "draft",
+                }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder="Select status"
+                  options={STATUS_OPTIONS}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={STATUS_OPTIONS} />
+              </SelectContent>
+            </Select>
+          </Field>
         </div>
 
         {/* Video URL */}
-        <Input
-          label="Video URL / Embed Link"
-          placeholder="https://www.youtube.com/watch?v=..."
-          value={formData.videoUrl}
-          onValueChange={(val) => {
-            setFormData((p) => ({ ...p, videoUrl: val }));
-            if (errors.videoUrl) setErrors((p) => ({ ...p, videoUrl: "" }));
-          }}
-          error={errors.videoUrl}
-          requiredSign
-          helperText="YouTube, Vimeo, or direct embed URL."
-          className="dark:border-darkBorder dark:focus:border-primary"
-        />
+        <Field>
+          <FieldLabel htmlFor="video-url">
+            Video URL / Embed Link
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
+          <Input
+            id="video-url"
+            name="videoUrl"
+            type="url"
+            placeholder="https://www.youtube.com/watch?v=..."
+            value={formData.videoUrl}
+            onValueChange={(val) => {
+              setFormData((p) => ({ ...p, videoUrl: val }));
+              if (errors.videoUrl) setErrors((p) => ({ ...p, videoUrl: "" }));
+            }}
+            aria-invalid={errors.videoUrl ? true : undefined}
+            className="bg-transparent"
+          />
+          {errors.videoUrl ? (
+            <FieldError>{errors.videoUrl}</FieldError>
+          ) : (
+            <FieldDescription>
+              YouTube, Vimeo, or direct embed URL.
+            </FieldDescription>
+          )}
+        </Field>
 
         {/* Thumbnail + Duration */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Thumbnail URL"
-            placeholder="https://..."
-            value={formData.thumbnailUrl}
-            onValueChange={(val) =>
-              setFormData((p) => ({ ...p, thumbnailUrl: val }))
-            }
-            className="dark:border-darkBorder dark:focus:border-primary"
-          />
-          <Input
-            label="Duration"
-            placeholder="e.g. 12:34"
-            value={formData.duration}
-            onValueChange={(val) =>
-              setFormData((p) => ({ ...p, duration: val }))
-            }
-            helperText="Format: MM:SS"
-            className="dark:border-darkBorder dark:focus:border-primary"
-          />
+          <Field>
+            <FieldLabel htmlFor="video-thumbnail">Thumbnail URL</FieldLabel>
+            <Input
+              id="video-thumbnail"
+              name="thumbnailUrl"
+              type="url"
+              placeholder="https://..."
+              value={formData.thumbnailUrl}
+              onValueChange={(val) =>
+                setFormData((p) => ({ ...p, thumbnailUrl: val }))
+              }
+              className="bg-transparent"
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="video-duration">Duration</FieldLabel>
+            <Input
+              id="video-duration"
+              name="duration"
+              placeholder="e.g. 12:34"
+              value={formData.duration}
+              onValueChange={(val) =>
+                setFormData((p) => ({ ...p, duration: val }))
+              }
+              className="bg-transparent"
+            />
+            <FieldDescription>Format: MM:SS</FieldDescription>
+          </Field>
         </div>
 
         {/* Description */}
-        <div className="space-y-1.5">
+        <Field>
+          <FieldLabel htmlFor="video-description">
+            Description
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Textarea
-            label="Description"
-            required
-            requiredSign
+            id="video-description"
+            name="description"
             rows={3}
             value={formData.description}
             onChange={(e) => {
@@ -213,19 +292,21 @@ export default function VideoModal({
                 setErrors((p) => ({ ...p, description: "" }));
             }}
             placeholder="What will viewers learn from this video?"
-            error={errors.description}
-            className="dark:border-darkBorder dark:focus:border-primary"
+            invalid={!!errors.description}
+            className="bg-transparent"
           />
-        </div>
+          {errors.description && <FieldError>{errors.description}</FieldError>}
+        </Field>
 
         {/* Tags */}
-        <div className="space-y-1.5">
+        <Field>
+          <FieldLabel htmlFor="video-tags">Tags</FieldLabel>
           <div className="flex items-end gap-2">
             <Input
-              label="Tags"
-              type="text"
+              id="video-tags"
+              name="tags"
               value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
+              onValueChange={setTagInput}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -233,13 +314,12 @@ export default function VideoModal({
                 }
               }}
               placeholder="Type tag & press Enter"
-              fullWidth
-              className="dark:border-darkBorder dark:focus:border-primary"
+              className="flex-1 bg-transparent"
             />
             <Button
               type="button"
               variant="outline"
-              className="h-11 px-4 text-sm"
+              className="h-10 px-4 text-sm"
               onClick={addTag}
             >
               Add
@@ -250,13 +330,13 @@ export default function VideoModal({
               {formData.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary dark:text-blue-400"
+                  className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="hover:text-rose-500 transition-colors"
+                    className="hover:text-destructive transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -264,8 +344,8 @@ export default function VideoModal({
               ))}
             </div>
           )}
-        </div>
+        </Field>
       </form>
-    </Modal>
+    </Dialog>
   );
 }

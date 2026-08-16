@@ -18,16 +18,16 @@ export default function AddBlogPage() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
+    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.back()}
-          className="size-8 center rounded-lg bg-white dark:bg-darkPrimary border border-border/50 dark:border-darkBorder/50 hover:bg-gray-50 dark:hover:bg-darkBorder/40  cursor-pointer"
+          className="size-8 center rounded-lg bg-popover border border-border/50 hover:bg-muted/50 cursor-pointer"
         >
-          <MoveLeft className="w-5 h-5 text-black dark:text-white" />
+          <MoveLeft className="w-5 h-5 text-foreground" />
         </button>
         <div>
-          <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+          <h1 className="sm:text-2xl text-xl font-medium text-foreground">
             Add New Post
           </h1>
         </div>

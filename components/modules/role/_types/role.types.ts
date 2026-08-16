@@ -1,32 +1,54 @@
-// Role & Permission module types
+// ─── Role Module Types ────────────────────────────────────────────────────────
+// Mirrors the admin-role API payloads, so form state can be sent as-is.
 
-import { PermissionKey } from "@/components/modules/access-control/_config/permission";
+export type RoleStatus = "active" | "inactive";
 
-export type RoleStatus = "active" | "inactive" | "draft";
-
-export interface RolePermissionEntry {
-  key: PermissionKey;
-  scope: "global" | "tenant" | "department" | "assigned" | "own";
+/** One row of the permission matrix — a page and the four actions on it. */
+export interface RolePermission {
+  page: string;
+  add: boolean;
+  edit: boolean;
+  view: boolean;
+  delete: boolean;
 }
 
+/** A row as returned by `GET /admin-role`. */
 export interface Role {
-  id: string;
+  _id: string;
   name: string;
   description: string;
+  permissions: RolePermission[];
   status: RoleStatus;
-  permissions: RolePermissionEntry[];
-  userCount: number;
-  assignedUserIds: string[]; // IDs of admin users assigned to this role
+  /** System roles are seeded by the backend and cannot be deleted. */
+  isSystem: boolean;
+  createdBy: string | null;
+  updatedBy: string | null;
   createdAt: string;
   updatedAt: string;
-  isSystem?: boolean; // system roles cannot be deleted
 }
 
-// Lightweight user record used in role assignment UI
-export interface AdminUser {
-  id: string;
+/**
+ * Create/update body for `/admin-role`. Field names match the API exactly —
+ * the form collects into this shape so no mapping is needed on submit.
+ */
+export interface RolePayload {
   name: string;
-  email: string;
-  avatar?: string;
-  department?: string;
+  description: string;
+  permissions: RolePermission[];
+  status: RoleStatus;
+}
+
+export interface RoleListMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPage: number;
+}
+
+export interface RoleListResponse {
+  status: boolean;
+  statusCode: number;
+  message: string;
+  meta: RoleListMeta;
+  data: Role[];
 }

@@ -6,8 +6,8 @@ import {
   IncomeOverviewChart,
   RevenueOverviewChart,
 } from "@/components/modules/dashboard";
+import { HugeCalender } from "@/components/ui/calendar/HugeCalender";
 import { useState } from "react";
-import { HugeCalender } from "@/components/ui/calender/HugeCalender";
 
 export default function DashboardPage() {
   // Date range state for HugeCalender

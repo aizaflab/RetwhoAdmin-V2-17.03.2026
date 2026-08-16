@@ -61,13 +61,13 @@ export default function ApplicationViewDrawer({
       />
       <div
         className="fixed top-0 right-0 z-501 h-full w-full max-w-md
-                   flex flex-col bg-white dark:bg-darkPrimary
+                   flex flex-col bg-popover
                    border-l border-border/40 dark:border-white/5
                    shadow-xl transition-transform duration-500 ease-out"
         style={{ transform: visible ? "translateX(0)" : "translateX(100%)" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-white/10 shrink-0">
+        <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 center text-primary overflow-hidden">
               {application.applicantPhoto ? (
@@ -83,10 +83,10 @@ export default function ApplicationViewDrawer({
               )}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-black dark:text-white leading-tight">
+              <h2 className="text-sm font-semibold text-foreground leading-tight">
                 {application.applicantName}
               </h2>
-              <p className="text-[11px] text-text5 mt-0.5">
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 Applied{" "}
                 {format(new Date(application.appliedAt), "MMM dd, yyyy")}
               </p>
@@ -94,7 +94,7 @@ export default function ApplicationViewDrawer({
           </div>
           <button
             onClick={handleClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-darkBorder/40 hover:bg-gray-200 dark:hover:bg-darkBorder/80 transition-colors text-text5"
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-muted hover:bg-muted transition-colors text-muted-foreground"
           >
             <X className="w-4 h-4" />
           </button>
@@ -103,17 +103,17 @@ export default function ApplicationViewDrawer({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-5 custom-scrollbar space-y-5">
           {/* Status & Role Info */}
-          <div className="bg-gray-50 dark:bg-darkBorder/20 rounded-lg p-4 border border-gray-100 dark:border-white/5 space-y-4">
+          <div className="bg-muted/50 rounded-lg p-4 border border-border space-y-4">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                   <BriefcaseBusiness className="w-3 h-3" />
                   Applied Role
                 </p>
-                <h3 className="text-sm font-semibold text-black dark:text-white">
+                <h3 className="text-sm font-semibold text-foreground">
                   {application.hiringTitle}
                 </h3>
-                <p className="text-[11px] text-text5 mt-0.5">
+                <p className="text-[11px] text-muted-foreground mt-0.5">
                   {application.companyName}
                 </p>
               </div>
@@ -127,7 +127,7 @@ export default function ApplicationViewDrawer({
 
           {/* Contact Details */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-widest border-b border-gray-100 dark:border-white/5 pb-2">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-widest border-b border-border pb-2">
               Contact Info
             </h3>
             <div className="grid gap-2">
@@ -137,7 +137,7 @@ export default function ApplicationViewDrawer({
                 </div>
                 <a
                   href={`mailto:${application.applicantEmail}`}
-                  className="text-text4 font-medium hover:text-primary transition-colors truncate"
+                  className="text-muted-foreground/70 font-medium hover:text-primary transition-colors truncate"
                 >
                   {application.applicantEmail}
                 </a>
@@ -146,7 +146,7 @@ export default function ApplicationViewDrawer({
                 <div className="w-7 h-7 rounded bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center text-emerald-500 shrink-0">
                   <Phone className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-text4 font-medium">
+                <span className="text-muted-foreground/70 font-medium">
                   {application.applicantPhone}
                 </span>
               </div>
@@ -154,7 +154,7 @@ export default function ApplicationViewDrawer({
                 <div className="w-7 h-7 rounded bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center text-purple-500 shrink-0">
                   <MapPin className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-text4 font-medium">
+                <span className="text-muted-foreground/70 font-medium">
                   {application.applicantLocation}
                 </span>
               </div>
@@ -163,27 +163,27 @@ export default function ApplicationViewDrawer({
 
           {/* Additional Details */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-widest border-b border-gray-100 dark:border-white/5 pb-2">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-widest border-b border-border pb-2">
               Applicant Details
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 dark:bg-darkBorder/20 rounded-lg p-3 border border-gray-100 dark:border-white/5">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+              <div className="bg-muted/50 rounded-lg p-3 border border-border">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                   <DollarSign className="w-3 h-3" />
                   Expected Pay
                 </p>
-                <p className="text-sm font-semibold text-black dark:text-white">
+                <p className="text-sm font-semibold text-foreground">
                   {application.expectedSalary
                     ? `৳ ${application.expectedSalary.toLocaleString()}`
                     : "N/A"}
                 </p>
               </div>
-              <div className="bg-gray-50 dark:bg-darkBorder/20 rounded-lg p-3 border border-gray-100 dark:border-white/5">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+              <div className="bg-muted/50 rounded-lg p-3 border border-border">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                   <Calendar className="w-3 h-3" />
                   Available From
                 </p>
-                <p className="text-sm font-semibold text-black dark:text-white truncate">
+                <p className="text-sm font-semibold text-foreground truncate">
                   {application.availableFrom
                     ? format(
                         new Date(application.availableFrom),
@@ -197,7 +197,7 @@ export default function ApplicationViewDrawer({
 
           {/* Links & Attachments */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-widest border-b border-gray-100 dark:border-white/5 pb-2">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-widest border-b border-border pb-2">
               Links & Documents
             </h3>
             <div className="grid gap-2">
@@ -223,12 +223,12 @@ export default function ApplicationViewDrawer({
                     href={application.portfolioUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex flex-1 items-center justify-between p-3 rounded-md bg-gray-50 dark:bg-darkBorder/20 border border-gray-100 dark:border-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                    className="flex flex-1 items-center justify-between p-3 rounded-md bg-muted/50 border border-border hover:bg-muted dark:hover:bg-card transition-colors"
                   >
-                    <span className="text-sm font-medium text-text4">
+                    <span className="text-sm font-medium text-muted-foreground/70">
                       Portfolio Website
                     </span>
-                    <ExternalLink className="w-3.5 h-3.5 text-text5" />
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
                   </a>
                 )}
                 {application.linkedInUrl && (
@@ -250,11 +250,11 @@ export default function ApplicationViewDrawer({
 
           {/* Cover Letter */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-black dark:text-white uppercase tracking-widest border-b border-gray-100 dark:border-white/5 pb-2">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-widest border-b border-border pb-2">
               Cover Letter / Message
             </h3>
-            <div className="bg-gray-50 dark:bg-darkBorder/20 p-4 rounded-lg border border-gray-100 dark:border-white/5">
-              <p className="text-sm text-text4 leading-relaxed whitespace-pre-wrap italic">
+            <div className="bg-muted/50 p-4 rounded-lg border border-border">
+              <p className="text-sm text-muted-foreground/70 leading-relaxed whitespace-pre-wrap italic">
                 &quot;{application.coverLetter}&quot;
               </p>
             </div>
@@ -262,10 +262,10 @@ export default function ApplicationViewDrawer({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4  bg-gray-50 dark:bg-darkBorder/20 shrink-0">
+        <div className="p-4 bg-muted/50 shrink-0">
           <div className="flex gap-2">
             <Button
-              className="flex-1 bg-white dark:bg-transparent text-black dark:text-white border-border dark:border-darkBorder"
+              className="flex-1 bg-card dark:bg-transparent text-foreground border-border"
               variant="outline"
               onClick={() => {
                 onStatusChange?.(application.id, "rejected");

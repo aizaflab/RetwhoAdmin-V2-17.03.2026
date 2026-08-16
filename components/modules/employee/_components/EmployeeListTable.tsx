@@ -1,71 +1,100 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Input, SimpleSelect } from "@/components/ui";
+import Image from "next/image";
+import { Input } from "@/components/ui";
+import { Button } from "@/components/ui/button/Button";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-} from "@/components/ui/dropdown/Dropdown";
-import {
-  UserCircle,
-  Edit2,
-  Trash2,
-  MoreVertical,
-  Eye,
-  Briefcase,
-} from "lucide-react";
+import { UserCircle, Edit2, Trash2, Eye, Plus } from "lucide-react";
 import { SearchIcon } from "@/components/icons/Icons";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
-// Assuming Employee Type is exported from _types
-import { Employee } from "../_types/employee.types";
+
+import EmployeeFormDialog from "./EmployeeFormDialog";
+import EmployeeViewDialog from "./EmployeeViewDialog";
+import { ROLE_OPTIONS, getRoleName } from "../_data/employee-options";
 import { mockEmployees } from "../_data/mock-employee";
+import type { Employee, EmployeePayload } from "../_types/employee.types";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 
 interface EmployeeListTableProps {
   employees?: Employee[];
+  onCreate?: (payload: EmployeePayload) => void | Promise<void>;
+  onUpdate?: (id: string, payload: EmployeePayload) => void | Promise<void>;
   onDelete?: (id: string) => void;
 }
 
+/* Tinted from the semantic tokens so both themes resolve from the same source. */
 const STATUS_STYLES: Record<string, string> = {
-  active:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
-  inactive:
-    "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
-  suspended: "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400",
-  resigned: "bg-gray-50 text-gray-600 dark:bg-gray-950/30 dark:text-gray-400",
+  active: "bg-success/10 text-success",
+  inactive: "bg-warning/10 text-warning",
 };
+
+const ACTION_BUTTON =
+  "cursor-pointer center size-8 rounded-lg border border-border bg-card text-muted-foreground transition-all duration-150";
+
+function formatDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    date,
+  );
+}
 
 export default function EmployeeListTable({
   employees = mockEmployees,
+  onCreate,
+  onUpdate,
   onDelete,
 }: EmployeeListTableProps) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
+  const [formOpen, setFormOpen] = useState(false);
+  // Set alongside `formOpen` for edit; left null when adding.
+  const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
+  const [employeeToView, setEmployeeToView] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
     null,
   );
-  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
 
   const statusOptions = [
     { value: "all", label: "All Status" },
     { value: "active", label: "Active" },
     { value: "inactive", label: "Inactive" },
-    { value: "suspended", label: "Suspended" },
-    { value: "resigned", label: "Resigned" },
   ];
 
   const roleOptions = [
     { value: "all", label: "All Roles" },
-    { value: "admin", label: "Admin" },
-    { value: "manager", label: "Manager" },
-    { value: "staff", label: "Staff" },
+    ...ROLE_OPTIONS.map((role) => ({
+      value: String(role.value),
+      label: role.label,
+    })),
   ];
+
+  const openAdd = () => {
+    setEmployeeToEdit(null);
+    setFormOpen(true);
+  };
+
+  const openEdit = (employee: Employee) => {
+    setEmployeeToEdit(employee);
+    setFormOpen(true);
+  };
+
+  const handleSubmit = async (payload: EmployeePayload) => {
+    if (employeeToEdit) await onUpdate?.(employeeToEdit._id, payload);
+    else await onCreate?.(payload);
+  };
 
   const columns: Column<Employee>[] = [
     {
@@ -73,14 +102,23 @@ export default function EmployeeListTable({
       header: "Employee",
       cell: (value, emp) => (
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/5 dark:bg-primary/20 shrink-0">
-            <UserCircle className="w-4 h-4 text-primary dark:text-blue-400" />
-          </div>
+          {emp.profileImage?.url ? (
+            <Image
+              src={emp.profileImage.url}
+              alt={emp.name}
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-lg object-cover shrink-0"
+              unoptimized
+            />
+          ) : (
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 shrink-0">
+              <UserCircle className="w-4 h-4 text-primary" />
+            </div>
+          )}
           <div>
-            <p className="text-sm font-semibold text-black dark:text-white">
-              {emp.name}
-            </p>
-            <p className="text-xs text-text5">{emp.email}</p>
+            <p className="text-sm font-semibold text-foreground">{emp.name}</p>
+            <p className="text-xs text-muted-foreground">{emp.email}</p>
           </div>
         </div>
       ),
@@ -90,28 +128,17 @@ export default function EmployeeListTable({
       header: "Phone",
       className: "hidden md:table-cell",
       cell: (value, emp) => (
-        <p className="text-sm text-text6 dark:text-text5">{emp.phone || "—"}</p>
+        <p className="text-sm text-muted-foreground">{emp.phone || "—"}</p>
       ),
     },
     {
       id: "roleId",
       header: "Role",
-      className: "hidden sm:table-cell text-center",
+      className: "hidden sm:table-cell",
       cell: (value, emp) => (
-        <span className="text-sm capitalize font-medium text-text6 dark:text-text5">
-          {emp.roleId || "—"}
+        <span className="text-sm font-medium text-muted-foreground">
+          {getRoleName(emp.roleId)}
         </span>
-      ),
-    },
-    {
-      id: "jobType",
-      header: "Job Type",
-      className: "hidden lg:table-cell text-center",
-      cell: (value, emp) => (
-        <div className="flex items-center justify-start gap-1.5 text-sm text-text6 dark:text-text5 capitalize">
-          <Briefcase className="w-3.5 h-3.5" />
-          {emp.jobType}
-        </div>
       ),
     },
     {
@@ -120,9 +147,21 @@ export default function EmployeeListTable({
       className: "text-center",
       cell: (value, emp) => (
         <span
-          className={`inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded capitalize ${STATUS_STYLES[emp.status] || STATUS_STYLES.inactive}`}
+          className={`inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded capitalize ${
+            STATUS_STYLES[emp.status] || STATUS_STYLES.inactive
+          }`}
         >
           {emp.status}
+        </span>
+      ),
+    },
+    {
+      id: "createdAt",
+      header: "Created",
+      className: "hidden lg:table-cell",
+      cell: (value, emp) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(emp.createdAt)}
         </span>
       ),
     },
@@ -131,83 +170,76 @@ export default function EmployeeListTable({
       header: "Actions",
       className: "justify-end text-right",
       cell: (value, emp) => (
-        <div className="flex items-center justify-end gap-1 relative">
+        <div className="flex items-center justify-end gap-1">
+          <SimpleTooltip content="View" position="top">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setEmployeeToView(emp);
+              }}
+              className={`${ACTION_BUTTON} hover:border-primary/50 hover:text-primary`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </button>
+          </SimpleTooltip>
+
           <SimpleTooltip content="Edit" position="top">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                // Normally this would navigate to edit page
-                // router.push(`/employee/${emp.id}/edit`);
-                console.log("Edit", emp.id);
+                openEdit(emp);
               }}
-              className="cursor-pointer flex items-center justify-center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className={`${ACTION_BUTTON} hover:border-primary/50 hover:text-primary`}
             >
               <Edit2 className="w-3.5 h-3.5" />
             </button>
           </SimpleTooltip>
 
-          <Dropdown
-            onOpenChange={(isOpen) => setOpenDropdownId(isOpen ? emp.id : null)}
-          >
-            <SimpleTooltip
-              content="More"
-              position="top"
-              disabled={openDropdownId === emp.id}
+          <SimpleTooltip content="Delete" position="top">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setEmployeeToDelete(emp);
+              }}
+              className={`${ACTION_BUTTON} hover:border-destructive/50 hover:text-destructive`}
             >
-              <DropdownTrigger asChild showChevron={false}>
-                <button
-                  className="cursor-pointer flex items-center justify-center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="w-3.5 h-3.5" />
-                </button>
-              </DropdownTrigger>
-            </SimpleTooltip>
-
-            <DropdownMenu align="end" className="min-w-[150px] p-1 font-medium">
-              <DropdownItem
-                icon={<Eye className="w-4 h-4" />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // View modal or drawer could be triggered here
-                  console.log("View", emp.id);
-                }}
-                className="text-text6 dark:text-text5 text-xs rounded-sm py-2 cursor-pointer"
-              >
-                View Profile
-              </DropdownItem>
-              <DropdownItem
-                icon={<Trash2 className="size-3.5" />}
-                destructive
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEmployeeToDelete(emp);
-                }}
-                className="text-xs rounded-sm py-2 cursor-pointer"
-              >
-                Delete Employee
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </SimpleTooltip>
         </div>
       ),
     },
   ];
 
+  // this is dummy filtering logic, remove it when the API is wired up with search and filter params
   const filtered = employees.filter((emp) => {
+    const query = search.toLowerCase();
     const matchSearch =
-      emp.name.toLowerCase().includes(search.toLowerCase()) ||
-      emp.email.toLowerCase().includes(search.toLowerCase());
+      emp.name.toLowerCase().includes(query) ||
+      emp.email.toLowerCase().includes(query) ||
+      (emp.phone ?? "").toLowerCase().includes(query);
     const matchRole = roleFilter === "all" || emp.roleId === roleFilter;
     const matchStatus = statusFilter === "all" || emp.status === statusFilter;
     return matchSearch && matchRole && matchStatus;
   });
 
+  // Clamp instead of resetting `page` in an effect, so filtering down to fewer
+  // pages can never leave the table showing an empty slice.
+  const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
+  const currentPage = Math.min(page, totalPages);
+  // Client-side slicing — drop this once the API takes page/limit params.
+  const paginated = filtered.slice(
+    (currentPage - 1) * limit,
+    currentPage * limit,
+  );
+
   return (
     <div>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
-        <h3 className="text-xl font-medium">Manage Employees</h3>
+        <h3 className="text-xl font-medium text-foreground">
+          Manage Employees
+        </h3>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {/* Search */}
           <div className="relative flex-1 sm:w-60">
@@ -216,49 +248,88 @@ export default function EmployeeListTable({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search employee..."
-              startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80 dark:focus:border-darkBorder"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 w-full bg-card border-border"
             />
           </div>
 
           <div className="flex gap-2 w-full sm:w-auto justify-end">
             {/* Role Filter */}
             <div className="relative w-32">
-              <SimpleSelect
-                options={roleOptions}
-                value={roleFilter}
-                onChange={setRoleFilter}
-                className="h-10 rounded-md bg-white dark:bg-darkBg"
-                arrowClass="size-6"
-              />
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="h-10 rounded-md bg-card text-foreground">
+                  <SelectValue options={roleOptions} placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItems options={roleOptions} />
+                </SelectContent>
+              </Select>
             </div>
             {/* Status filter */}
             <div className="relative w-32">
-              <SimpleSelect
-                options={statusOptions}
-                value={statusFilter}
-                onChange={setStatusFilter}
-                className="h-10 rounded-md bg-white dark:bg-darkBg"
-                arrowClass="size-6"
-              />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-10 rounded-md bg-card text-foreground">
+                  <SelectValue
+                    options={statusOptions}
+                    placeholder="All Status"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItems options={statusOptions} />
+                </SelectContent>
+              </Select>
             </div>
+
+            <Button
+              onClick={openAdd}
+              className="h-10 shrink-0"
+              startIcon={<Plus className="w-4 h-4" />}
+            >
+              Add Employee
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="">
-        <Table<Employee>
-          data={filtered}
-          columns={columns}
-          pagination={true}
-          limit={10}
-          bordered
-          emptyMessage="No employees found"
-          headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
-          tableClassName="min-w-full"
-        />
-      </div>
+      <Table<Employee>
+        data={paginated}
+        columns={columns}
+        pagination
+        page={currentPage}
+        setPage={setPage}
+        limit={limit}
+        setLimit={(next) => {
+          setLimit(next);
+          setPage(1);
+        }}
+        totalData={filtered.length}
+        bordered
+        emptyMessage="No employees found"
+        headerColor="bg-muted/60"
+        tableClassName="min-w-full"
+      />
+
+      {/* Add / Edit */}
+      <EmployeeFormDialog
+        open={formOpen}
+        employee={employeeToEdit}
+        onClose={() => setFormOpen(false)}
+        onSubmit={handleSubmit}
+      />
+
+      {/* View */}
+      <EmployeeViewDialog
+        open={!!employeeToView}
+        employee={employeeToView}
+        onClose={() => setEmployeeToView(null)}
+        onEdit={(emp) => {
+          setEmployeeToView(null);
+          openEdit(emp);
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
       <DeleteModal
@@ -271,7 +342,7 @@ export default function EmployeeListTable({
         selectedRow={employeeToDelete}
         handleDelete={(emp) => {
           if (emp) {
-            onDelete?.(emp.id);
+            onDelete?.(emp._id);
             setEmployeeToDelete(null);
           }
         }}

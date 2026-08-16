@@ -1,6 +1,11 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+import {
+  readRefreshCookie,
+  refreshCookieHeader,
+} from "@/lib/auth/refreshCookie";
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 // Last-resort lifetime, used only when neither the access token itself nor the
@@ -75,11 +80,13 @@ const refreshPromises = new Map();
 async function requestRefreshedToken(token) {
   const res = await fetch(`${BACKEND_URL}/admin/employees/auth/refresh-token`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    // The endpoint documents an empty body, but sending the refresh token is
-    // what makes this work from the server, where the backend's own cookie
-    // is not available.
-    body: JSON.stringify({ refreshToken: token.refreshToken }),
+    headers: {
+      "Content-Type": "application/json",
+      // The endpoint reads the refresh token from `req.cookies`, so it has to
+      // travel as a cookie. We run on the server, where the browser's cookie
+      // jar does not exist, so the header is built by hand from the JWT.
+      Cookie: refreshCookieHeader(token.refreshToken),
+    },
   });
 
   const body = unwrap(await res.json().catch(() => ({})));
@@ -91,9 +98,9 @@ async function requestRefreshedToken(token) {
   return {
     ...token,
     accessToken: body.accessToken,
-    // Backends that rotate refresh tokens return a new one; keep the old
-    // one when they don't (this one currently returns only accessToken).
-    refreshToken: body.refreshToken ?? token.refreshToken,
+    // Backends that rotate refresh tokens hand back a new cookie; keep the
+    // old token when they don't (this one currently reuses it).
+    refreshToken: readRefreshCookie(res) ?? token.refreshToken,
     accessTokenExpires: toExpiryMs(body),
     error: undefined,
   };
@@ -176,7 +183,10 @@ export const authOptions = {
           role: user.role ?? null,
           image: user.profileImage?.url ?? null,
           accessToken: body.accessToken,
-          refreshToken: body.refreshToken ?? null,
+          // Login returns only `{ accessToken }` in its body — the refresh
+          // token comes back as a Set-Cookie that dies with this response
+          // unless we keep it here.
+          refreshToken: readRefreshCookie(res) ?? body.refreshToken ?? null,
           accessTokenExpires: toExpiryMs(body),
         };
       },

@@ -215,6 +215,25 @@ export const CalendarIcon = ({
   </svg>
 );
 
+export const ClockIcon = ({
+  className = "w-6 h-6",
+  color = "currentColor",
+  strokeWidth = 2,
+}: IconProps) => (
+  <svg
+    className={className}
+    fill="none"
+    stroke={color}
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <g strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </g>
+  </svg>
+);
+
 export const XIcon = ({
   className = "w-6 h-6",
   color = "currentColor",

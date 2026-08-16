@@ -84,9 +84,7 @@ export default function SecurityTab({ prefs, onChange }: SecurityTabProps) {
                     key={i}
                     className={cn(
                       "flex-1 rounded-full transition-colors",
-                      i <= pwStrength
-                        ? pwStrengthColor
-                        : "bg-slate-200 dark:bg-slate-700",
+                      i <= pwStrength ? pwStrengthColor : "bg-muted",
                     )}
                   />
                 ))}
@@ -129,7 +127,7 @@ export default function SecurityTab({ prefs, onChange }: SecurityTabProps) {
         title="Two-Factor Authentication"
         desc="Add an extra layer of security to your account."
       >
-        <div className="divide-y divide-border/30 dark:divide-darkBorder/30">
+        <div className="divide-y divide-border/30">
           <ToggleRow
             label="Enable 2FA"
             desc="Require a verification code on every login"
@@ -166,19 +164,21 @@ export default function SecurityTab({ prefs, onChange }: SecurityTabProps) {
                   "p-4 rounded-lg border cursor-pointer transition-all",
                   method.active
                     ? "border-primary/40 bg-primary/5 dark:bg-primary/10"
-                    : "border-border/40 dark:border-darkBorder/40 hover:border-primary/30 hover:bg-gray-light dark:hover:bg-darkPrimary",
+                    : "border-border/40 hover:border-primary/30 hover:bg-gray-light",
                 )}
               >
                 <method.icon
                   className={cn(
                     "w-5 h-5 mb-2",
-                    method.active ? "text-primary" : "text-text5",
+                    method.active ? "text-primary" : "text-muted-foreground",
                   )}
                 />
-                <p className="text-xs font-semibold text-text6 dark:text-text4">
+                <p className="text-xs font-semibold text-foreground">
                   {method.label}
                 </p>
-                <p className="text-[10px] text-text5 mt-0.5">{method.desc}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {method.desc}
+                </p>
                 {method.active && (
                   <span className="inline-flex items-center gap-1 mt-2 text-[10px] font-semibold text-primary">
                     <CheckCircle2 className="w-3 h-3" /> Enabled
@@ -194,7 +194,7 @@ export default function SecurityTab({ prefs, onChange }: SecurityTabProps) {
         title="Security Preferences"
         desc="Control how your account handles security events."
       >
-        <div className="divide-y divide-border/30 dark:divide-darkBorder/30">
+        <div className="divide-y divide-border/30">
           <ToggleRow
             label="Login Alerts"
             desc="Email alert on new device login"
@@ -227,43 +227,41 @@ export default function SecurityTab({ prefs, onChange }: SecurityTabProps) {
         title="Login History"
         desc="Recent login activity for your account."
       >
-        <div className="overflow-x-auto rounded-md border border-border/40 dark:border-darkBorder/40">
+        <div className="overflow-x-auto rounded-md border border-border/40">
           <table className="w-full text-xs">
             <thead>
-              <tr className="bg-gray-light dark:bg-darkPrimary">
-                <th className="px-4 py-2.5 text-left font-medium text-text5 uppercase tracking-wide">
+              <tr className="bg-gray-light">
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground uppercase tracking-wide">
                   IP Address
                 </th>
-                <th className="px-4 py-2.5 text-left font-medium text-text5 uppercase tracking-wide">
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground uppercase tracking-wide">
                   Location
                 </th>
-                <th className="px-4 py-2.5 text-left font-medium text-text5 uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">
                   Device
                 </th>
-                <th className="px-4 py-2.5 text-left font-medium text-text5 uppercase tracking-wide">
+                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground uppercase tracking-wide">
                   Time
                 </th>
-                <th className="px-4 py-2.5 text-center font-medium text-text5 uppercase tracking-wide">
+                <th className="px-4 py-2.5 text-center font-medium text-muted-foreground uppercase tracking-wide">
                   Status
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/30 dark:divide-darkBorder/30">
+            <tbody className="divide-y divide-border/30">
               {LOGIN_HISTORY.map((log, i) => (
                 <tr
                   key={i}
-                  className="hover:bg-gray-light/40 dark:hover:bg-darkPrimary/40 transition-colors"
+                  className="hover:bg-gray-light/40 transition-colors"
                 >
-                  <td className="px-4 py-3 font-mono text-text6 dark:text-text4">
+                  <td className="px-4 py-3 font-mono text-foreground">
                     {log.ip}
                   </td>
-                  <td className="px-4 py-3 text-text6 dark:text-text5">
-                    {log.location}
-                  </td>
-                  <td className="px-4 py-3 text-text5 hidden sm:table-cell">
+                  <td className="px-4 py-3 text-foreground">{log.location}</td>
+                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
                     {log.device}
                   </td>
-                  <td className="px-4 py-3 text-text5 whitespace-nowrap">
+                  <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                     {log.time}
                   </td>
                   <td className="px-4 py-3 text-center">

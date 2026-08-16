@@ -14,7 +14,13 @@ import { Input } from "@/components/ui";
 import { BlogCategory } from "../_types/blog.types";
 import BlogCategoryModal from "./BlogCategoryModal";
 import { Button } from "@/components/ui/button/Button";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
@@ -59,10 +65,8 @@ export default function BlogCategoryListTable({
             <FlexTextIcon className="w-4 h-4 text-primary dark:text-blue-400" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-black dark:text-white">
-              {row.name}
-            </p>
-            <p className="text-[10px] text-text5">/{row.slug}</p>
+            <p className="text-sm font-semibold text-foreground">{row.name}</p>
+            <p className="text-[10px] text-muted-foreground">/{row.slug}</p>
           </div>
         </div>
       ),
@@ -72,7 +76,7 @@ export default function BlogCategoryListTable({
       header: "Posts",
       className: "text-center",
       cell: (value, row) => (
-        <span className="text-sm font-semibold text-text6 dark:text-text5">
+        <span className="text-sm font-semibold text-foreground">
           {row.postCount}
         </span>
       ),
@@ -82,7 +86,7 @@ export default function BlogCategoryListTable({
       header: "Created Date",
       className: "text-left hidden sm:table-cell",
       cell: (value, row) => (
-        <span className="text-sm text-text6 dark:text-text5">
+        <span className="text-sm text-foreground">
           {format(new Date(row.createdAt), "dd MMM yyyy")}
         </span>
       ),
@@ -111,7 +115,7 @@ export default function BlogCategoryListTable({
                 e.stopPropagation();
                 setEditingCategory(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
@@ -123,7 +127,7 @@ export default function BlogCategoryListTable({
                 e.stopPropagation();
                 setCategoryToDelete(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
             >
               <DeleteIcon className="w-4 h-4" />
             </button>
@@ -137,7 +141,7 @@ export default function BlogCategoryListTable({
     <div>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-5">
-        <h1 className="sm:text-2xl text-xl font-medium ">Categories</h1>
+        <h1 className="sm:text-2xl text-xl font-medium">Categories</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative w-full sm:w-auto min-w-50 flex-1">
             <Input
@@ -145,19 +149,22 @@ export default function BlogCategoryListTable({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search category..."
-              startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80 dark:focus:border-darkLight/50"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 w-full bg-card"
             />
           </div>
 
           <div className="relative w-32">
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onValueChange={(val) => setStatusFilter(val)}
-              className="rounded-md bg-white dark:bg-darkBg"
-              fieldClass="h-10!"
-            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10 rounded-md bg-card">
+                <SelectValue options={statusOptions} placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={statusOptions} />
+              </SelectContent>
+            </Select>
           </div>
 
           <Button
@@ -183,7 +190,7 @@ export default function BlogCategoryListTable({
           setLimit={setLimit}
           bordered
           emptyMessage="No categories found"
-          headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
+          headerColor="bg-muted/50"
           tableClassName="min-w-full"
           rowClass="py-2.5"
         />

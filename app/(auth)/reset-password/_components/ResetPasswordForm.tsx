@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { Input, ThemeToggle } from "@/components/ui";
+import { FieldError, Input, Label, ThemeToggle } from "@/components/ui";
 import type {
   ResetPasswordFormErrors,
   ResetPasswordFormValues,
@@ -25,10 +25,7 @@ const INITIAL_VALUES: ResetPasswordFormValues = {
   confirmPassword: "",
 };
 
-// How long the success screen stays up before we send the user to sign in.
 const REDIRECT_DELAY_MS = 4000;
-
-/** Shape the backend uses for zod failures: 400 + a details array. */
 type ApiError = {
   data?: {
     message?: string;
@@ -36,11 +33,6 @@ type ApiError = {
   };
 };
 
-/**
- * Turn a rejected request into per-field errors. The backend reports zod
- * failures as `body.newPassword` / `body.confirmPassword`, so those land under
- * the right input instead of showing a bare "Validation error".
- */
 function toFormErrors(err: unknown): ResetPasswordFormErrors {
   const data = (err as ApiError)?.data;
   const details = data?.error?.details ?? [];
@@ -54,9 +46,6 @@ function toFormErrors(err: unknown): ResetPasswordFormErrors {
       nextErrors.confirmPassword ??= detail.message;
     }
   }
-
-  // Nothing field-specific — fall back to the top-level message. An expired
-  // reset token is the most likely cause.
   if (!nextErrors.password && !nextErrors.confirmPassword) {
     nextErrors.form =
       data?.message ||
@@ -80,7 +69,6 @@ export default function ResetPasswordForm() {
 
   const [resetPassword, { isLoading }] = useResetPasswordMutation();
 
-  // Send the user to sign in once they have had a moment to read the
   // confirmation.
   useEffect(() => {
     if (!success) return;
@@ -147,9 +135,9 @@ export default function ResetPasswordForm() {
     return (
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative overflow-hidden isolate">
         <div className="w-full max-w-sm relative z-10 text-center">
-          <div className="w-16 h-16 rounded-full center mb-6 mx-auto bg-primary/10 border border-primary/30">
+          <div className="size-16 rounded-full center mb-6 mx-auto bg-primary/10 border border-primary/30">
             <svg
-              className="w-8 h-8 text-primary dark:text-darkLight"
+              className="w-8 h-8 text-primary "
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -162,10 +150,10 @@ export default function ResetPasswordForm() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold mb-2 dark:text-white text-black">
+          <h1 className="text-2xl font-semibold mb-2 text-foreground">
             Password Reset!
           </h1>
-          <p className=" text-sm mb-8 text-black/40 dark:text-white/40">
+          <p className=" text-sm mb-8 text-muted-foreground">
             Your password has been updated successfully. Taking you to the sign
             in page — or continue below.
           </p>
@@ -188,17 +176,17 @@ export default function ResetPasswordForm() {
     <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative overflow-hidden isolate">
       <div className="w-full max-w-sm relative z-10">
         {/* Icon */}
-        <div className="w-12 h-12 rounded-xl center mb-6 mx-auto border bg-black/5 dark:bg-darkPrimary/70  border-border/50 dark:border-darkBorder text-black dark:text-white ">
+        <div className="size-12 rounded-xl center mb-4 mx-auto border bg-primary/5 border-primary/50 text-primary">
           <KeyIcon />
         </div>
 
         {/* Heading */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold mb-2 dark:text-white text-black">
+          <h1 className="text-2xl font-semibold mb-2 text-foreground">
             Reset Password
           </h1>
           {!token && (
-            <p className="text-sm text-red-500 dark:text-red-400">
+            <p className="text-sm text-destructive">
               This reset link is missing its token.{" "}
               <Link href="/forgot-password" className="underline">
                 Request a new link
@@ -206,7 +194,7 @@ export default function ResetPasswordForm() {
               .
             </p>
           )}
-          <p className="text-sm text-black/40 dark:text-white/40">
+          <p className="text-sm text-muted-foreground">
             Choose a strong new password for your account.
           </p>
         </div>
@@ -215,26 +203,27 @@ export default function ResetPasswordForm() {
         <form className="space-y-5" onSubmit={handleSubmit}>
           {/* New password */}
           <div className="space-y-2">
+            <Label htmlFor="password">New Password</Label>
             <Input
-              label="New Password"
+              id="password"
               name="password"
               type={showPassword ? "text" : "password"}
               value={values.password}
               onChange={handleChange}
-              error={errors.password}
+              aria-invalid={errors.password ? true : undefined}
               placeholder="Enter new password"
-              fullWidth
               endIcon={
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="transition-colors cursor-pointer text-black/50 dark:text-white/50 hover:text-primary dark:hover:text-darkLight "
+                  className="transition-colors cursor-pointer text-muted-foreground hover:text-primary "
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               }
             />
+            {errors.password && <FieldError>{errors.password}</FieldError>}
 
             {/* Live requirements — compact chips */}
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -259,37 +248,35 @@ export default function ResetPasswordForm() {
           </div>
 
           {/* Confirm password */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
-              label="Confirm Password"
+              id="confirmPassword"
               name="confirmPassword"
               type={showConfirm ? "text" : "password"}
               value={values.confirmPassword}
               onChange={handleChange}
-              error={errors.confirmPassword}
+              aria-invalid={errors.confirmPassword ? true : undefined}
               placeholder="Re-enter new password"
-              fullWidth
               endIcon={
                 <button
                   type="button"
                   onClick={() => setShowConfirm((v) => !v)}
-                  className="transition-colors cursor-pointer text-black/50 dark:text-white/50 hover:text-primary dark:hover:text-darkLight "
+                  className="transition-colors cursor-pointer text-muted-foreground hover:text-primary "
                   aria-label={showConfirm ? "Hide password" : "Show password"}
                 >
                   {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               }
             />
+            {errors.confirmPassword && (
+              <FieldError>{errors.confirmPassword}</FieldError>
+            )}
           </div>
 
           {errors.form && (
-            <p className="text-xs text-red-500 dark:text-red-400">
-              {errors.form}
-            </p>
+            <p className="text-xs text-destructive">{errors.form}</p>
           )}
-
-          {/* Deliberately not disabled on invalid input: clicking submit is
-              what surfaces the inline errors. */}
           <Button
             type="submit"
             loading={isLoading}
@@ -302,7 +289,7 @@ export default function ResetPasswordForm() {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Remember your password?{" "}
             <Link href="/login" className="text-foreground font-medium">
               Sign in

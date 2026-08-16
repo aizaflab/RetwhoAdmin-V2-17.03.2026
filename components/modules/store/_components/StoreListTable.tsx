@@ -24,7 +24,13 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { SearchIcon } from "@/components/icons/Icons";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 
 interface StoreListTableProps {
   stores: Shop[];
@@ -256,13 +262,14 @@ export default function StoreListTable({ stores, title }: StoreListTableProps) {
           </div>
 
           <div className="relative w-36">
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onValueChange={(val) => setStatusFilter(val)}
-              className="rounded-md bg-white dark:bg-darkBg"
-              fieldClass="h-10!"
-            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10 rounded-md bg-card">
+                <SelectValue options={statusOptions} placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={statusOptions} />
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

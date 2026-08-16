@@ -49,7 +49,7 @@ const STATUS_STYLES = {
     "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
   draft: "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
   archived:
-    "bg-slate-50 text-slate-600 dark:bg-slate-800/30 dark:text-slate-400",
+    "bg-muted/50 text-muted-foreground dark:bg-muted dark:text-muted-foreground",
 };
 
 function BlogPostListTable({
@@ -87,10 +87,10 @@ function BlogPostListTable({
         const category = categories.find((c) => c.id === row.categoryId);
         return (
           <div className="flex items-center gap-3">
-            <div className="relative w-12 h-12 rounded-lg bg-gray-100 dark:bg-darkBorder overflow-hidden shrink-0">
-              {row.bannerImage ? (
+            <div className="relative w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0">
+              {row.image ? (
                 <Image
-                  src={row.bannerImage}
+                  src={row.image}
                   alt={row.altText}
                   className="w-full h-full object-cover"
                   width={1000}
@@ -98,20 +98,22 @@ function BlogPostListTable({
                   priority
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-text5">
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   <ImageIcon className="w-5 h-5" />
                 </div>
               )}
             </div>
             <div className="max-w-50 sm:max-w-xs">
-              <p className="text-sm font-semibold text-black dark:text-white truncate">
+              <p className="text-sm font-semibold text-foreground truncate">
                 {row.title}
               </p>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary dark:text-blue-400">
                   {category?.name || "Unknown"}
                 </span>
-                <span className="text-xs text-text5 truncate">/{row.slug}</span>
+                <span className="text-xs text-muted-foreground truncate">
+                  /{row.slug}
+                </span>
               </div>
             </div>
           </div>
@@ -123,7 +125,7 @@ function BlogPostListTable({
       header: "Views",
       className: "text-center hidden sm:table-cell",
       cell: (value, row) => (
-        <span className="text-sm font-semibold text-text6 dark:text-text5">
+        <span className="text-sm font-semibold text-foreground">
           {row.views.toLocaleString()}
         </span>
       ),
@@ -133,7 +135,7 @@ function BlogPostListTable({
       header: "Published On",
       className: "text-left hidden md:table-cell",
       cell: (value, row) => (
-        <span className="text-sm text-text6 dark:text-text5">
+        <span className="text-sm text-foreground">
           {format(new Date(row.createdAt), "dd MMM yyyy")}
         </span>
       ),
@@ -162,7 +164,7 @@ function BlogPostListTable({
                 e.stopPropagation();
                 router.push(`/blog/post/edit/${row.id}`);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
@@ -178,7 +180,7 @@ function BlogPostListTable({
             >
               <DropdownTrigger asChild showChevron={false}>
                 <button
-                  className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
+                  className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreIcon className="w-4 h-4" />
@@ -193,7 +195,7 @@ function BlogPostListTable({
                   e.stopPropagation();
                   setViewingPost(row);
                 }}
-                className="text-text6 dark:text-text5 text-xs rounded-sm py-2 cursor-pointer"
+                className="text-foreground text-xs rounded-sm py-2 cursor-pointer"
               >
                 View Details
               </DropdownItem>
@@ -201,7 +203,7 @@ function BlogPostListTable({
               {onUpdateStatus && (
                 <>
                   <DropdownSeparator />
-                  <DropdownLabel className="text-[9px] items-center gap-1.5 uppercase tracking-wider text-text5 py-1.5 pb-2  pl-0 flex">
+                  <DropdownLabel className="text-[9px] items-center gap-1.5 uppercase tracking-wider text-muted-foreground py-1.5 pb-2 pl-0 flex">
                     Status Actions
                   </DropdownLabel>
                   {row.status !== "published" && (
@@ -235,7 +237,7 @@ function BlogPostListTable({
                         e.stopPropagation();
                         onUpdateStatus(row.id, "archived");
                       }}
-                      className="text-slate-600 dark:text-slate-400 text-xs rounded-sm py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/20"
+                      className="text-muted-foreground text-xs rounded-sm py-2 cursor-pointer hover:bg-muted/50 dark:hover:bg-muted"
                     >
                       Move to Archive
                     </DropdownItem>
@@ -276,7 +278,7 @@ function BlogPostListTable({
     <div>
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5">
-        <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+        <h1 className="sm:text-2xl text-xl font-medium text-foreground">
           All Posts
         </h1>
         <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
@@ -286,8 +288,10 @@ function BlogPostListTable({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search posts..."
-              startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80 dark:focus:border-darkBorder"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 w-full bg-card"
             />
           </div>
 
@@ -296,8 +300,7 @@ function BlogPostListTable({
               options={categoryOptions}
               value={categoryFilter}
               onChange={(val) => setCategoryFilter(val)}
-              className="h-10 rounded-md bg-white dark:bg-darkBg"
-              arrowClass="size-6"
+              className="h-10 rounded-md bg-card"
             />
           </div>
 
@@ -306,8 +309,7 @@ function BlogPostListTable({
               options={statusOptions}
               value={statusFilter}
               onChange={(val) => setStatusFilter(val)}
-              className="h-10 rounded-md bg-white dark:bg-darkBg"
-              arrowClass="size-6"
+              className="h-10 rounded-md bg-card"
             />
           </div>
 
@@ -329,7 +331,7 @@ function BlogPostListTable({
           pagination={false}
           bordered
           emptyMessage="No posts found"
-          headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
+          headerColor="bg-muted/50"
           tableClassName="min-w-full"
         />
       </div>

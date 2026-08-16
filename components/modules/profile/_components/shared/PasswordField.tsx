@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Eye, EyeOff, LucideLock } from "lucide-react";
-import { Input } from "@/components/ui";
+import { Field, FieldLabel, Input } from "@/components/ui";
 
 export function PasswordField({
   label,
@@ -14,30 +14,34 @@ export function PasswordField({
   onChange: (v: string) => void;
 }) {
   const [show, setShow] = useState(false);
+  const id = useId();
+
   return (
-    <div className="relative">
+    <Field>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Input
-        label={label}
+        id={id}
         type={show ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         startIcon={<LucideLock className="size-4.5" />}
         placeholder={`Enter ${label}`}
         endIcon={
-          show ? (
-            <EyeOff
-              className="w-4 h-4 cursor-pointer"
-              onClick={() => setShow(!show)}
-            />
-          ) : (
-            <Eye
-              className="w-4 h-4 cursor-pointer"
-              onClick={() => setShow(!show)}
-            />
-          )
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            aria-label={show ? "Hide password" : "Show password"}
+            className="cursor-pointer text-foreground transition-colors hover:text-primary"
+          >
+            {show ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
+          </button>
         }
-        className="h-10 dark:border-darkBorder dark:focus:border-darkLight/50"
+        className="h-10 bg-transparent"
       />
-    </div>
+    </Field>
   );
 }

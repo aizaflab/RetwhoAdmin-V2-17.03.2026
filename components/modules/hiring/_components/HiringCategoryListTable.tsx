@@ -4,7 +4,13 @@ import { useState } from "react";
 import { HiringCategory } from "../_types/hiring.types";
 import { Input } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
@@ -74,10 +80,8 @@ export default function HiringCategoryListTable({
             )}
           </div>
           <div>
-            <p className="text-sm font-semibold text-black dark:text-white">
-              {row.name}
-            </p>
-            <p className="text-[10px] text-text5">/{row.slug}</p>
+            <p className="text-sm font-semibold text-foreground">{row.name}</p>
+            <p className="text-[10px] text-muted-foreground">/{row.slug}</p>
           </div>
         </div>
       ),
@@ -99,7 +103,7 @@ export default function HiringCategoryListTable({
       header: "Posts",
       className: "text-center",
       cell: (_, row) => (
-        <span className="text-sm font-semibold text-text6 dark:text-text5">
+        <span className="text-sm font-semibold text-foreground">
           {row.postCount}
         </span>
       ),
@@ -109,7 +113,7 @@ export default function HiringCategoryListTable({
       header: "Created",
       className: "text-left hidden md:table-cell",
       cell: (_, row) => (
-        <span className="text-sm text-text6 dark:text-text5">
+        <span className="text-sm text-foreground">
           {format(new Date(row.createdAt), "dd MMM yyyy")}
         </span>
       ),
@@ -138,7 +142,7 @@ export default function HiringCategoryListTable({
                 e.stopPropagation();
                 setEditingCat(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
@@ -149,7 +153,7 @@ export default function HiringCategoryListTable({
                 e.stopPropagation();
                 setCatToDelete(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
             >
               <DeleteIcon className="w-4 h-4" />
             </button>
@@ -176,10 +180,10 @@ export default function HiringCategoryListTable({
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
         <div>
-          <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+          <h1 className="sm:text-2xl text-xl font-medium text-foreground">
             Hiring Categories
           </h1>
-          <p className="text-xs text-text5 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Manage job and service categories
           </p>
         </div>
@@ -190,27 +194,31 @@ export default function HiringCategoryListTable({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search category..."
-              startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 w-full bg-card"
             />
           </div>
           <div className="w-28">
-            <Select
-              options={typeOptions}
-              value={typeFilter}
-              onValueChange={setTypeFilter}
-              fieldClass="h-10!"
-              className="w-full"
-            />
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="h-10 bg-card">
+                <SelectValue options={typeOptions} placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={typeOptions} />
+              </SelectContent>
+            </Select>
           </div>
           <div className="w-28">
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-              fieldClass="h-10!"
-              className="w-full"
-            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10 bg-card">
+                <SelectValue options={statusOptions} placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={statusOptions} />
+              </SelectContent>
+            </Select>
           </div>
           <Button
             onClick={() => setIsAddOpen(true)}
@@ -234,7 +242,7 @@ export default function HiringCategoryListTable({
         setLimit={setLimit}
         bordered
         emptyMessage="No categories found"
-        headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
+        headerColor="bg-muted/50"
         tableClassName="min-w-full"
         rowClass="py-2.5"
       />

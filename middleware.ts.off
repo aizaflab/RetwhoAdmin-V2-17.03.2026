@@ -1,0 +1,55 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
+
+/**
+ * Pages that must stay reachable without a session. Everything else in the app
+ * is behind the sign-in wall.
+ *
+ * Note that only `/login` bounces a signed-in user away (below). Password
+ * recovery has to keep working while a session is still around — someone who
+ * is logged in on one tab may well be following a reset link in another, and
+ * redirecting them to the dashboard would make the emailed link look broken.
+ */
+const PUBLIC_ROUTES = ["/login", "/forgot-password", "/reset-password"];
+
+export async function middleware(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  // A session whose refresh has already failed is spent — treat it as signed
+  // out rather than letting the app render and fail every request.
+  const isSignedIn = Boolean(token) && token?.error !== "RefreshAccessTokenError";
+  const isPublicRoute = PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  if (!isSignedIn && !isPublicRoute) {
+    const loginUrl = new URL("/login", request.url);
+    // Read back by LoginForm so the user lands where they were headed.
+    loginUrl.searchParams.set("callbackUrl", `${pathname}${search}`);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (isSignedIn && pathname === "/login") {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Everything except:
+     * - api routes (they do their own auth; /api/auth must stay reachable so
+     *   sign-in and sign-out can run at all)
+     * - _next internals and static assets
+     * - anything with a file extension (images, fonts, favicon…)
+     */
+    "/((?!api|_next/static|_next/image|.*\\.[\\w]+$).*)",
+  ],
+};

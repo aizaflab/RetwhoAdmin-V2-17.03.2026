@@ -1,15 +1,17 @@
 "use client";
 
-import { LoaderIcon } from "@/components/icons/Icons";
-import { cn } from "@/lib/utils";
-import React, {
-  forwardRef,
-  useState,
-  useRef,
-  MouseEvent,
+import {
   ButtonHTMLAttributes,
+  forwardRef,
+  MouseEvent,
   ReactNode,
+  useRef,
+  useState,
 } from "react";
+
+import { mergeRefs } from "@/lib/merge-refs";
+import { cn } from "@/lib/utils";
+import { LoaderIcon } from "@/components/icons/Icons";
 
 // ---------- Types ----------
 type Variant =
@@ -25,7 +27,17 @@ type Variant =
   | "dark"
   | "link";
 
-type Size = "sm" | "default" | "lg" | "xl" | "icon" | "icon-sm" | "icon-lg";
+type Size =
+  | "xs"
+  | "sm"
+  | "default"
+  | "lg"
+  | "xl"
+  | "icon"
+  | "icon-xs"
+  | "icon-sm"
+  | "icon-md"
+  | "icon-lg";
 
 type Rounded = "none" | "sm" | "default" | "lg" | "xl" | "full";
 
@@ -104,34 +116,31 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     // ---------- Styles ----------
     const variantStyles: Record<Variant, string> = {
-      default:
-        "bg-primary text-white border border-primary hover:bg-primary/90 hover:border-primary/90 focus-visible:bg-primary/95 focus-visible:border-primary/95 dark:bg-[#07659B] dark:text-white dark:border-primary/80 dark:hover:bg-primary/80 dark:hover:border-primary/70 dark:focus-visible:bg-primary/80",
+      default: "bg-primary hover:bg-primary/90 border-transparent text-white",
       secondary:
-        "bg-secondary text-black border border-border hover:bg-secondary/80 focus-visible:bg-secondary/80 dark:text-white dark:border-darkBorder dark:focus-visible:bg-secondary/80",
-      outline:
-        "border border-border bg-white text-black hover:bg-[#F5F5F5] focus-visible:bg-[#F5F5F5] dark:border-darkBorder dark:bg-darkPrimary dark:text-white dark:hover:bg-darkBorder/80 dark:focus-visible:bg-darkBorder/80",
-      ghost:
-        "text-black hover:bg-secondary focus-visible:bg-secondary border-transparent dark:text-white dark:hover:text-white dark:focus-visible:bg-secondary/80",
+        "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-transparent",
+      outline: "border-border bg-transparent text-foreground hover:bg-muted",
+      ghost: "hover:bg-muted text-foreground border-transparent",
       destructive:
-        "bg-destructive text-white hover:bg-destructive/90 focus-visible:bg-destructive/90 border-transparent",
-      success:
-        "bg-green-600 text-white hover:bg-green-700 focus-visible:bg-green-700 border-transparent",
-      warning:
-        "bg-amber-500 text-white hover:bg-amber-600 focus-visible:bg-amber-600 border-transparent",
-      info: "bg-blue-500 text-white hover:bg-blue-600 focus-visible:bg-blue-600 border-transparent",
-      light:
-        "bg-gray-100 text-gray-800 hover:bg-gray-200 focus-visible:bg-gray-200 border-gray-200",
-      dark: "bg-gray-800 text-white hover:bg-gray-900 focus-visible:bg-gray-900 border-transparent",
+        "bg-destructive text-white hover:bg-destructive/70 border-transparent",
+      success: "bg-success text-white hover:bg-success/90 border-transparent",
+      warning: "bg-warning text-black hover:bg-warning/90 border-transparent",
+      info: "bg-info text-white hover:bg-info/90 border-transparent",
+      light: "bg-muted text-foreground hover:bg-muted/80 border-border",
+      dark: "bg-foreground text-background hover:opacity-90 border-transparent",
       link: "text-primary underline-offset-4 hover:underline p-0 h-auto border-transparent",
     };
 
     const sizeStyles: Record<Size, string> = {
+      xs: "h-7 px-2.5 text-xs",
       sm: "h-8 px-3 text-xs",
       default: "h-9 px-4 py-2 text-sm",
       lg: "h-12 px-6",
       xl: "h-14 px-8 text-lg",
       icon: "size-[33px] p-0",
+      "icon-xs": "size-7 p-0",
       "icon-sm": "h-8 w-8 p-0",
+      "icon-md": "size-9 p-0",
       "icon-lg": "h-12 w-12 p-0",
     };
 
@@ -156,21 +165,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // ---------- Render ----------
     return (
       <button
-        ref={(node) => {
-          buttonRef.current = node;
-          if (typeof ref === "function") {
-            ref(node);
-          } else if (ref) {
-            (ref as React.MutableRefObject<HTMLButtonElement | null>).current =
-              node;
-          }
-        }}
+        ref={mergeRefs(ref, buttonRef)}
         type={type}
         disabled={disabled || loading}
-        aria-busy={loading || undefined}
-        aria-disabled={disabled || loading || undefined}
         className={cn(
-          "relative inline-flex items-center justify-center gap-2 whitespace-nowrap border font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 dark:focus-visible:ring-darkLight/55 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-darkBg disabled:pointer-events-none disabled:opacity-50 cursor-pointer ",
+          "relative inline-flex cursor-pointer items-center justify-center gap-2 border font-medium whitespace-nowrap transition duration-200 ease-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
           variantStyles[variant],
           sizeStyles[size],
           roundedStyles[rounded],
@@ -185,24 +184,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {/* Ripple effect */}
         {ripple && (
           <span
-            className="absolute inset-0 overflow-hidden pointer-events-none"
-            aria-hidden="true"
+            className="absolute inset-0 overflow-hidden"
             style={{ borderRadius: "inherit" }}
           >
             {rippleEffect.map((r) => (
               <span
                 key={r.id}
-                className={cn(
-                  "absolute rounded-full animate-ripple",
-                  variant === "default" ||
-                    variant === "destructive" ||
-                    variant === "success" ||
-                    variant === "warning" ||
-                    variant === "info" ||
-                    variant === "dark"
-                    ? "bg-white/20"
-                    : "bg-black/10 dark:bg-white/20",
-                )}
+                className="animate-ripple absolute rounded-full bg-white/30"
                 style={{
                   width: `${r.size}px`,
                   height: `${r.size}px`,
@@ -214,15 +202,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           </span>
         )}
 
-        {/* Loading spinner */}
         {loading && (
-          <LoaderIcon
-            className={cn(
-              "animate-spin",
-              size === "sm" ? "h-3 w-3" : "h-4 w-4",
-            )}
-            aria-hidden="true"
-          />
+          <>
+            <LoaderIcon
+              className={cn(
+                "shrink-0 animate-spin",
+                size === "sm" ? "size-3.5" : "size-4",
+              )}
+              aria-hidden="true"
+            />
+            <span className="sr-only">Loading...</span>
+          </>
         )}
 
         {/* Start icon */}

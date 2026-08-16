@@ -40,21 +40,21 @@ export default function AppearanceTab({
                 "p-4 rounded-lg border text-center transition-all cursor-pointer",
                 prefs.theme === t.id
                   ? "border-primary bg-primary/5 dark:bg-primary/10"
-                  : "border-border/40 dark:border-darkBorder/40 hover:border-primary/30 hover:bg-gray-light dark:hover:bg-darkPrimary",
+                  : "border-border/40 hover:border-primary/30 hover:bg-gray-light",
               )}
             >
               <t.icon
                 className={cn(
                   "w-6 h-6 mx-auto mb-1.5",
-                  prefs.theme === t.id ? "text-primary" : "text-text5",
+                  prefs.theme === t.id
+                    ? "text-primary"
+                    : "text-muted-foreground",
                 )}
               />
               <p
                 className={cn(
                   "text-xs font-medium",
-                  prefs.theme === t.id
-                    ? "text-primary"
-                    : "text-text6 dark:text-text4",
+                  prefs.theme === t.id ? "text-primary" : "text-foreground",
                 )}
               >
                 {t.label}
@@ -82,20 +82,18 @@ export default function AppearanceTab({
                 "p-4 rounded-lg border text-left transition-all cursor-pointer",
                 prefs.density === d.id
                   ? "border-primary bg-primary/5 dark:bg-primary/10"
-                  : "border-border/40 dark:border-darkBorder/40 hover:border-primary/30 hover:bg-gray-light dark:hover:bg-darkPrimary",
+                  : "border-border/40 hover:border-primary/30 hover:bg-gray-light",
               )}
             >
               <p
                 className={cn(
                   "text-xs font-semibold mb-1",
-                  prefs.density === d.id
-                    ? "text-primary"
-                    : "text-text6 dark:text-text4",
+                  prefs.density === d.id ? "text-primary" : "text-foreground",
                 )}
               >
                 {d.label}
               </p>
-              <p className="text-[10px] text-text5">{d.desc}</p>
+              <p className="text-[10px] text-muted-foreground">{d.desc}</p>
             </button>
           ))}
         </div>
@@ -105,7 +103,7 @@ export default function AppearanceTab({
         title="Display Preferences"
         desc="Customize how the interface behaves."
       >
-        <div className="divide-y divide-border/30 dark:divide-darkBorder/30">
+        <div className="divide-y divide-border/30">
           <ToggleRow
             label="Animations & Transitions"
             desc="Enable smooth UI animations"

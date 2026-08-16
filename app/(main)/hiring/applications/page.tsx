@@ -60,29 +60,31 @@ export default function ManageApplicationsPage() {
   return (
     <div className="space-y-4">
       {/* Compact Filter Row */}
-      <div className="p-3 sm:p-4 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="p-3 sm:p-4 rounded-lg border bg-card border-border/70 flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Minimal Stats Inline */}
         <div className="flex items-center gap-4 text-[13px] w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-text5 font-medium">Total:</span>
-            <span className="text-black dark:text-white px-2 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-bold min-w-[24px] text-center">
+            <span className="text-muted-foreground font-medium">Total:</span>
+            <span className="text-foreground px-2 py-0.5 rounded bg-muted font-bold min-w-[24px] text-center">
               {stats.total}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-text5 font-medium">Reviewed:</span>
+            <span className="text-muted-foreground font-medium">Reviewed:</span>
             <span className="text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 font-bold min-w-[24px] text-center">
               {stats.reviewed}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-text5 font-medium">Shortlisted:</span>
+            <span className="text-muted-foreground font-medium">
+              Shortlisted:
+            </span>
             <span className="text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/20 font-bold min-w-[24px] text-center">
               {stats.shortlisted}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-text5 font-medium">Hired:</span>
+            <span className="text-muted-foreground font-medium">Hired:</span>
             <span className="text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/20 font-bold min-w-[24px] text-center">
               {stats.hired}
             </span>
@@ -94,12 +96,12 @@ export default function ManageApplicationsPage() {
             options={jobOptions}
             value={selectedJobId}
             onChange={setSelectedJobId}
-            className="h-10 rounded-md bg-white dark:bg-darkBg"
+            className="h-10 rounded-md bg-card"
           />
         </div>
       </div>
 
-      <div className="min-h-[calc(100dvh-150px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
+      <div className="min-h-[calc(100dvh-150px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
         <ApplicationListTable
           applications={filteredApplications}
           onStatusChange={handleStatusChange}

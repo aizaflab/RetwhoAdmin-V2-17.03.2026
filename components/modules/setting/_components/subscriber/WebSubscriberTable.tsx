@@ -383,7 +383,6 @@ export default function WebSubscriberTable({
               value={sourceFilter}
               onChange={(val) => setSourceFilter(val)}
               className="h-10 rounded-md bg-white dark:bg-darkBg"
-              arrowClass="size-6"
             />
           </div>
           <div className="relative w-32">
@@ -392,7 +391,6 @@ export default function WebSubscriberTable({
               value={statusFilter}
               onChange={(val) => setStatusFilter(val)}
               className="h-10 rounded-md bg-white dark:bg-darkBg"
-              arrowClass="size-6"
             />
           </div>
         </div>

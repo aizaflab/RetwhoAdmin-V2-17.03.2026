@@ -8,7 +8,13 @@ import {
   TargetAudience,
   PromotionStatus,
 } from "../_types/promotion.types";
-import { Input } from "@/components/ui";
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+  Textarea,
+} from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
 import { useRouter } from "next/navigation";
 import {
@@ -20,9 +26,15 @@ import {
   FileText,
 } from "lucide-react";
 import Image from "next/image";
-import { Select } from "@/components/ui/select/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
+import { HugeCalender } from "@/components/ui/calendar/HugeCalender";
 import { SearchSelect } from "@/components/ui/select/SearchSelect";
-import { HugeCalender } from "@/components/ui/calender/HugeCalender";
 
 interface PromotionFormProps {
   initialData?: Promotion | null;
@@ -142,36 +154,59 @@ export default function PromotionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Basic Configuration */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-white dark:bg-darkBg p-3 sm:p-5 rounded-xl border border-border/50 dark:border-darkBorder">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 bg-card p-3 sm:p-5 rounded-xl border border-border/50">
         <div className="space-y-4">
-          <Input
-            label="Promotion Title"
-            requiredSign
-            placeholder="e.g. Summer Super Sale"
-            value={formData.title}
-            onValueChange={(val) => {
-              setFormData((p) => ({ ...p, title: val }));
-              if (errors.title) setErrors((p) => ({ ...p, title: "" }));
-            }}
-            error={errors.title}
-            fullWidth
-            className="dark:border-darkBorder dark:focus:border-darkBorder"
-          />
+          <Field>
+            <FieldLabel htmlFor="promo-title">
+              Promotion Title
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
+            </FieldLabel>
+            <Input
+              id="promo-title"
+              name="title"
+              placeholder="e.g. Summer Super Sale"
+              value={formData.title}
+              onValueChange={(val) => {
+                setFormData((p) => ({ ...p, title: val }));
+                if (errors.title) setErrors((p) => ({ ...p, title: "" }));
+              }}
+              aria-invalid={errors.title ? true : undefined}
+              className="bg-transparent"
+            />
+            {errors.title && <FieldError>{errors.title}</FieldError>}
+          </Field>
 
-          <Select
-            label="Promotion Type"
-            requiredSign
-            options={adTypeOptions}
-            value={formData.adType}
-            onValueChange={(val) => {
-              setFormData((p) => ({
-                ...p,
-                adType: val as AdvertisementType,
-              }));
-              if (errors.mediaUrl) setErrors((p) => ({ ...p, mediaUrl: "" }));
-            }}
-            className=" w-full dark:bg-darkBg dark:border-darkBorder"
-          />
+          <Field>
+            <FieldLabel id="promo-adtype-label" htmlFor="promo-adtype">
+              Promotion Type
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
+            </FieldLabel>
+            <Select
+              id="promo-adtype"
+              value={formData.adType}
+              onValueChange={(val) => {
+                setFormData((p) => ({
+                  ...p,
+                  adType: val as AdvertisementType,
+                }));
+                if (errors.mediaUrl) setErrors((p) => ({ ...p, mediaUrl: "" }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder="Select promotion type"
+                  options={adTypeOptions}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={adTypeOptions} />
+              </SelectContent>
+            </Select>
+          </Field>
 
           <SearchSelect
             label="Wholesaler"
@@ -184,51 +219,83 @@ export default function PromotionForm({
                 setErrors((p) => ({ ...p, wholesalerId: "" }));
             }}
             error={errors.wholesalerId}
-            className={`w-full dark:bg-darkBg ${errors.wholesalerId ? "border-red-500" : "dark:border-darkBorder"}`}
+            className="w-full"
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select
-              label="Status"
-              options={statusOptions}
-              value={formData.status}
-              onValueChange={(val) =>
-                setFormData((p) => ({ ...p, status: val as PromotionStatus }))
-              }
-              className="w-full dark:bg-darkBg dark:border-darkBorder"
-            />
-            <Select
-              label="Target Audience"
-              options={audienceOptions}
-              value={formData.targetAudience}
-              onValueChange={(val) =>
-                setFormData((p) => ({
-                  ...p,
-                  targetAudience: val as TargetAudience,
-                }))
-              }
-              className="w-full dark:bg-darkBg dark:border-darkBorder"
-            />
+            <Field>
+              <FieldLabel id="promo-status-label" htmlFor="promo-status">
+                Status
+              </FieldLabel>
+              <Select
+                id="promo-status"
+                value={formData.status}
+                onValueChange={(val) =>
+                  setFormData((p) => ({ ...p, status: val as PromotionStatus }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder="Select status"
+                    options={statusOptions}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItems options={statusOptions} />
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field>
+              <FieldLabel id="promo-audience-label" htmlFor="promo-audience">
+                Target Audience
+              </FieldLabel>
+              <Select
+                id="promo-audience"
+                value={formData.targetAudience}
+                onValueChange={(val) =>
+                  setFormData((p) => ({
+                    ...p,
+                    targetAudience: val as TargetAudience,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder="Select audience"
+                    options={audienceOptions}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItems options={audienceOptions} />
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
 
-          <div className="pt-2">
-            <label className="text-sm font-medium text-[#344054] dark:text-gray-100 flex items-center mb-1.5">
+          <Field className="pt-2">
+            <FieldLabel htmlFor="promo-media-url">
               {getMediaTypeIcon()}
-              {formData.adType.toUpperCase()} Media Link{" "}
-              <span className="text-red-500 ml-1">*</span>
-            </label>
+              {formData.adType.toUpperCase()} Media Link
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
+            </FieldLabel>
             <Input
+              id="promo-media-url"
+              name="mediaUrl"
+              type="url"
               placeholder={`Enter ${formData.adType} URL`}
               value={formData.mediaUrl}
               onValueChange={(val) => {
                 setFormData((p) => ({ ...p, mediaUrl: val }));
                 if (errors.mediaUrl) setErrors((p) => ({ ...p, mediaUrl: "" }));
               }}
-              error={errors.mediaUrl}
-              fullWidth
-              className="dark:border-darkBorder dark:focus:border-[#0284c7]"
+              aria-invalid={errors.mediaUrl ? true : undefined}
+              className="bg-transparent"
             />
-            <p className="mt-1 text-[11px] text-gray-500 italic">
+            {errors.mediaUrl && <FieldError>{errors.mediaUrl}</FieldError>}
+            <p className="mt-1 text-[11px] text-muted-foreground italic">
               Example:{" "}
               {formData.adType === "video"
                 ? "https://youtube.com/..."
@@ -236,19 +303,18 @@ export default function PromotionForm({
                   ? "https://storage.com/audio.mp3"
                   : "https://docs.com/promo.pdf"}
             </p>
-          </div>
+          </Field>
         </div>
 
         {/* Banner Upload & Schedule */}
         <div className="space-y-4">
-          <div className="space-y-1.5 mb-5">
-            <label className="text-sm font-medium text-[#344054] dark:text-gray-100 block">
-              Promotion Banner
-            </label>
+          <Field className="mb-5">
+            <FieldLabel htmlFor="promo-banner">Promotion Banner</FieldLabel>
             <div
+              id="promo-banner"
               role="button"
               onClick={() => fileInputRef.current?.click()}
-              className="group relative border-2 border-dashed border-[#EAECF0] dark:border-darkBorder rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:border-[#0284c7]/50 hover:bg-gray-50/50 dark:hover:bg-darkPrimary/50 h-[220px] overflow-hidden"
+              className="group relative border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-all hover:border-primary/50 hover:bg-muted/50 h-55 overflow-hidden"
             >
               <input
                 type="file"
@@ -276,42 +342,46 @@ export default function PromotionForm({
                       e.stopPropagation();
                       setFormData((p) => ({ ...p, bannerImage: "" }));
                     }}
-                    className="absolute top-2 right-2 bg-black/50 hover:bg-red-500 text-white rounded-full p-1.5 shadow transition-colors z-10"
+                    className="absolute top-2 right-2 bg-black/50 hover:bg-destructive text-white rounded-full p-1.5 shadow transition-colors z-10"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-center space-y-2">
-                  <div className="p-2 border border-[#EAECF0] dark:border-darkBorder rounded-xl bg-gray-50 dark:bg-darkPrimary/90 transition-transform group-hover:scale-110">
-                    <CloudUploadIcon className="h-6 w-6 text-[#667085] dark:text-white" />
+                  <div className="p-2 border border-border rounded-xl bg-muted/50 transition-transform group-hover:scale-110">
+                    <CloudUploadIcon className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <div>
-                    <p className="text-sm text-[#475467] dark:text-gray-300 font-medium">
-                      <span className="text-[#0284c7]">Click to upload</span> or
+                    <p className="text-sm text-foreground font-medium">
+                      <span className="text-primary">Click to upload</span> or
                       drag
                     </p>
-                    <p className="text-xs text-[#667085]">
+                    <p className="text-xs text-muted-foreground">
                       Recommended 1200x630px
                     </p>
                   </div>
                 </div>
               )}
             </div>
-          </div>
-          <HugeCalender
-            label="Start date - End date"
-            placeholder="Select Start date and End date"
-            inputClass="w-full h-[42px]"
-          />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="promo-schedule">
+              Start date - End date
+            </FieldLabel>
+            <HugeCalender
+              id="promo-schedule"
+              placeholder="Select Start date and End date"
+              inputClass="w-full h-10 bg-transparent"
+            />
+          </Field>
 
           <div className="mt-5">
-            <label className="text-sm font-medium text-[#344054] dark:text-gray-100 block mb-1.5">
-              Priority Level
-            </label>
-            <div className="flex relative items-center gap-1 border border-border dark:border-darkBorder rounded-lg p-1.5 bg-gray-50/50 dark:bg-darkPrimary/50 overflow-hidden">
+            <FieldLabel className="mb-1.5">Priority Level</FieldLabel>
+            <div className="flex relative items-center gap-1 border border-border rounded-lg p-1.5 bg-muted/50 overflow-hidden">
               <div
-                className="absolute bg-[#0284c7] ani3 rounded-md z-0"
+                className="absolute bg-primary ani3 rounded-md z-0"
                 style={{
                   width: "calc((100% - 48px) / 10)",
                   height: "calc(100% - 12px)",
@@ -325,15 +395,15 @@ export default function PromotionForm({
                   onClick={() => setFormData((p) => ({ ...p, priority: lvl }))}
                   className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-all relative z-10 cursor-pointer ${
                     formData.priority === lvl
-                      ? "text-white"
-                      : "text-gray-500 hover:bg-gray-200/50 dark:hover:bg-white/10"
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {lvl}
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-gray-400 mt-1">
+            <p className="text-[10px] text-muted-foreground mt-1">
               1 = Highest Priority, 5 = Lowest Priority
             </p>
           </div>
@@ -342,24 +412,31 @@ export default function PromotionForm({
 
       {/* Description Section */}
 
-      <label className="text-sm font-medium text-[#344054] dark:text-gray-100 block mb-2">
-        Short Description & Promotional Message{" "}
-        <span className="text-red-500">*</span>
-      </label>
-      <textarea
-        rows={9}
-        value={formData.shortDescription}
-        onChange={(e) => {
-          setFormData((p) => ({ ...p, shortDescription: e.target.value }));
-          if (errors.shortDescription)
-            setErrors((p) => ({ ...p, shortDescription: "" }));
-        }}
-        className={`w-full rounded-xl border ${errors.shortDescription ? "border-red-500" : "border-border dark:border-darkBorder"} p-4 text-sm bg-white dark:bg-darkBg outline-none focus:outline-none focus:border-[#0284c7]/20 transition-shadow placeholder:text-gray-400`}
-        placeholder="Summarize the promotion for the audience..."
-      />
-      {errors.shortDescription && (
-        <p className="text-xs text-red-500 mt-1">{errors.shortDescription}</p>
-      )}
+      <Field>
+        <FieldLabel htmlFor="promo-description">
+          Short Description &amp; Promotional Message
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>
+        </FieldLabel>
+        <Textarea
+          id="promo-description"
+          name="shortDescription"
+          rows={9}
+          value={formData.shortDescription}
+          onChange={(e) => {
+            setFormData((p) => ({ ...p, shortDescription: e.target.value }));
+            if (errors.shortDescription)
+              setErrors((p) => ({ ...p, shortDescription: "" }));
+          }}
+          invalid={!!errors.shortDescription}
+          placeholder="Summarize the promotion for the audience..."
+          className="rounded-xl bg-transparent p-4"
+        />
+        {errors.shortDescription && (
+          <FieldError>{errors.shortDescription}</FieldError>
+        )}
+      </Field>
 
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-4">
@@ -367,7 +444,7 @@ export default function PromotionForm({
           type="button"
           variant="outline"
           onClick={() => router.back()}
-          className=" border-border dark:border-darkBorder "
+          className="border-border"
         >
           Cancel
         </Button>

@@ -28,7 +28,7 @@ export default function NotificationsTab({
         title="Email Notifications"
         desc="Choose which emails you'd like to receive."
       >
-        <div className="divide-y divide-border/30 dark:divide-darkBorder/30">
+        <div className="divide-y divide-border/30">
           <ToggleRow
             label="Order Updates"
             desc="New orders, status changes, disputes"
@@ -61,7 +61,7 @@ export default function NotificationsTab({
         title="Push Notifications"
         desc="Real-time browser notifications."
       >
-        <div className="divide-y divide-border/30 dark:divide-darkBorder/30">
+        <div className="divide-y divide-border/30">
           <ToggleRow
             label="Orders"
             desc="New and updated orders"
@@ -94,7 +94,7 @@ export default function NotificationsTab({
         title="SMS Notifications"
         desc="Mobile SMS alerts for critical events."
       >
-        <div className="divide-y divide-border/30 dark:divide-darkBorder/30">
+        <div className="divide-y divide-border/30">
           <ToggleRow
             label="Security Alerts"
             desc="Login from new device, password change"
@@ -112,7 +112,7 @@ export default function NotificationsTab({
       </Section>
 
       <Section title="Digest Emails" desc="Summary reports sent to your inbox.">
-        <div className="divide-y divide-border/30 dark:divide-darkBorder/30">
+        <div className="divide-y divide-border/30">
           <ToggleRow
             label="Daily Digest"
             desc="Daily activity & performance summary"

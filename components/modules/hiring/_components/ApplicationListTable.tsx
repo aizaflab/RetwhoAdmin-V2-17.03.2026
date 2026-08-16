@@ -84,10 +84,10 @@ export default function ApplicationListTable({
             )}
           </div>
           <div>
-            <p className="text-sm font-semibold text-black dark:text-white">
+            <p className="text-sm font-semibold text-foreground">
               {row.applicantName}
             </p>
-            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-text5">
+            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <MailIcon className="w-3 h-3" />
                 {row.applicantEmail}
@@ -103,10 +103,12 @@ export default function ApplicationListTable({
       className: "hidden md:table-cell",
       cell: (_, row) => (
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-black dark:text-white truncate max-w-[200px]">
+          <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
             {row.hiringTitle}
           </span>
-          <span className="text-[10px] text-text5">{row.companyName}</span>
+          <span className="text-[10px] text-muted-foreground">
+            {row.companyName}
+          </span>
         </div>
       ),
     },
@@ -115,7 +117,7 @@ export default function ApplicationListTable({
       header: "Date",
       className: "hidden lg:table-cell",
       cell: (_, row) => (
-        <span className="text-sm text-text6 dark:text-text5">
+        <span className="text-sm text-foreground">
           {format(new Date(row.appliedAt), "dd MMM yyyy")}
         </span>
       ),
@@ -144,7 +146,7 @@ export default function ApplicationListTable({
                 e.stopPropagation();
                 setViewingApp(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
             >
               <EyeIcon className="w-4 h-4" />
             </button>
@@ -160,7 +162,7 @@ export default function ApplicationListTable({
             >
               <DropdownTrigger asChild showChevron={false}>
                 <button
-                  className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+                  className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreIcon className="w-4 h-4" />
@@ -176,7 +178,7 @@ export default function ApplicationListTable({
                     e.stopPropagation();
                     onStatusChange?.(row.id, s as JobApplication["status"]);
                   }}
-                  className={`text-xs py-2 cursor-pointer capitalize ${row.status === s ? "bg-gray-100 dark:bg-white/5 font-semibold" : ""}`}
+                  className={`text-xs py-2 cursor-pointer capitalize ${row.status === s ? "bg-muted font-semibold" : ""}`}
                 >
                   Mark as {s}
                 </DropdownItem>
@@ -193,7 +195,7 @@ export default function ApplicationListTable({
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
+          <h1 className="sm:text-2xl text-xl font-medium text-foreground">
             {title}
           </h1>
         </div>
@@ -204,8 +206,10 @@ export default function ApplicationListTable({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search applicant or role..."
-              startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full dark:border-darkBorder dark:focus:border-primary/50"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 w-full dark:focus:border-primary/50"
             />
           </div>
           <div className="w-32">
@@ -230,7 +234,7 @@ export default function ApplicationListTable({
         limit={limit}
         setLimit={setLimit}
         emptyMessage="No applications found"
-        headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
+        headerColor="bg-muted/50"
       />
 
       {/* View Drawer */}
