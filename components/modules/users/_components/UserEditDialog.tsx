@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Dialog, Field, FieldLabel, Input } from "@/components/ui";
+import { getApiErrorMessage } from "@/lib/apiError";
 import { Button } from "@/components/ui/button/Button";
 import {
   Select,
@@ -9,59 +11,75 @@ import {
   SelectItems,
   SelectTrigger,
   SelectValue,
-  type SelectOption,
 } from "@/components/ui/select/Select";
 
-import type { User } from "../_types/users.types";
+import { STATUS_OPTIONS, VERIFICATION_OPTIONS } from "../_data/user-options";
+import type { User, UserUpdatePayload } from "../_types/users.types";
 
 interface UserEditDialogProps {
   open: boolean;
   onClose: () => void;
   user?: User | null;
-  onSubmit?: (id: string, changes: Partial<User>) => void | Promise<void>;
+  /** Must reject on failure so the error can be surfaced rather than swallowed. */
+  onSubmit: (id: string, changes: UserUpdatePayload) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
 
-const STATUS_OPTIONS: SelectOption[] = [
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-];
-
-const VERIFICATION_OPTIONS: SelectOption[] = [
-  { label: "Verified", value: "true" },
-  { label: "Unverified", value: "false" },
-];
-
 /** Edit an existing user's details. */
+/** Only the fields the API's strict update schema accepts. */
+const EMPTY_FORM: UserUpdatePayload = {};
+
 export default function UserEditDialog({
   open,
   onClose,
   user,
   onSubmit,
+  saving = false,
 }: UserEditDialogProps) {
-  const [formData, setFormData] = useState<Partial<User>>({});
-  const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState<UserUpdatePayload>(EMPTY_FORM);
 
   // Reload on every open so a previous edit never leaks into the next one.
-  useEffect(() => {
-    if (!open || !user) return;
-    setFormData(user);
-  }, [open, user]);
+  // Adjusted during render rather than in an effect, which would paint the
+  // stale values for a frame first. Null while closed, so the fields keep
+  // their content through the fade-out.
+  const openKey = open && user ? user._id : null;
+  const [lastOpenKey, setLastOpenKey] = useState<string | null>(openKey);
 
-  const handleFieldChange = <K extends keyof User>(
+  if (openKey !== lastOpenKey) {
+    setLastOpenKey(openKey);
+    if (openKey && user) {
+      setFormData({
+        name: user.name,
+        userName: user.userName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        status: user.status,
+        isVerified: user.isVerified,
+      });
+    }
+  }
+
+  const handleFieldChange = <K extends keyof UserUpdatePayload>(
     field: K,
-    value: User[K],
+    value: UserUpdatePayload[K],
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
     if (!user) return;
-    setSaving(true);
     try {
-      await onSubmit?.(user._id, formData);
+      await onSubmit(user._id, formData);
+      toast.success(`User "${formData.name ?? user.name}" updated`);
       onClose();
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Could not update the user. Please try again.",
+        ),
+      );
     }
   };
 
@@ -123,8 +141,8 @@ export default function UserEditDialog({
             id="edit-user-phone"
             name="phone"
             type="tel"
-            value={formData.phone || ""}
-            onValueChange={(val) => handleFieldChange("phone", val)}
+            value={formData.phoneNumber || ""}
+            onValueChange={(val) => handleFieldChange("phoneNumber", val)}
             className="bg-transparent"
           />
         </Field>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 import { Dialog, Field, FieldError, FieldLabel } from "@/components/ui";
 import { Input } from "@/components/ui/input/Input";
 import { Button } from "@/components/ui/button/Button";
@@ -11,21 +13,19 @@ import {
   SelectItems,
   SelectTrigger,
   SelectValue,
-  type SelectOption,
 } from "@/components/ui/select/Select";
 
+import { STATUS_OPTIONS } from "../_data/user-options";
 import type { UserPayload } from "../_types/users.types";
 
 interface UserCreateDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit?: (payload: UserPayload) => void | Promise<void>;
+  /** Must reject on failure — the rejection is what puts a 409 on the field. */
+  onSubmit: (payload: UserPayload) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
-
-const STATUS_OPTIONS: SelectOption[] = [
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-];
 
 /** Field names match the API body, so this state object is the payload. */
 const EMPTY_FORM: UserPayload = {
@@ -43,19 +43,25 @@ export default function UserCreateDialog({
   open,
   onClose,
   onSubmit,
+  saving = false,
 }: UserCreateDialogProps) {
   const [formData, setFormData] = useState<UserPayload>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
-  const [saving, setSaving] = useState(false);
 
-  // Reset on every open so a half-filled attempt never carries over.
-  useEffect(() => {
-    if (!open) return;
-    setFormData(EMPTY_FORM);
-    setErrors({});
-    setShowPassword(false);
-  }, [open]);
+  // Reset on every open so a half-filled attempt never carries over. Adjusted
+  // during render rather than in an effect: an effect would paint the stale
+  // form for a frame first.
+  const [wasOpen, setWasOpen] = useState(open);
+
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setFormData(EMPTY_FORM);
+      setErrors({});
+      setShowPassword(false);
+    }
+  }
 
   const handleFieldChange = (field: keyof UserPayload, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -82,17 +88,30 @@ export default function UserCreateDialog({
       return;
     }
 
-    setSaving(true);
+    const name = formData.name.trim();
+
     try {
-      await onSubmit?.({
+      await onSubmit({
         ...formData,
-        name: formData.name.trim(),
+        name,
         email: formData.email.trim(),
         phoneNumber: formData.phoneNumber?.trim(),
       });
+      toast.success(`User "${name}" created — credentials have been emailed`);
       onClose();
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        "Could not create the user. Please try again.",
+      );
+
+      // 409 on this endpoint is only ever the duplicate email, so it belongs on
+      // the field the user has to change rather than in a dismissible toast.
+      if (getApiErrorStatus(error) === 409) {
+        setErrors((prev) => ({ ...prev, email: message }));
+      }
+
+      toast.error(message);
     }
   };
 

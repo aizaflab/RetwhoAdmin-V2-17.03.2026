@@ -1,109 +1,101 @@
 "use client";
 
 import { useState } from "react";
-import { BlogCategory } from "../_types/blog.types";
-import {
-  Dialog,
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-  Input,
-} from "@/components/ui";
+import { toast } from "sonner";
+import { Dialog, Field, FieldError, FieldLabel, Input } from "@/components/ui";
 import {
   Select,
   SelectContent,
   SelectItems,
   SelectTrigger,
   SelectValue,
-  type SelectOption,
 } from "@/components/ui/select/Select";
 import { Button } from "@/components/ui/button/Button";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 
-const STATUS_OPTIONS: SelectOption[] = [
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-];
+import { CATEGORY_STATUS_OPTIONS } from "../_data/blog-options";
+import type {
+  BlogCategory,
+  BlogCategoryPayload,
+  BlogCategoryStatus,
+} from "../_types/blog.types";
 
 interface BlogCategoryModalProps {
+  /** Present in edit mode; null to create a new category. */
   category: BlogCategory | null;
   onClose: () => void;
-  onSave: (data: Partial<BlogCategory>) => void;
+  /** Must reject on failure — the rejection is what puts a 409 on the field. */
+  onSave: (payload: BlogCategoryPayload, id?: string) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
 
 export default function BlogCategoryModal({
   category,
   onClose,
   onSave,
+  saving = false,
 }: BlogCategoryModalProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const initialFormData = category
-    ? {
-        name: category.name,
-        slug: category.slug,
-        status: category.status,
-      }
-    : {
-        name: "",
-        slug: "",
-        status: "active" as "active" | "inactive",
-      };
-  const [formData, setFormData] = useState(initialFormData);
+  // The API derives `slug` from the title and its strict schema rejects the
+  // field, so the form no longer collects one.
+  const [formData, setFormData] = useState({
+    title: category?.title ?? "",
+    status: (category?.status ?? "active") as BlogCategoryStatus,
+  });
+
   const [prevCategory, setPrevCategory] = useState(category);
 
-  // Adjust state during render when category prop changes
+  // Adjust state during render when the category prop changes.
   if (category !== prevCategory) {
     setPrevCategory(category);
-    setFormData(
-      category
-        ? {
-            name: category.name,
-            slug: category.slug,
-            status: category.status,
-          }
-        : {
-            name: "",
-            slug: "",
-            status: "active",
-          },
-    );
+    setFormData({
+      title: category?.title ?? "",
+      status: (category?.status ?? "active") as BlogCategoryStatus,
+    });
+    setErrors({});
   }
 
-  const handleNameChange = (val: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      name: val,
-      slug: !category
-        ? val
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)+/g, "")
-        : prev.slug,
-    }));
-    if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
-  };
-
   const validate = () => {
-    const newErrs: Record<string, string> = {};
-    if (!formData.name.trim()) newErrs.name = "Category name is required";
-    if (!formData.slug.trim()) newErrs.slug = "Slug is required";
-    setErrors(newErrs);
-    return Object.keys(newErrs).length === 0;
+    const next: Record<string, string> = {};
+    if (!formData.title.trim()) next.title = "Category name is required";
+    else if (formData.title.trim().length < 2)
+      next.title = "Name must be at least 2 characters";
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    onSave({
-      id: category ? category.id : `cat_${Date.now()}`,
-      name: formData.name,
-      slug: formData.slug,
-      status: formData.status,
-      postCount: category ? category.postCount : 0,
-      createdAt: category ? category.createdAt : new Date().toISOString(),
-    });
+    const title = formData.title.trim();
+
+    try {
+      await onSave({ title, status: formData.status }, category?._id);
+      toast.success(
+        category
+          ? `Category "${title}" updated successfully`
+          : `Category "${title}" created successfully`,
+      );
+      onClose();
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        category
+          ? "Could not update the category. Please try again."
+          : "Could not create the category. Please try again.",
+      );
+
+      // 409 here is the duplicate-name conflict, which belongs on the field
+      // the author has to change.
+      if (getApiErrorStatus(error) === 409) {
+        setErrors((prev) => ({ ...prev, title: message }));
+      }
+
+      toast.error(message);
+    }
   };
 
   return (
@@ -119,6 +111,7 @@ export default function BlogCategoryModal({
             variant="outline"
             className="flex-1 h-10"
             onClick={onClose}
+            disabled={saving}
           >
             Cancel
           </Button>
@@ -126,6 +119,8 @@ export default function BlogCategoryModal({
             type="submit"
             form="blog-category-form"
             className="flex-1 h-10"
+            loading={saving}
+            loadingText="Saving..."
           >
             {category ? "Save Changes" : "Create Category"}
           </Button>
@@ -135,52 +130,34 @@ export default function BlogCategoryModal({
       <form
         id="blog-category-form"
         onSubmit={handleSubmit}
+        noValidate
         className="space-y-4"
       >
         <Field>
-          <FieldLabel htmlFor="category-name">
+          <FieldLabel htmlFor="category-title">
             Category Name
             <span className="text-destructive" aria-hidden="true">
               *
             </span>
           </FieldLabel>
           <Input
-            id="category-name"
-            name="name"
+            id="category-title"
+            name="title"
             placeholder="e.g. Technology"
-            value={formData.name}
-            onValueChange={handleNameChange}
-            aria-invalid={errors.name ? true : undefined}
-            className="bg-transparent"
-          />
-          {errors.name && <FieldError>{errors.name}</FieldError>}
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor="category-slug">
-            Slug
-            <span className="text-destructive" aria-hidden="true">
-              *
-            </span>
-          </FieldLabel>
-          <Input
-            id="category-slug"
-            name="slug"
-            placeholder="e.g. technology"
-            value={formData.slug}
+            value={formData.title}
             onValueChange={(val) => {
-              setFormData((prev) => ({ ...prev, slug: val }));
-              if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
+              setFormData((prev) => ({ ...prev, title: val }));
+              if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
             }}
-            aria-invalid={errors.slug ? true : undefined}
+            aria-invalid={errors.title ? true : undefined}
             className="bg-transparent"
           />
-          {errors.slug ? (
-            <FieldError>{errors.slug}</FieldError>
+          {errors.title ? (
+            <FieldError>{errors.title}</FieldError>
           ) : (
-            <FieldDescription>
-              URL-friendly string. Auto-generated from the name while typing.
-            </FieldDescription>
+            <p className="text-xs text-muted-foreground">
+              The URL slug is generated from this name.
+            </p>
           )}
         </Field>
 
@@ -194,20 +171,23 @@ export default function BlogCategoryModal({
             onValueChange={(val) =>
               setFormData((prev) => ({
                 ...prev,
-                status: val as "active" | "inactive",
+                status: val as BlogCategoryStatus,
               }))
             }
           >
             <SelectTrigger>
               <SelectValue
                 placeholder="Select status"
-                options={STATUS_OPTIONS}
+                options={CATEGORY_STATUS_OPTIONS}
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectItems options={STATUS_OPTIONS} />
+              <SelectItems options={CATEGORY_STATUS_OPTIONS} />
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground">
+            Only active categories can be assigned to a post.
+          </p>
         </Field>
       </form>
     </Dialog>

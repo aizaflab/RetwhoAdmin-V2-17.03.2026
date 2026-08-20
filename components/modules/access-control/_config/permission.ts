@@ -24,7 +24,7 @@ export const PERMISSIONS = {
   EMPLOYEE_LIST: "users.employee.list",
   EMPLOYEE_CREATE: "users.employee.create",
   USER_LIST: "users.user.list",
-  USER_INACTIVE_LIST: "users.inactive_user.list",
+  USER_CREATE: "users.user.create",
 
   CONNECT_REQUEST_LIST: "connect.connection_request.list",
   CONNECT_REQUEST_CREATE: "connect.connection_request.create",

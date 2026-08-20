@@ -3,41 +3,56 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui";
-import { Button } from "@/components/ui/button/Button";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
-import { UserCircle, Edit2, Trash2, Eye, Plus } from "lucide-react";
+import { UserCircle, Edit2, Trash2, Eye } from "lucide-react";
 import { SearchIcon } from "@/components/icons/Icons";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
-
-import EmployeeFormDialog from "./EmployeeFormDialog";
-import EmployeeViewDialog from "./EmployeeViewDialog";
-import { ROLE_OPTIONS, getRoleName } from "../_data/employee-options";
-import { mockEmployees } from "../_data/mock-employee";
-import type { Employee, EmployeePayload } from "../_types/employee.types";
 import {
   Select,
   SelectContent,
   SelectItems,
   SelectTrigger,
   SelectValue,
+  type SelectOption,
 } from "@/components/ui/select/Select";
 
-interface EmployeeListTableProps {
-  employees?: Employee[];
-  onCreate?: (payload: EmployeePayload) => void | Promise<void>;
-  onUpdate?: (id: string, payload: EmployeePayload) => void | Promise<void>;
-  onDelete?: (id: string) => void;
-}
+import EmployeeViewDialog from "./EmployeeViewDialog";
+import {
+  STATUS_FILTER_OPTIONS,
+  employeeStatusStyle,
+} from "../_data/employee-options";
+import type { Employee } from "../_types/employee.types";
 
-/* Tinted from the semantic tokens so both themes resolve from the same source. */
-const STATUS_STYLES: Record<string, string> = {
-  active: "bg-success/10 text-success",
-  inactive: "bg-warning/10 text-warning",
-};
+interface EmployeeListTableProps {
+  employees: Employee[];
+  /** Row count across every page — drives the pagination footer. */
+  total: number;
+  loading?: boolean;
+  /** Search / filters / paging are all server-side; this component only reports
+   *  the changes and renders whatever the API sent back. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  roleFilter: string;
+  onRoleFilterChange: (value: string) => void;
+  /** Assignable roles from `GET /admin/roles/options`, for the role filter. */
+  roleOptions: SelectOption[];
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  page: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  onEdit?: (employee: Employee) => void;
+  onDelete?: (employee: Employee) => Promise<void> | void;
+  deleting?: boolean;
+}
 
 const ACTION_BUTTON =
   "cursor-pointer center size-8 rounded-lg border border-border bg-card text-muted-foreground transition-all duration-150";
+
+const DISABLED_ACTION_BUTTON =
+  "disabled:cursor-not-allowed disabled:opacity-40";
 
 function formatDate(iso: string): string {
   const date = new Date(iso);
@@ -48,53 +63,33 @@ function formatDate(iso: string): string {
 }
 
 export default function EmployeeListTable({
-  employees = mockEmployees,
-  onCreate,
-  onUpdate,
+  employees,
+  total,
+  loading,
+  search,
+  onSearchChange,
+  roleFilter,
+  onRoleFilterChange,
+  roleOptions,
+  statusFilter,
+  onStatusFilterChange,
+  page,
+  onPageChange,
+  limit,
+  onLimitChange,
+  onEdit,
   onDelete,
+  deleting,
 }: EmployeeListTableProps) {
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-
-  const [formOpen, setFormOpen] = useState(false);
-  // Set alongside `formOpen` for edit; left null when adding.
-  const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
   const [employeeToView, setEmployeeToView] = useState<Employee | null>(null);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
     null,
   );
 
-  const statusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-  ];
-
-  const roleOptions = [
+  const roleFilterOptions: SelectOption[] = [
     { value: "all", label: "All Roles" },
-    ...ROLE_OPTIONS.map((role) => ({
-      value: String(role.value),
-      label: role.label,
-    })),
+    ...roleOptions,
   ];
-
-  const openAdd = () => {
-    setEmployeeToEdit(null);
-    setFormOpen(true);
-  };
-
-  const openEdit = (employee: Employee) => {
-    setEmployeeToEdit(employee);
-    setFormOpen(true);
-  };
-
-  const handleSubmit = async (payload: EmployeePayload) => {
-    if (employeeToEdit) await onUpdate?.(employeeToEdit._id, payload);
-    else await onCreate?.(payload);
-  };
 
   const columns: Column<Employee>[] = [
     {
@@ -117,7 +112,20 @@ export default function EmployeeListTable({
             </div>
           )}
           <div>
-            <p className="text-sm font-semibold text-foreground">{emp.name}</p>
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              {emp.name}
+              {/* Explains up front why this row's actions are greyed out. */}
+              {emp.isSystem && (
+                <SimpleTooltip
+                  content="Seeded account — permanent"
+                  position="top"
+                >
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    system
+                  </span>
+                </SimpleTooltip>
+              )}
+            </p>
             <p className="text-xs text-muted-foreground">{emp.email}</p>
           </div>
         </div>
@@ -132,13 +140,28 @@ export default function EmployeeListTable({
       ),
     },
     {
-      id: "roleId",
+      id: "role",
       header: "Role",
       className: "hidden sm:table-cell",
       cell: (value, emp) => (
-        <span className="text-sm font-medium text-muted-foreground">
-          {getRoleName(emp.roleId)}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium text-foreground">
+            {emp.role?.name ?? "—"}
+          </span>
+          {emp.role?.isSystem && (
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              system
+            </span>
+          )}
+          {/* A role deactivated under its holder — their access is now stale. */}
+          {emp.role && emp.role.status !== "active" && (
+            <SimpleTooltip content="This role is inactive" position="top">
+              <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                inactive
+              </span>
+            </SimpleTooltip>
+          )}
+        </div>
       ),
     },
     {
@@ -147,9 +170,9 @@ export default function EmployeeListTable({
       className: "text-center",
       cell: (value, emp) => (
         <span
-          className={`inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded capitalize ${
-            STATUS_STYLES[emp.status] || STATUS_STYLES.inactive
-          }`}
+          className={`inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded capitalize ${employeeStatusStyle(
+            emp.status,
+          )}`}
         >
           {emp.status}
         </span>
@@ -183,25 +206,36 @@ export default function EmployeeListTable({
             </button>
           </SimpleTooltip>
 
-          <SimpleTooltip content="Edit" position="top">
+          {/* Both actions mirror what the API itself refuses: a system account
+              is seeded and permanent, so PATCH and DELETE answer it with a 403.
+              Offering the buttons would only produce a rejected round-trip. */}
+          <SimpleTooltip
+            content={emp.isSystem ? "System account" : "Edit"}
+            position="top"
+          >
             <button
+              disabled={emp.isSystem}
               onClick={(e) => {
                 e.stopPropagation();
-                openEdit(emp);
+                onEdit?.(emp);
               }}
-              className={`${ACTION_BUTTON} hover:border-primary/50 hover:text-primary`}
+              className={`${ACTION_BUTTON} ${DISABLED_ACTION_BUTTON} enabled:hover:border-primary/50 enabled:hover:text-primary`}
             >
               <Edit2 className="w-3.5 h-3.5" />
             </button>
           </SimpleTooltip>
 
-          <SimpleTooltip content="Delete" position="top">
+          <SimpleTooltip
+            content={emp.isSystem ? "System account" : "Delete"}
+            position="top"
+          >
             <button
+              disabled={emp.isSystem}
               onClick={(e) => {
                 e.stopPropagation();
                 setEmployeeToDelete(emp);
               }}
-              className={`${ACTION_BUTTON} hover:border-destructive/50 hover:text-destructive`}
+              className={`${ACTION_BUTTON} ${DISABLED_ACTION_BUTTON} enabled:hover:border-destructive/50 enabled:hover:text-destructive`}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -211,42 +245,20 @@ export default function EmployeeListTable({
     },
   ];
 
-  // this is dummy filtering logic, remove it when the API is wired up with search and filter params
-  const filtered = employees.filter((emp) => {
-    const query = search.toLowerCase();
-    const matchSearch =
-      emp.name.toLowerCase().includes(query) ||
-      emp.email.toLowerCase().includes(query) ||
-      (emp.phone ?? "").toLowerCase().includes(query);
-    const matchRole = roleFilter === "all" || emp.roleId === roleFilter;
-    const matchStatus = statusFilter === "all" || emp.status === statusFilter;
-    return matchSearch && matchRole && matchStatus;
-  });
-
-  // Clamp instead of resetting `page` in an effect, so filtering down to fewer
-  // pages can never leave the table showing an empty slice.
-  const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
-  const currentPage = Math.min(page, totalPages);
-  // Client-side slicing — drop this once the API takes page/limit params.
-  const paginated = filtered.slice(
-    (currentPage - 1) * limit,
-    currentPage * limit,
-  );
-
   return (
     <div>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
         <h3 className="text-xl font-medium text-foreground">
-          Manage Employees
+          Available Employees
         </h3>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-          {/* Search */}
+          {/* Search — matches name, email, phone and role name server-side. */}
           <div className="relative flex-1 sm:w-60">
             <Input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search employee..."
               startIcon={
                 <SearchIcon className="w-4 h-4 text-muted-foreground" />
@@ -256,68 +268,54 @@ export default function EmployeeListTable({
           </div>
 
           <div className="flex gap-2 w-full sm:w-auto justify-end">
-            {/* Role Filter */}
+            {/* Role filter */}
             <div className="relative w-32">
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger className="h-10 rounded-md bg-card text-foreground">
-                  <SelectValue options={roleOptions} placeholder="All Roles" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItems options={roleOptions} />
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Status filter */}
-            <div className="relative w-32">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={roleFilter} onValueChange={onRoleFilterChange}>
                 <SelectTrigger className="h-10 rounded-md bg-card text-foreground">
                   <SelectValue
-                    options={statusOptions}
-                    placeholder="All Status"
+                    options={roleFilterOptions}
+                    placeholder="All Roles"
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItems options={statusOptions} />
+                  <SelectItems options={roleFilterOptions} />
                 </SelectContent>
               </Select>
             </div>
 
-            <Button
-              onClick={openAdd}
-              className="h-10 shrink-0"
-              startIcon={<Plus className="w-4 h-4" />}
-            >
-              Add Employee
-            </Button>
+            {/* Status filter */}
+            <div className="relative w-32">
+              <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+                <SelectTrigger className="h-10 rounded-md bg-card text-foreground">
+                  <SelectValue
+                    options={STATUS_FILTER_OPTIONS}
+                    placeholder="All Status"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItems options={STATUS_FILTER_OPTIONS} />
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Table */}
       <Table<Employee>
-        data={paginated}
+        data={employees}
         columns={columns}
+        loading={loading}
         pagination
-        page={currentPage}
-        setPage={setPage}
+        page={page}
+        setPage={onPageChange}
         limit={limit}
-        setLimit={(next) => {
-          setLimit(next);
-          setPage(1);
-        }}
-        totalData={filtered.length}
+        setLimit={onLimitChange}
+        totalData={total}
         bordered
         emptyMessage="No employees found"
         headerColor="bg-muted/60"
         tableClassName="min-w-full"
-      />
-
-      {/* Add / Edit */}
-      <EmployeeFormDialog
-        open={formOpen}
-        employee={employeeToEdit}
-        onClose={() => setFormOpen(false)}
-        onSubmit={handleSubmit}
       />
 
       {/* View */}
@@ -327,7 +325,7 @@ export default function EmployeeListTable({
         onClose={() => setEmployeeToView(null)}
         onEdit={(emp) => {
           setEmployeeToView(null);
-          openEdit(emp);
+          onEdit?.(emp);
         }}
       />
 
@@ -340,11 +338,14 @@ export default function EmployeeListTable({
           if (!open) setEmployeeToDelete(null);
         }}
         selectedRow={employeeToDelete}
-        handleDelete={(emp) => {
-          if (emp) {
-            onDelete?.(emp._id);
-            setEmployeeToDelete(null);
-          }
+        isLoading={deleting}
+        handleDelete={async (emp) => {
+          if (!emp) return;
+          await onDelete?.(emp);
+          // Closed unconditionally: on failure the page has already toasted the
+          // reason (own account, last Super Admin), and leaving the modal open
+          // would only invite the same rejected click again.
+          setEmployeeToDelete(null);
         }}
       />
     </div>

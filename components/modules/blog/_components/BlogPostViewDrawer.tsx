@@ -1,27 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BlogPost, BlogCategory } from "../_types/blog.types";
+import { blogStatusStyle } from "../_data/blog-options";
+import { BlogPost } from "../_types/blog.types";
 import { X, FileText, Image as ImageIcon } from "lucide-react";
 
 interface BlogPostViewDrawerProps {
   post: BlogPost;
-  category?: BlogCategory;
   onClose: () => void;
   onEdit?: () => void;
 }
 
-const STATUS_STYLES = {
-  published:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
-  draft: "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
-  archived:
-    "bg-muted/50 text-muted-foreground dark:bg-muted dark:text-muted-foreground",
-};
-
 export default function BlogPostViewDrawer({
   post,
-  category,
   onClose,
   onEdit,
 }: BlogPostViewDrawerProps) {
@@ -76,7 +67,7 @@ export default function BlogPostViewDrawer({
               <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
                 {post.title}
                 <span
-                  className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${STATUS_STYLES[post.status]}`}
+                  className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${blogStatusStyle(post.status)}`}
                 >
                   {post.status}
                 </span>
@@ -96,11 +87,11 @@ export default function BlogPostViewDrawer({
 
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
           <div className="relative w-full aspect-[2/1] rounded-xl overflow-hidden bg-muted">
-            {post.image ? (
+            {post.image?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={post.image}
-                alt={post.altText}
+                src={post.image.url}
+                alt={post.image.alt || post.title}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -121,7 +112,7 @@ export default function BlogPostViewDrawer({
                 Category
               </span>
               <p className="font-semibold text-foreground">
-                {category?.name || "Unknown"}
+                {post.category?.title || "Uncategorised"}
               </p>
             </div>
             <div className="p-4 rounded-xl border border-border/50 bg-muted/50">
@@ -129,7 +120,7 @@ export default function BlogPostViewDrawer({
                 Total Views
               </span>
               <p className="font-semibold text-foreground mt-2">
-                {post.views.toLocaleString()}
+                {(post.viewCount ?? 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -161,7 +152,7 @@ export default function BlogPostViewDrawer({
                     Image Alt
                   </span>
                   <p className="text-sm text-foreground">
-                    {post.altText || "-"}
+                    {post.image?.alt || "-"}
                   </p>
                 </div>
                 <div>
@@ -169,7 +160,7 @@ export default function BlogPostViewDrawer({
                     Image Title
                   </span>
                   <p className="text-sm text-foreground">
-                    {post.imageTitle || "-"}
+                    {post.image?.title || "-"}
                   </p>
                 </div>
               </div>

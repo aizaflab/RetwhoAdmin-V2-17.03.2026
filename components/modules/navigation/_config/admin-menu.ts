@@ -125,31 +125,15 @@ export const ADMIN_MENU: AdminMenuItem[] = [
   },
 
   {
+    // A flat item, not a group: the separate "inactive users" page was removed
+    // in favour of the status filter on the one list.
     id: "users",
     title: "Users",
-    type: "group",
+    type: "item",
     icon: UsersIcon,
-    requiredPermissions: [
-      PERMISSIONS.USER_LIST,
-      PERMISSIONS.USER_INACTIVE_LIST,
-    ],
+    path: "/users/manage",
+    requiredPermissions: [PERMISSIONS.USER_LIST],
     order: 6,
-    children: [
-      {
-        id: "users-manage",
-        title: "Manage Users",
-        type: "item",
-        path: "/users/manage",
-        requiredPermissions: [PERMISSIONS.USER_LIST],
-      },
-      {
-        id: "users-inactive",
-        title: "InActive Users",
-        type: "item",
-        path: "/users/inactive",
-        requiredPermissions: [PERMISSIONS.USER_INACTIVE_LIST],
-      },
-    ],
   },
 
   {

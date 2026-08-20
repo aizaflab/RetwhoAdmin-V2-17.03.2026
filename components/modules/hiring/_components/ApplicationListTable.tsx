@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { JobApplication } from "../_types/hiring.types";
+import {
+  UserCircle,
+  Trash2,
+  Eye,
+  FileText,
+  CheckCircle2,
+  XCircle,
+  Star,
+} from "lucide-react";
+import DeleteModal from "@/components/ui/modal/DeleteModal";
 import { Input, SimpleSelect } from "@/components/ui";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
@@ -10,115 +19,139 @@ import {
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
+  DropdownSeparator,
+  DropdownLabel,
 } from "@/components/ui/dropdown/Dropdown";
-import { SearchIcon, EyeIcon, MoreIcon } from "@/components/icons/Icons";
-import { format } from "date-fns";
-import Image from "next/image";
-import { MailIcon } from "lucide-react";
+import { SearchIcon, MoreIcon } from "@/components/icons/Icons";
+
 import ApplicationViewDrawer from "./ApplicationViewDrawer";
+import {
+  APPLICATION_STATUS_FILTER_OPTIONS,
+  applicationStatusStyle,
+} from "../_data/hiring-options";
+import type { ApplicationStatus, JobApplication } from "../_types/hiring.types";
 
 interface ApplicationListTableProps {
   applications: JobApplication[];
-  onStatusChange?: (id: string, status: JobApplication["status"]) => void;
-  title?: string;
-  subtitle?: React.ReactNode;
+  /** Row count across every page — drives the pagination footer. */
+  total: number;
+  loading?: boolean;
+  /** Search / filters / paging are all server-side; this component only reports
+   *  the changes and renders whatever the API sent back. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  postFilter: string;
+  onPostFilterChange: (value: string) => void;
+  /** Postings to filter by, as { label, value }. */
+  postOptions: { label: string; value: string }[];
+  page: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  onUpdateStatus?: (
+    application: JobApplication,
+    status: ApplicationStatus,
+  ) => Promise<void> | void;
+  onDelete?: (application: JobApplication) => Promise<void> | void;
+  deleting?: boolean;
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  pending:
-    "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
-  reviewed: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400",
-  shortlisted:
-    "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400",
-  rejected: "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400",
-  hired:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
-};
+const ACTION_BUTTON =
+  "cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground transition-all duration-150";
+
+function formatDate(iso?: string | null): string {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    date,
+  );
+}
 
 export default function ApplicationListTable({
   applications,
-  onStatusChange,
-  title = "Applications",
+  total,
+  loading,
+  search,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  postFilter,
+  onPostFilterChange,
+  postOptions,
+  page,
+  onPageChange,
+  limit,
+  onLimitChange,
+  onUpdateStatus,
+  onDelete,
+  deleting,
 }: ApplicationListTableProps) {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [viewing, setViewing] = useState<JobApplication | null>(null);
+  const [toDelete, setToDelete] = useState<JobApplication | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-  const [viewingApp, setViewingApp] = useState<JobApplication | null>(null);
 
-  const statusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "pending", label: "Pending" },
-    { value: "reviewed", label: "Reviewed" },
-    { value: "shortlisted", label: "Shortlisted" },
-    { value: "rejected", label: "Rejected" },
-    { value: "hired", label: "Hired" },
+  const postFilterOptions = [
+    { value: "all", label: "All Postings" },
+    ...postOptions,
   ];
-
-  const filtered = applications.filter((app) => {
-    const matchSearch =
-      app.applicantName.toLowerCase().includes(search.toLowerCase()) ||
-      app.applicantEmail.toLowerCase().includes(search.toLowerCase()) ||
-      app.hiringTitle.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || app.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
 
   const columns: Column<JobApplication>[] = [
     {
-      id: "applicant" as keyof JobApplication,
+      id: "fullName",
       header: "Applicant",
-      cell: (_, row) => (
+      cell: (value, row) => (
         <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-full bg-primary/10 overflow-hidden shrink-0 flex items-center justify-center text-primary font-semibold">
-            {row.applicantPhoto ? (
-              <Image
-                src={row.applicantPhoto}
-                alt={row.applicantName}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              row.applicantName.charAt(0).toUpperCase()
-            )}
+          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 shrink-0">
+            <UserCircle className="w-4 h-4 text-primary" />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              {row.applicantName}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">
+              {row.fullName}
             </p>
-            <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <MailIcon className="w-3 h-3" />
-                {row.applicantEmail}
-              </span>
-            </div>
+            <p className="text-[11px] text-muted-foreground truncate">
+              {row.email}
+            </p>
           </div>
         </div>
       ),
     },
     {
-      id: "appliedFor" as keyof JobApplication,
+      id: "hiring",
       header: "Applied For",
       className: "hidden md:table-cell",
-      cell: (_, row) => (
-        <div className="flex flex-col">
-          <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
-            {row.hiringTitle}
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            {row.companyName}
-          </span>
+      cell: (value, row) => (
+        <div className="max-w-50 min-w-0">
+          <p className="text-sm text-foreground truncate">
+            {row.hiring?.title || "—"}
+          </p>
+          {row.hiring?.companyName && (
+            <p className="text-[11px] text-muted-foreground truncate">
+              {row.hiring.companyName}
+            </p>
+          )}
         </div>
       ),
     },
     {
-      id: "appliedDate" as keyof JobApplication,
-      header: "Date",
+      id: "phone",
+      header: "Phone",
       className: "hidden lg:table-cell",
-      cell: (_, row) => (
-        <span className="text-sm text-foreground">
-          {format(new Date(row.appliedAt), "dd MMM yyyy")}
+      cell: (value, row) => (
+        <span className="text-sm text-muted-foreground">
+          {row.phone || "—"}
+        </span>
+      ),
+    },
+    {
+      id: "createdAt",
+      header: "Applied On",
+      className: "hidden sm:table-cell",
+      cell: (value, row) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.createdAt)}
         </span>
       ),
     },
@@ -126,9 +159,11 @@ export default function ApplicationListTable({
       id: "status",
       header: "Status",
       className: "text-center",
-      cell: (_, row) => (
+      cell: (value, row) => (
         <span
-          className={`inline-flex items-center justify-center text-[10px] font-semibold px-2.5 py-1 rounded-full capitalize min-w-[80px] ${STATUS_STYLES[row.status]}`}
+          className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${applicationStatusStyle(
+            row.status,
+          )}`}
         >
           {row.status}
         </span>
@@ -137,32 +172,58 @@ export default function ApplicationListTable({
     {
       id: "actions" as keyof JobApplication,
       header: "Actions",
-      className: "text-right",
-      cell: (_, row) => (
-        <div className="flex items-center justify-end gap-1">
-          <SimpleTooltip content="View Details" position="top">
+      className: "justify-end text-right",
+      cell: (value, row) => (
+        <div className="flex items-center justify-end gap-1 relative">
+          <SimpleTooltip content="View" position="top">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setViewingApp(row);
+                setViewing(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className={`${ACTION_BUTTON} hover:border-primary/50 hover:text-primary`}
             >
-              <EyeIcon className="w-4 h-4" />
+              <Eye className="w-3.5 h-3.5" />
             </button>
           </SimpleTooltip>
 
+          {/* Opens the uploaded CV in a new tab; absent on older records. */}
+          <SimpleTooltip
+            content={row.resume?.url ? "Open résumé" : "No résumé attached"}
+            position="top"
+          >
+            <a
+              href={row.resume?.url || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-disabled={!row.resume?.url}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!row.resume?.url) e.preventDefault();
+              }}
+              className={`${ACTION_BUTTON} ${
+                row.resume?.url
+                  ? "hover:border-primary/50 hover:text-primary"
+                  : "cursor-not-allowed opacity-40"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+            </a>
+          </SimpleTooltip>
+
           <Dropdown
-            onOpenChange={(isOpen) => setOpenDropdownId(isOpen ? row.id : null)}
+            onOpenChange={(isOpen) =>
+              setOpenDropdownId(isOpen ? row._id : null)
+            }
           >
             <SimpleTooltip
-              content="Update Status"
+              content="More"
               position="top"
-              disabled={openDropdownId === row.id}
+              disabled={openDropdownId === row._id}
             >
               <DropdownTrigger asChild showChevron={false}>
                 <button
-                  className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
+                  className={`${ACTION_BUTTON} hover:border-destructive/50 hover:text-destructive`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreIcon className="w-4 h-4" />
@@ -170,19 +231,63 @@ export default function ApplicationListTable({
               </DropdownTrigger>
             </SimpleTooltip>
 
-            <DropdownMenu align="right" className="min-w-36 p-1">
-              {["reviewed", "shortlisted", "hired", "rejected"].map((s) => (
-                <DropdownItem
-                  key={s}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onStatusChange?.(row.id, s as JobApplication["status"]);
-                  }}
-                  className={`text-xs py-2 cursor-pointer capitalize ${row.status === s ? "bg-muted font-semibold" : ""}`}
-                >
-                  Mark as {s}
-                </DropdownItem>
-              ))}
+            <DropdownMenu align="right" className="min-w-40 p-1 font-medium">
+              {onUpdateStatus && (
+                <>
+                  <DropdownLabel className="text-[9px] items-center gap-1.5 uppercase tracking-wider text-muted-foreground py-1.5 pb-2 pl-0 flex">
+                    Move To
+                  </DropdownLabel>
+                  {row.status !== "shortlisted" && (
+                    <DropdownItem
+                      icon={<Star className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "shortlisted");
+                      }}
+                      className="text-primary text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Shortlist
+                    </DropdownItem>
+                  )}
+                  {row.status !== "hired" && (
+                    <DropdownItem
+                      icon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "hired");
+                      }}
+                      className="text-success text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Mark Hired
+                    </DropdownItem>
+                  )}
+                  {row.status !== "rejected" && (
+                    <DropdownItem
+                      icon={<XCircle className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "rejected");
+                      }}
+                      className="text-destructive text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Reject
+                    </DropdownItem>
+                  )}
+                  <DropdownSeparator />
+                </>
+              )}
+
+              <DropdownItem
+                icon={<Trash2 className="size-3.5" />}
+                destructive
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setToDelete(row);
+                }}
+                className="text-xs rounded-sm py-2 cursor-pointer"
+              >
+                Delete Application
+              </DropdownItem>
             </DropdownMenu>
           </Dropdown>
         </div>
@@ -191,33 +296,44 @@ export default function ApplicationListTable({
   ];
 
   return (
-    <div className="space-y-5">
+    <div>
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="sm:text-2xl text-xl font-medium text-foreground">
-            {title}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-          <div className="relative flex-1 min-w-44 sm:w-56">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5">
+        <h3 className="text-xl font-medium text-foreground">
+          All Applications
+        </h3>
+        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+          <div className="relative flex-1 md:w-56 min-w-50">
             <Input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search applicant or role..."
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search applicants..."
               startIcon={
                 <SearchIcon className="w-4 h-4 text-muted-foreground" />
               }
-              className="h-10 w-full dark:focus:border-primary/50"
+              className="h-10 w-full bg-card"
             />
           </div>
-          <div className="w-32">
+
+          <div className="relative w-40">
             <SimpleSelect
-              options={statusOptions}
+              options={postFilterOptions}
+              value={postFilter}
+              onChange={onPostFilterChange}
+              className="h-10 rounded-md bg-card"
+            />
+          </div>
+
+          <div className="relative w-32">
+            <SimpleSelect
+              options={APPLICATION_STATUS_FILTER_OPTIONS.map((o) => ({
+                value: String(o.value),
+                label: o.label,
+              }))}
               value={statusFilter}
-              onChange={setStatusFilter}
-              className="h-10 rounded-md"
+              onChange={onStatusFilterChange}
+              className="h-10 rounded-md bg-card"
             />
           </div>
         </div>
@@ -225,26 +341,45 @@ export default function ApplicationListTable({
 
       {/* Table */}
       <Table<JobApplication>
-        data={filtered}
+        data={applications}
         columns={columns}
+        loading={loading}
         pagination
-        totalData={filtered.length}
         page={page}
-        setPage={setPage}
+        setPage={onPageChange}
         limit={limit}
-        setLimit={setLimit}
+        setLimit={onLimitChange}
+        totalData={total}
+        bordered
         emptyMessage="No applications found"
         headerColor="bg-muted/50"
+        tableClassName="min-w-full"
       />
 
-      {/* View Drawer */}
-      {viewingApp && (
-        <ApplicationViewDrawer
-          application={viewingApp}
-          onClose={() => setViewingApp(null)}
-          onStatusChange={onStatusChange}
-        />
-      )}
+      {/* View */}
+      <ApplicationViewDrawer
+        open={!!viewing}
+        application={viewing}
+        onClose={() => setViewing(null)}
+        onUpdateStatus={onUpdateStatus}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        title="Delete Application"
+        text={`Delete the application from "${toDelete?.fullName}"? It will be archived and hidden from the panel; their CV is kept.`}
+        deleteModal={!!toDelete}
+        setDeleteModal={(open) => {
+          if (!open) setToDelete(null);
+        }}
+        selectedRow={toDelete}
+        isLoading={deleting}
+        handleDelete={async (row) => {
+          if (!row) return;
+          await onDelete?.(row);
+          setToDelete(null);
+        }}
+      />
     </div>
   );
 }

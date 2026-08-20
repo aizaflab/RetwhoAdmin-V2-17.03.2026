@@ -1,16 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, Key, FileText } from "lucide-react";
+import { Shield, Key, Users } from "lucide-react";
 import { Drawer } from "@/components/ui/drawer/Drawer";
 import { Button } from "@/components/ui/button/Button";
 
 import PermissionMatrix from "./PermissionMatrix";
-import {
-  PERMISSION_ACTIONS,
-  ROLE_PAGES,
-  countGrants,
-} from "../_data/role-pages";
+import { countGrants } from "../_data/role-pages";
 import type { Role } from "../_types/role.types";
 
 interface RoleViewDrawerProps {
@@ -42,10 +38,6 @@ export default function RoleViewDrawer({
   if (!shownRole) return null;
 
   const grants = countGrants(shownRole.permissions);
-  // Pages the role can touch at all — any one action counts.
-  const pagesWithAccess = shownRole.permissions.filter((p) =>
-    PERMISSION_ACTIONS.some((action) => p[action]),
-  ).length;
 
   return (
     <Drawer
@@ -119,17 +111,13 @@ export default function RoleViewDrawer({
           </div>
           <div className="rounded-xl border border-border bg-muted/30 p-4">
             <div className="mb-2 flex items-center gap-2">
-              <FileText className="size-4 text-muted-foreground" />
+              <Users className="size-4 text-muted-foreground" />
               <span className="text-xs font-medium text-muted-foreground">
-                Pages
+                Employees
               </span>
             </div>
             <p className="text-2xl font-semibold tabular-nums text-foreground">
-              {pagesWithAccess}
-              <span className="text-sm font-normal text-muted-foreground">
-                {" / "}
-                {ROLE_PAGES.length}
-              </span>
+              {shownRole.employeeCount ?? 0}
             </p>
           </div>
         </div>

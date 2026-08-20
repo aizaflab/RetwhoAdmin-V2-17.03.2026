@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { HiringCategory } from "../_types/hiring.types";
+import { FolderTree } from "lucide-react";
 import { Input } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
 import {
@@ -20,101 +20,137 @@ import {
   SearchIcon,
   DeleteIcon,
 } from "@/components/icons/Icons";
-import { format } from "date-fns";
-import { Briefcase, Wrench } from "lucide-react";
+
 import HiringCategoryModal from "./HiringCategoryModal";
+import {
+  CATEGORY_STATUS_FILTER_OPTIONS,
+  hiringCategoryStatusStyle,
+} from "../_data/hiring-options";
+import type {
+  HiringCategory,
+  HiringCategoryPayload,
+} from "../_types/hiring.types";
 
-const STATUS_STYLES = {
-  active:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
-  inactive: "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400",
-};
+interface HiringCategoryListTableProps {
+  categories: HiringCategory[];
+  /** Row count across every page — drives the pagination footer. */
+  total: number;
+  loading?: boolean;
+  /** Search / filter / paging are all server-side; this component only reports
+   *  the changes and renders whatever the API sent back. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  page: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  /** Create when no id is given, update when there is one. */
+  onSaveCategory: (
+    payload: HiringCategoryPayload,
+    id?: string,
+  ) => Promise<unknown>;
+  savingCategory?: boolean;
+  onDelete?: (category: HiringCategory) => Promise<void> | void;
+  deleting?: boolean;
+}
 
-const TYPE_STYLES = {
-  job: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400",
-  service:
-    "bg-purple-50 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400",
-};
+const ACTION_BUTTON =
+  "cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground transition-all duration-150";
+
+function formatDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    date,
+  );
+}
+
+/**
+ * Why the row's delete button is off — empty string means it is available.
+ * Mirrors the API guard exactly: a category holding postings is refused with a
+ * 409, because every one of those postings would be left pointing at a
+ * category no query can resolve. An empty category is archived instead.
+ */
+function deleteBlockedReason(category: HiringCategory): string {
+  const count = category.postCount ?? 0;
+
+  if (count > 0) {
+    return `Holds ${count} post${count === 1 ? "" : "s"}`;
+  }
+
+  return "";
+}
 
 export default function HiringCategoryListTable({
   categories,
-}: {
-  categories: HiringCategory[];
-}) {
-  const [items, setItems] = useState<HiringCategory[]>(categories);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [catToDelete, setCatToDelete] = useState<HiringCategory | null>(null);
-  const [editingCat, setEditingCat] = useState<HiringCategory | null>(null);
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  total,
+  loading,
+  search,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  page,
+  onPageChange,
+  limit,
+  onLimitChange,
+  onSaveCategory,
+  savingCategory,
+  onDelete,
+  deleting,
+}: HiringCategoryListTableProps) {
+  const [categoryToDelete, setCategoryToDelete] =
+    useState<HiringCategory | null>(null);
+  const [editingCategory, setEditingCategory] = useState<HiringCategory | null>(
+    null,
+  );
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const filtered = items.filter((c) => {
-    const matchSearch =
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.slug.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || c.status === statusFilter;
-    const matchType = typeFilter === "all" || c.type === typeFilter;
-    return matchSearch && matchStatus && matchType;
-  });
+  const statusOptions = CATEGORY_STATUS_FILTER_OPTIONS.map((o) => ({
+    value: String(o.value),
+    label: o.label,
+  }));
 
   const columns: Column<HiringCategory>[] = [
     {
-      id: "name",
+      id: "title",
       header: "Category",
-      cell: (_, row) => (
+      cell: (value, row) => (
         <div className="flex items-center gap-3">
-          <div
-            className={`flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${
-              row.type === "job"
-                ? "bg-blue-50 dark:bg-blue-950/30"
-                : "bg-purple-50 dark:bg-purple-950/30"
-            }`}
-          >
-            {row.type === "job" ? (
-              <Briefcase className="w-4 h-4 text-blue-500" />
-            ) : (
-              <Wrench className="w-4 h-4 text-purple-500" />
-            )}
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 shrink-0">
+            <FolderTree className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">{row.name}</p>
+            <p className="text-sm font-semibold text-foreground">{row.title}</p>
             <p className="text-[10px] text-muted-foreground">/{row.slug}</p>
           </div>
         </div>
       ),
     },
     {
-      id: "type",
-      header: "Type",
-      className: "text-center hidden sm:table-cell",
-      cell: (_, row) => (
-        <span
-          className={`inline-flex items-center justify-center text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${TYPE_STYLES[row.type]}`}
-        >
-          {row.type}
-        </span>
-      ),
-    },
-    {
       id: "postCount",
-      header: "Posts",
+      header: "Postings",
       className: "text-center",
-      cell: (_, row) => (
-        <span className="text-sm font-semibold text-foreground">
-          {row.postCount}
-        </span>
+      cell: (value, row) => (
+        <div className="text-sm">
+          <span className="font-semibold text-foreground">
+            {row.postCount ?? 0}
+          </span>
+          {/* How much of the category is actually reachable by the public. */}
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {row.publishedPostCount ?? 0} live
+          </p>
+        </div>
       ),
     },
     {
       id: "createdAt",
-      header: "Created",
-      className: "text-left hidden md:table-cell",
-      cell: (_, row) => (
-        <span className="text-sm text-foreground">
-          {format(new Date(row.createdAt), "dd MMM yyyy")}
+      header: "Created Date",
+      className: "text-left hidden sm:table-cell",
+      cell: (value, row) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(row.createdAt)}
         </span>
       ),
     },
@@ -122,9 +158,11 @@ export default function HiringCategoryListTable({
       id: "status",
       header: "Status",
       className: "text-center",
-      cell: (_, row) => (
+      cell: (value, row) => (
         <span
-          className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_STYLES[row.status]}`}
+          className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${hiringCategoryStatusStyle(
+            row.status,
+          )}`}
         >
           {row.status}
         </span>
@@ -133,27 +171,34 @@ export default function HiringCategoryListTable({
     {
       id: "actions" as keyof HiringCategory,
       header: "Actions",
-      className: "text-right",
-      cell: (_, row) => (
-        <div className="flex items-center justify-end gap-1">
+      className: "justify-end text-right",
+      cell: (value, row) => (
+        <div className="flex items-center justify-end gap-1 relative">
           <SimpleTooltip content="Edit" position="top">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setEditingCat(row);
+                setEditingCategory(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className={`${ACTION_BUTTON} hover:border-primary/50 hover:text-primary`}
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
           </SimpleTooltip>
-          <SimpleTooltip content="Delete" position="top">
+
+          {/* The API refuses to delete a category that still holds postings,
+              so the button says why before it is clicked. */}
+          <SimpleTooltip
+            content={deleteBlockedReason(row) || "Delete"}
+            position="top"
+          >
             <button
+              disabled={!!deleteBlockedReason(row)}
               onClick={(e) => {
                 e.stopPropagation();
-                setCatToDelete(row);
+                setCategoryToDelete(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
+              className={`${ACTION_BUTTON} enabled:hover:border-destructive/50 enabled:hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40`}
             >
               <DeleteIcon className="w-4 h-4" />
             </button>
@@ -163,36 +208,17 @@ export default function HiringCategoryListTable({
     },
   ];
 
-  const statusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-  ];
-
-  const typeOptions = [
-    { value: "all", label: "All Types" },
-    { value: "job", label: "Job" },
-    { value: "service", label: "Service" },
-  ];
-
   return (
     <div>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
-        <div>
-          <h1 className="sm:text-2xl text-xl font-medium text-foreground">
-            Hiring Categories
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Manage job and service categories
-          </p>
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-          <div className="relative flex-1 sm:w-52 min-w-44">
+        <h3 className="text-xl font-medium text-foreground">Categories</h3>
+        <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto">
+          <div className="relative w-full sm:w-auto min-w-50 flex-1">
             <Input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search category..."
               startIcon={
                 <SearchIcon className="w-4 h-4 text-muted-foreground" />
@@ -200,19 +226,10 @@ export default function HiringCategoryListTable({
               className="h-10 w-full bg-card"
             />
           </div>
-          <div className="w-28">
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-10 bg-card">
-                <SelectValue options={typeOptions} placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItems options={typeOptions} />
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-28">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-10 bg-card">
+
+          <div className="relative w-32">
+            <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+              <SelectTrigger className="h-10 rounded-md bg-card">
                 <SelectValue options={statusOptions} placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -220,9 +237,10 @@ export default function HiringCategoryListTable({
               </SelectContent>
             </Select>
           </div>
+
           <Button
-            onClick={() => setIsAddOpen(true)}
-            className="h-10 px-3.5 w-full sm:w-auto justify-center"
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-3.5 h-10 w-full sm:w-auto justify-center"
           >
             <PlusIcon className="size-4.5" />
             Add Category
@@ -232,14 +250,15 @@ export default function HiringCategoryListTable({
 
       {/* Table */}
       <Table<HiringCategory>
-        data={filtered}
+        data={categories}
         columns={columns}
+        loading={loading}
         pagination
-        totalData={filtered.length}
+        totalData={total}
         page={page}
-        setPage={setPage}
+        setPage={onPageChange}
         limit={limit}
-        setLimit={setLimit}
+        setLimit={onLimitChange}
         bordered
         emptyMessage="No categories found"
         headerColor="bg-muted/50"
@@ -248,51 +267,32 @@ export default function HiringCategoryListTable({
       />
 
       {/* Add / Edit Modal */}
-      {(isAddOpen || editingCat) && (
+      {(isAddModalOpen || editingCategory) && (
         <HiringCategoryModal
-          category={editingCat}
+          category={editingCategory}
           onClose={() => {
-            setIsAddOpen(false);
-            setEditingCat(null);
+            setIsAddModalOpen(false);
+            setEditingCategory(null);
           }}
-          onSave={(data) => {
-            if (editingCat) {
-              setItems((prev) =>
-                prev.map((c) =>
-                  c.id === editingCat.id ? { ...c, ...data } : c,
-                ),
-              );
-            } else {
-              setItems((prev) => [
-                ...prev,
-                {
-                  ...data,
-                  id: `hcat_${Date.now()}`,
-                  postCount: 0,
-                  createdAt: new Date().toISOString(),
-                } as HiringCategory,
-              ]);
-            }
-            setIsAddOpen(false);
-            setEditingCat(null);
-          }}
+          onSave={onSaveCategory}
+          saving={savingCategory}
         />
       )}
 
-      {/* Delete Modal */}
+      {/* Delete Confirmation Modal */}
       <DeleteModal
         title="Delete Category"
-        text={`Are you sure you want to delete "${catToDelete?.name}"? This cannot be undone.`}
-        deleteModal={!!catToDelete}
+        text={`Delete the category "${categoryToDelete?.title}"? It holds no posts, so it will be archived and hidden from the panel.`}
+        deleteModal={!!categoryToDelete}
         setDeleteModal={(open) => {
-          if (!open) setCatToDelete(null);
+          if (!open) setCategoryToDelete(null);
         }}
-        selectedRow={catToDelete}
-        handleDelete={(row) => {
-          if (row) {
-            setItems((prev) => prev.filter((c) => c.id !== row.id));
-            setCatToDelete(null);
-          }
+        selectedRow={categoryToDelete}
+        isLoading={deleting}
+        handleDelete={async (row) => {
+          if (!row) return;
+          await onDelete?.(row);
+          setCategoryToDelete(null);
         }}
       />
     </div>

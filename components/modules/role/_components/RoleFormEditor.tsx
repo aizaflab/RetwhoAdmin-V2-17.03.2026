@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ArrowLeftIcon } from "lucide-react";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 import {
   Field,
   FieldError,
@@ -33,7 +35,11 @@ import type {
 interface RoleFormEditorProps {
   /** Present in edit mode; omit to create a new role. */
   initialRole?: Role;
-  onSave?: (payload: RolePayload) => void | Promise<void>;
+  /** Sends the payload to the API. Must reject on failure — the rejection is
+   *  what turns a 409 into an inline "name taken" error on the field. */
+  onSave: (payload: RolePayload) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
 
 const STATUS_OPTIONS: SelectOption[] = [
@@ -47,6 +53,7 @@ type FormErrors = Partial<Record<"name" | "description", string>>;
 export default function RoleFormEditor({
   initialRole,
   onSave,
+  saving = false,
 }: RoleFormEditorProps) {
   const router = useRouter();
   const isEdit = !!initialRole;
@@ -66,11 +73,16 @@ export default function RoleFormEditor({
   );
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [saving, setSaving] = useState(false);
 
   const validate = (): FormErrors => {
     const next: FormErrors = {};
-    if (!name.trim()) next.name = "Role name is required";
+    // Mirrors the API's own rule, so a too-short name is caught before the
+    // round trip rather than coming back as a 400.
+    if (!name.trim()) {
+      next.name = "Role name is required";
+    } else if (name.trim().length < 2) {
+      next.name = "Role name must be at least 2 characters";
+    }
     if (!description.trim()) next.description = "Description is required";
     return next;
   };
@@ -83,17 +95,34 @@ export default function RoleFormEditor({
       return;
     }
 
-    setSaving(true);
     try {
-      await onSave?.({
+      await onSave({
         name: name.trim(),
         description: description.trim(),
         permissions,
         status,
       });
+      toast.success(
+        isEdit
+          ? `Role "${name.trim()}" updated successfully`
+          : `Role "${name.trim()}" created successfully`,
+      );
       router.push("/role/manage");
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        isEdit
+          ? "Could not update the role. Please try again."
+          : "Could not create the role. Please try again.",
+      );
+
+      // 409 is only ever the duplicate-name conflict, so it belongs on the
+      // field the user has to change rather than in a toast they can dismiss.
+      if (getApiErrorStatus(error) === 409) {
+        setErrors((prev) => ({ ...prev, name: message }));
+      }
+
+      toast.error(message);
     }
   };
 

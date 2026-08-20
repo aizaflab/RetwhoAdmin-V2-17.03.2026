@@ -6,7 +6,7 @@ import { UserCircle } from "lucide-react";
 import { Dialog } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
 
-import { getRoleName } from "../_data/employee-options";
+import { employeeStatusStyle } from "../_data/employee-options";
 import type { Employee } from "../_types/employee.types";
 
 interface EmployeeViewDialogProps {
@@ -16,12 +16,8 @@ interface EmployeeViewDialogProps {
   onEdit?: (employee: Employee) => void;
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  active: "bg-success/10 text-success",
-  inactive: "bg-warning/10 text-warning",
-};
-
-function formatDate(iso: string): string {
+function formatDate(iso?: string | null): string {
+  if (!iso) return "—";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
   return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
@@ -72,7 +68,9 @@ export default function EmployeeViewDialog({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          {onEdit && (
+          {/* A system account cannot be edited, so the dialog does not offer a
+              route into a form the API would reject on submit. */}
+          {onEdit && !shown.isSystem && (
             <Button onClick={() => onEdit(shown)}>Edit Employee</Button>
           )}
         </div>
@@ -98,8 +96,14 @@ export default function EmployeeViewDialog({
           )}
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-semibold text-foreground">
-              {shown.name}
+            <p className="flex items-center gap-1.5 text-base font-semibold text-foreground">
+              <span className="truncate">{shown.name}</span>
+              {/* Says why this dialog has no Edit button. */}
+              {shown.isSystem && (
+                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  system
+                </span>
+              )}
             </p>
             <p className="truncate text-sm text-muted-foreground">
               {shown.email}
@@ -107,9 +111,9 @@ export default function EmployeeViewDialog({
           </div>
 
           <span
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize ${
-              STATUS_STYLES[shown.status] ?? STATUS_STYLES.inactive
-            }`}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize ${employeeStatusStyle(
+              shown.status,
+            )}`}
           >
             <span className="h-1.5 w-1.5 rounded-full bg-current" />
             {shown.status}
@@ -118,9 +122,39 @@ export default function EmployeeViewDialog({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <DetailRow label="Phone" value={shown.phone || "—"} />
-          <DetailRow label="Role" value={getRoleName(shown.roleId)} />
+          <DetailRow
+            label="Role"
+            value={
+              <span className="flex flex-wrap items-center gap-1.5">
+                {shown.role?.name ?? "—"}
+                {shown.role?.isSystem && (
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    system
+                  </span>
+                )}
+                {/* The role was deactivated under them — flagged here because
+                    it silently makes their access stale. */}
+                {shown.role && shown.role.status !== "active" && (
+                  <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                    role inactive
+                  </span>
+                )}
+              </span>
+            }
+          />
           <DetailRow label="Created At" value={formatDate(shown.createdAt)} />
-          <DetailRow label="Last Updated" value={formatDate(shown.updatedAt)} />
+          {/* Null means the invite was never acted on — the one case worth
+              calling out rather than showing as a blank dash. */}
+          <DetailRow
+            label="Last Login"
+            value={
+              shown.lastLoginAt ? (
+                formatDate(shown.lastLoginAt)
+              ) : (
+                <span className="text-muted-foreground">Never signed in</span>
+              )
+            }
+          />
         </div>
       </div>
     </Dialog>

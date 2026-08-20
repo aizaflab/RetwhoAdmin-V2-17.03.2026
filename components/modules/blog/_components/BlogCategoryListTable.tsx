@@ -11,7 +11,11 @@ import {
 import { useState } from "react";
 import { format } from "date-fns";
 import { Input } from "@/components/ui";
-import { BlogCategory } from "../_types/blog.types";
+import {
+  CATEGORY_STATUS_FILTER_OPTIONS,
+  categoryStatusStyle,
+} from "../_data/blog-options";
+import { BlogCategory, BlogCategoryPayload } from "../_types/blog.types";
 import BlogCategoryModal from "./BlogCategoryModal";
 import { Button } from "@/components/ui/button/Button";
 import {
@@ -25,20 +29,64 @@ import DeleteModal from "@/components/ui/modal/DeleteModal";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
 
-const STATUS_STYLES = {
-  active:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
-  inactive: "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400",
-};
+interface BlogCategoryListTableProps {
+  categories: BlogCategory[];
+  /** Row count across every page — drives the pagination footer. */
+  total: number;
+  loading?: boolean;
+  /** Search / filter / paging are all server-side; this component only reports
+   *  the changes and renders whatever the API sent back. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  page: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  /** Create when no id is given, update when there is one. */
+  onSaveCategory: (
+    payload: BlogCategoryPayload,
+    id?: string,
+  ) => Promise<unknown>;
+  savingCategory?: boolean;
+  onDelete?: (category: BlogCategory) => Promise<void> | void;
+  deleting?: boolean;
+}
+
+/**
+ * Why the row's delete button is off — empty string means it is available.
+ * Mirrors the API guard exactly: a category holding blogs is refused with a
+ * 409, because every one of those blogs would be left pointing at a category
+ * no query can resolve. An empty category is archived instead.
+ */
+function deleteBlockedReason(category: BlogCategory): string {
+  const count = category.blogCount ?? 0;
+
+  if (count > 0) {
+    return `Holds ${count} blog${count === 1 ? "" : "s"}`;
+  }
+
+  return "";
+}
 
 export default function BlogCategoryListTable({
   categories,
-}: {
-  categories: BlogCategory[];
-}) {
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-
+  total,
+  loading,
+  search,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  page,
+  onPageChange,
+  limit,
+  onLimitChange,
+  onSaveCategory,
+  savingCategory,
+  onDelete,
+  deleting,
+}: BlogCategoryListTableProps) {
   const [categoryToDelete, setCategoryToDelete] = useState<BlogCategory | null>(
     null,
   );
@@ -46,18 +94,15 @@ export default function BlogCategoryListTable({
     null,
   );
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
 
-  const statusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-  ];
+  const statusOptions = CATEGORY_STATUS_FILTER_OPTIONS.map((o) => ({
+    value: String(o.value),
+    label: o.label,
+  }));
 
   const columns: Column<BlogCategory>[] = [
     {
-      id: "name",
+      id: "title",
       header: "Category",
       cell: (value, row) => (
         <div className="flex items-center gap-3">
@@ -65,19 +110,19 @@ export default function BlogCategoryListTable({
             <FlexTextIcon className="w-4 h-4 text-primary dark:text-blue-400" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">{row.name}</p>
+            <p className="text-sm font-semibold text-foreground">{row.title}</p>
             <p className="text-[10px] text-muted-foreground">/{row.slug}</p>
           </div>
         </div>
       ),
     },
     {
-      id: "postCount",
-      header: "Posts",
+      id: "blogCount",
+      header: "Blogs",
       className: "text-center",
       cell: (value, row) => (
         <span className="text-sm font-semibold text-foreground">
-          {row.postCount}
+          {row.blogCount ?? 0}
         </span>
       ),
     },
@@ -97,7 +142,7 @@ export default function BlogCategoryListTable({
       className: "text-center",
       cell: (value, row) => (
         <span
-          className={` text-xs font-semibold px-2.5 w-18 center  py-1 rounded-full capitalize ${STATUS_STYLES[row.status]}`}
+          className={` text-xs font-semibold px-2.5 w-18 center  py-1 rounded-full capitalize ${categoryStatusStyle(row.status)}`}
         >
           {row.status}
         </span>
@@ -121,13 +166,17 @@ export default function BlogCategoryListTable({
             </button>
           </SimpleTooltip>
 
-          <SimpleTooltip content="Delete" position="top">
+          <SimpleTooltip
+            content={deleteBlockedReason(row) || "Delete"}
+            position="top"
+          >
             <button
+              disabled={!!deleteBlockedReason(row)}
               onClick={(e) => {
                 e.stopPropagation();
                 setCategoryToDelete(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground enabled:hover:border-destructive/50 enabled:hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40 transition-all duration-150"
             >
               <DeleteIcon className="w-4 h-4" />
             </button>
@@ -147,7 +196,7 @@ export default function BlogCategoryListTable({
             <Input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search category..."
               startIcon={
                 <SearchIcon className="w-4 h-4 text-muted-foreground" />
@@ -157,7 +206,7 @@ export default function BlogCategoryListTable({
           </div>
 
           <div className="relative w-32">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               <SelectTrigger className="h-10 rounded-md bg-card">
                 <SelectValue options={statusOptions} placeholder="All Status" />
               </SelectTrigger>
@@ -182,12 +231,13 @@ export default function BlogCategoryListTable({
         <Table<BlogCategory>
           data={categories}
           columns={columns}
-          pagination={true}
-          totalData={categories.length}
+          loading={loading}
+          pagination
+          totalData={total}
           page={page}
-          setPage={setPage}
+          setPage={onPageChange}
           limit={limit}
-          setLimit={setLimit}
+          setLimit={onLimitChange}
           bordered
           emptyMessage="No categories found"
           headerColor="bg-muted/50"
@@ -204,26 +254,27 @@ export default function BlogCategoryListTable({
             setIsAddModalOpen(false);
             setEditingCategory(null);
           }}
-          onSave={() => {
-            setIsAddModalOpen(false);
-            setEditingCategory(null);
-          }}
+          onSave={onSaveCategory}
+          saving={savingCategory}
         />
       )}
 
       {/* Delete Confirmation Modal */}
       <DeleteModal
         title="Delete Category"
-        text={`Are you sure you want to delete the category "${categoryToDelete?.name}"? This action cannot be undone.`}
+        text={`Delete the category "${categoryToDelete?.title}"? It holds no blogs, so it will be archived and hidden from the panel.`}
         deleteModal={!!categoryToDelete}
         setDeleteModal={(open) => {
           if (!open) setCategoryToDelete(null);
         }}
         selectedRow={categoryToDelete}
-        handleDelete={(row) => {
-          if (row) {
-            setCategoryToDelete(null);
-          }
+        isLoading={deleting}
+        handleDelete={async (row) => {
+          if (!row) return;
+          await onDelete?.(row);
+          // Closed unconditionally: on failure the page has already toasted
+          // the reason (blogs filed under it since the list was fetched).
+          setCategoryToDelete(null);
         }}
       />
     </div>

@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
-  Promotion,
-  Wholesaler,
-  PromotionStatus,
-} from "../_types/promotion.types";
+  Image as ImageIcon,
+  Trash2,
+  Eye,
+  Globe,
+  FileEdit,
+  Archive,
+} from "lucide-react";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
-import { Input } from "@/components/ui";
+import { Input, SimpleSelect } from "@/components/ui";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
 import {
@@ -16,94 +21,99 @@ import {
   DropdownMenu,
   DropdownItem,
   DropdownSeparator,
+  DropdownLabel,
 } from "@/components/ui/dropdown/Dropdown";
+import { SearchIcon, EditIcon, MoreIcon } from "@/components/icons/Icons";
 
-import {
-  SearchIcon,
-  PlusIcon,
-  EditIcon,
-  MoreIcon,
-  EyeIcon,
-  LinkIcon,
-  DeleteIcon,
-  ImageIcon,
-} from "@/components/icons/Icons";
-import { Button } from "@/components/ui/button/Button";
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import Image from "next/image";
 import PromotionViewDrawer from "./PromotionViewDrawer";
 import {
-  Select,
-  SelectContent,
-  SelectItems,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/Select";
+  PHASE_LABELS,
+  PHASE_STYLES,
+  PROMOTION_STATUS_FILTER_OPTIONS,
+  PROMOTION_TYPE_FILTER_OPTIONS,
+  audienceLabel,
+  promotionPhase,
+  promotionStatusStyle,
+  promotionTypeLabel,
+} from "../_data/promotion-options";
+import type { Promotion, PromotionStatus } from "../_types/promotion.types";
 
 interface PromotionListTableProps {
   promotions: Promotion[];
-  wholesalers: Wholesaler[];
-  onDelete?: (id: string) => void;
-  onUpdateStatus?: (id: string, status: PromotionStatus) => void;
+  /** Row count across every page — drives the pagination footer. */
+  total: number;
+  loading?: boolean;
+  /** Search / filters / paging are all server-side; this component only reports
+   *  the changes and renders whatever the API sent back. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  typeFilter: string;
+  onTypeFilterChange: (value: string) => void;
+  page: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  onUpdateStatus?: (
+    promotion: Promotion,
+    status: PromotionStatus,
+  ) => Promise<void> | void;
+  onDelete?: (promotion: Promotion) => Promise<void> | void;
+  deleting?: boolean;
 }
 
-const STATUS_STYLES: Record<PromotionStatus, string> = {
-  active:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50",
-  inactive:
-    "bg-muted/50 text-muted-foreground dark:bg-muted dark:text-muted-foreground border-border",
-  scheduled:
-    "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 border-blue-100 dark:border-blue-900/50",
-  expired:
-    "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 border-rose-100 dark:border-rose-900/50",
-};
+const ACTION_BUTTON =
+  "cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground transition-all duration-150";
 
-function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
+function formatDate(iso?: string | null): string {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    date,
+  );
+}
+
+export default function PromotionListTable({
+  promotions,
+  total,
+  loading,
+  search,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  typeFilter,
+  onTypeFilterChange,
+  page,
+  onPageChange,
+  limit,
+  onLimitChange,
+  onUpdateStatus,
+  onDelete,
+  deleting,
+}: PromotionListTableProps) {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+
+  const [viewing, setViewing] = useState<Promotion | null>(null);
+  const [toDelete, setToDelete] = useState<Promotion | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-
-  const [viewingPromotion, setViewingPromotion] = useState<Promotion | null>(
-    null,
-  );
-  const [promotionToDelete, setPromotionToDelete] = useState<Promotion | null>(
-    null,
-  );
-
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-
-  const statusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "active", label: "Active" },
-    { value: "inactive", label: "Inactive" },
-    { value: "scheduled", label: "Scheduled" },
-    { value: "expired", label: "Expired" },
-  ];
-
-  const typeOptions = [
-    { value: "all", label: "All Types" },
-    { value: "video", label: "Video" },
-    { value: "audio", label: "Audio" },
-    { value: "pdf", label: "PDF" },
-  ];
 
   const columns: Column<Promotion>[] = [
     {
       id: "title",
-      header: "Promotion & Wholesaler",
+      header: "Campaign",
       cell: (value, row) => (
         <div className="flex items-center gap-3">
-          <div className="relative size-11 rounded-lg bg-muted overflow-hidden shrink-0">
-            {row.bannerImage ? (
+          <div className="relative w-12 h-12 rounded-lg bg-muted overflow-hidden shrink-0">
+            {row.bannerImage?.url ? (
               <Image
-                src={row.bannerImage}
-                alt={row.title}
+                src={row.bannerImage.url}
+                alt={row.bannerImage.alt || row.title}
                 className="w-full h-full object-cover"
-                fill
+                width={96}
+                height={96}
+                unoptimized
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -116,14 +126,11 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
               {row.title}
             </p>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="flex items-center gap-2">
-                <span className="text-[11px] opacity-50">
-                  {row.wholesalerName}
-                </span>
-                <span className="flex items-center gap-1 text-[11px] font-medium text-primary">
-                  <div className="size-1 rounded-full bg-primary"></div>
-                  <span className="ml-0.5">{row.adType}</span>
-                </span>
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary capitalize">
+                {promotionTypeLabel(row.promotionType)}
+              </span>
+              <span className="text-xs text-muted-foreground truncate">
+                {row.wholesaler?.companyName || "Platform-wide"}
               </span>
             </div>
           </div>
@@ -132,47 +139,57 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
     },
     {
       id: "targetAudience",
-      header: "Target",
+      header: "Audience",
       className: "hidden lg:table-cell",
       cell: (value, row) => (
-        <span className="inline-flex items-center justify-center text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 dark:text-indigo-300 border border-indigo-100 capitalize">
-          {row.targetAudience}
-        </span>
+        <div className="flex flex-wrap gap-1">
+          {(row.targetAudience ?? []).length > 0 ? (
+            row.targetAudience.map((audience) => (
+              <span
+                key={audience}
+                className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+              >
+                {audienceLabel(audience)}
+              </span>
+            ))
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
+          )}
+        </div>
       ),
+    },
+    {
+      id: "startDate",
+      header: "Runs",
+      className: "hidden md:table-cell",
+      cell: (value, row) => {
+        // The dates say whether it is on screen; the status only says whether
+        // it was approved, so both are shown together.
+        const phase = promotionPhase(row);
+        return (
+          <div className="text-sm">
+            <span className="text-muted-foreground">
+              {formatDate(row.startDate)} → {formatDate(row.endDate)}
+            </span>
+            <p className="mt-0.5">
+              <span
+                className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${PHASE_STYLES[phase]}`}
+              >
+                {PHASE_LABELS[phase]}
+              </span>
+            </p>
+          </div>
+        );
+      },
     },
     {
       id: "priority",
       header: "Priority",
-      className: "text-center hidden sm:table-cell",
+      className: "text-center hidden xl:table-cell",
       cell: (value, row) => (
-        <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-xs font-semibold text-yellow-600 dark:text-yellow-300 border border-yellow-100 dark:border-yellow-800/50">
-          {row.priority}
-        </div>
-      ),
-    },
-    {
-      id: "startDate" as keyof Promotion,
-      header: "Validity",
-      className: "hidden xl:table-cell",
-      cell: (value, row) => (
-        <div className="flex flex-col text-[11px] text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <span className="text-emerald-500 font-medium w-6">S:</span>
-            <span>
-              {row.startDate
-                ? format(new Date(row.startDate), "dd MMM yyyy")
-                : "N/A"}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-rose-500 font-medium w-6">E:</span>
-            <span>
-              {row.endDate
-                ? format(new Date(row.endDate), "dd MMM yyyy")
-                : "N/A"}
-            </span>
-          </div>
-        </div>
+        <span className="text-sm font-medium text-foreground">
+          {row.priority ?? 0}
+        </span>
       ),
     },
     {
@@ -181,7 +198,9 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       className: "text-center",
       cell: (value, row) => (
         <span
-          className={`inline-flex items-center justify-center w-20 text-[10px] font-semibold px-2 py-1 rounded-full capitalize border ${STATUS_STYLES[row.status]}`}
+          className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${promotionStatusStyle(
+            row.status,
+          )}`}
         >
           {row.status}
         </span>
@@ -192,54 +211,105 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
       header: "Actions",
       className: "justify-end text-right",
       cell: (value, row) => (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-1 relative">
           <SimpleTooltip content="Edit" position="top">
             <button
-              onClick={() => router.push(`/promotion/edit/${row.id}`)}
-              className="center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-[#0284c7] hover:text-[#0284c7] transition-all cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/promotion/edit/${row._id}`);
+              }}
+              className={`${ACTION_BUTTON} hover:border-primary/50 hover:text-primary`}
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
           </SimpleTooltip>
 
           <Dropdown
-            onOpenChange={(isOpen) => setOpenDropdownId(isOpen ? row.id : null)}
+            onOpenChange={(isOpen) =>
+              setOpenDropdownId(isOpen ? row._id : null)
+            }
           >
             <SimpleTooltip
               content="More"
               position="top"
-              disabled={openDropdownId === row.id}
+              disabled={openDropdownId === row._id}
             >
               <DropdownTrigger asChild showChevron={false}>
-                <button className="center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:bg-muted/50 dark:hover:bg-card transition-all cursor-pointer">
+                <button
+                  className={`${ACTION_BUTTON} hover:border-destructive/50 hover:text-destructive`}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <MoreIcon className="w-4 h-4" />
                 </button>
               </DropdownTrigger>
             </SimpleTooltip>
 
-            <DropdownMenu className="min-w-40 p-1" align="right">
+            <DropdownMenu align="right" className="min-w-40 p-1 font-medium">
               <DropdownItem
-                icon={<EyeIcon className="w-4 h-4" />}
-                onClick={() => setViewingPromotion(row)}
-                className="text-xs py-2.5 rounded-md cursor-pointer transition-colors font-medium"
+                icon={<Eye className="w-4 h-4" />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewing(row);
+                }}
+                className="text-foreground text-xs rounded-sm py-2 cursor-pointer"
               >
                 View Details
               </DropdownItem>
 
-              <DropdownItem
-                icon={<LinkIcon className="w-4 h-4" />}
-                onClick={() => window.open(row.mediaUrl, "_blank")}
-                className="text-xs py-2.5 rounded-md cursor-pointer transition-colors font-medium"
-              >
-                Open Media Link
-              </DropdownItem>
+              {onUpdateStatus && (
+                <>
+                  <DropdownSeparator />
+                  <DropdownLabel className="text-[9px] items-center gap-1.5 uppercase tracking-wider text-muted-foreground py-1.5 pb-2 pl-0 flex">
+                    Status Actions
+                  </DropdownLabel>
+                  {row.status !== "published" && (
+                    <DropdownItem
+                      icon={<Globe className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "published");
+                      }}
+                      className="text-success text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Publish
+                    </DropdownItem>
+                  )}
+                  {row.status !== "draft" && (
+                    <DropdownItem
+                      icon={<FileEdit className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "draft");
+                      }}
+                      className="text-warning text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Revert to Draft
+                    </DropdownItem>
+                  )}
+                  {row.status !== "archived" && (
+                    <DropdownItem
+                      icon={<Archive className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "archived");
+                      }}
+                      className="text-muted-foreground text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Move to Archive
+                    </DropdownItem>
+                  )}
+                </>
+              )}
 
-              <DropdownSeparator className="my-1.5" />
+              <DropdownSeparator />
               <DropdownItem
-                icon={<DeleteIcon className="size-3.5" />}
+                icon={<Trash2 className="size-3.5" />}
                 destructive
-                onClick={() => setPromotionToDelete(row)}
-                className="text-xs py-2.5 rounded-md cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setToDelete(row);
+                }}
+                className="text-xs rounded-sm py-2 cursor-pointer"
               >
                 Delete Promotion
               </DropdownItem>
@@ -250,111 +320,96 @@ function PromotionListTable({ promotions, onDelete }: PromotionListTableProps) {
     },
   ];
 
-  const filtered = promotions.filter((r) => {
-    const matchSearch =
-      r.title.toLowerCase().includes(search.toLowerCase()) ||
-      r.wholesalerName.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || r.status === statusFilter;
-    const matchType = typeFilter === "all" || r.adType === typeFilter;
-    return matchSearch && matchStatus && matchType;
-  });
-
   return (
-    <div className="space-y-5">
-      {/* Header & Toolbar */}
-      <div className="mb-5 flex items-center justify-between">
-        <h1 className="sm:text-2xl text-xl font-medium text-foreground">
-          Manage Promotion
-        </h1>
-
-        <div className="flex items-center gap-3 w-full lg:w-auto flex-wrap">
-          <div className="relative flex-1 min-w-50">
+    <div>
+      {/* Toolbar */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5">
+        <h3 className="text-xl font-medium text-foreground">All Campaigns</h3>
+        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+          {/* Search — matches title, slug and description server-side. */}
+          <div className="relative flex-1 md:w-56 min-w-50">
             <Input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search title, wholesaler..."
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search campaigns..."
               startIcon={
                 <SearchIcon className="w-4 h-4 text-muted-foreground" />
               }
-              className="h-10 dark:focus:border-primary"
+              className="h-10 w-full bg-card"
             />
           </div>
 
-          <div className="w-32">
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-10">
-                <SelectValue options={typeOptions} placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItems options={typeOptions} />
-              </SelectContent>
-            </Select>
+          <div className="relative w-32">
+            <SimpleSelect
+              options={PROMOTION_TYPE_FILTER_OPTIONS.map((o) => ({
+                value: String(o.value),
+                label: o.label,
+              }))}
+              value={typeFilter}
+              onChange={onTypeFilterChange}
+              className="h-10 rounded-md bg-card"
+            />
           </div>
 
-          <div className="w-32">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-10">
-                <SelectValue options={statusOptions} placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItems options={statusOptions} />
-              </SelectContent>
-            </Select>
+          <div className="relative w-32">
+            <SimpleSelect
+              options={PROMOTION_STATUS_FILTER_OPTIONS.map((o) => ({
+                value: String(o.value),
+                label: o.label,
+              }))}
+              value={statusFilter}
+              onChange={onStatusFilterChange}
+              className="h-10 rounded-md bg-card"
+            />
           </div>
-
-          <Button
-            onClick={() => router.push("/promotion/add")}
-            className="h-10"
-          >
-            <PlusIcon className="size-4" />
-            Add New
-          </Button>
         </div>
       </div>
 
-      {/* Table Container */}
-      <div>
-        <Table<Promotion>
-          data={filtered}
-          columns={columns}
-          pagination={true}
-          totalData={filtered.length}
-          page={page}
-          setPage={setPage}
-          limit={limit}
-          setLimit={setLimit}
-          emptyMessage="No promotions found matching your criteria"
-        />
-      </div>
+      {/* Table */}
+      <Table<Promotion>
+        data={promotions}
+        columns={columns}
+        loading={loading}
+        pagination
+        page={page}
+        setPage={onPageChange}
+        limit={limit}
+        setLimit={onLimitChange}
+        totalData={total}
+        bordered
+        emptyMessage="No campaigns found"
+        headerColor="bg-muted/50"
+        tableClassName="min-w-full"
+      />
+
+      {/* View */}
+      <PromotionViewDrawer
+        open={!!viewing}
+        promotion={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={(promotion) => {
+          setViewing(null);
+          router.push(`/promotion/edit/${promotion._id}`);
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
       <DeleteModal
         title="Delete Promotion"
-        text={`Are you sure you want to delete "${promotionToDelete?.title}"? This will remove it from all displays.`}
-        deleteModal={!!promotionToDelete}
+        text={`Delete "${toDelete?.title}"? The promotion will be archived and hidden from the panel.`}
+        deleteModal={!!toDelete}
         setDeleteModal={(open) => {
-          if (!open) setPromotionToDelete(null);
+          if (!open) setToDelete(null);
         }}
-        selectedRow={promotionToDelete}
-        handleDelete={(row) => {
-          if (row) {
-            onDelete?.(row.id);
-            setPromotionToDelete(null);
-          }
+        selectedRow={toDelete}
+        isLoading={deleting}
+        handleDelete={async (row) => {
+          if (!row) return;
+          await onDelete?.(row);
+          setToDelete(null);
         }}
       />
-
-      {/* View Drawer */}
-      {viewingPromotion && (
-        <PromotionViewDrawer
-          promotion={viewingPromotion}
-          onClose={() => setViewingPromotion(null)}
-          onEdit={() => router.push(`/promotion/edit/${viewingPromotion.id}`)}
-        />
-      )}
     </div>
   );
 }
-
-export default PromotionListTable;

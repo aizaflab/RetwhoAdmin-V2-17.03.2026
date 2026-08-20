@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 import {
+  EMPLOYMENT_TYPE_OPTIONS,
+  HIRING_STATUS_OPTIONS,
+  HIRING_TYPE_OPTIONS,
+  SALARY_TYPE_OPTIONS,
+} from "../_data/hiring-options";
+import type {
+  EmploymentType,
   HiringPost,
-  HiringCategory,
+  HiringPostPayload,
   HiringStatus,
-  JobType,
+  HiringType,
   SalaryType,
 } from "../_types/hiring.types";
 import { Field, FieldError, FieldLabel, Input } from "@/components/ui";
@@ -35,34 +44,23 @@ import TextEditor from "@/components/ui/editor/TextEditor";
 import { HugeCalender } from "@/components/ui/calendar/HugeCalender";
 
 interface HiringPostFormProps {
+  /** Present in edit mode; omit to create a new posting. */
   initialData?: HiringPost | null;
-  categories: HiringCategory[];
-  onSave: (data: Partial<HiringPost>) => void;
+  /** Assignable categories from `GET /hiring/categories/options`. */
+  categoryOptions: SelectOption[];
+  categoriesLoading?: boolean;
+  /** Must reject on failure — the rejection is what surfaces the API's reason. */
+  onSave: (
+    payload: HiringPostPayload,
+    files: { companyLogoFile: File | null; bannerImageFile: File | null },
+  ) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
 
-const JOB_TYPE_OPTIONS: { value: JobType; label: string }[] = [
-  { value: "full-time", label: "Full Time" },
-  { value: "part-time", label: "Part Time" },
-  { value: "contract", label: "Contract" },
-  { value: "internship", label: "Internship" },
-  { value: "freelance", label: "Freelance" },
-  { value: "remote", label: "Remote" },
-];
-
-const SALARY_TYPE_OPTIONS: { value: SalaryType; label: string }[] = [
-  { value: "monthly", label: "Monthly" },
-  { value: "weekly", label: "Weekly" },
-  { value: "hourly", label: "Hourly" },
-  { value: "yearly", label: "Yearly" },
-  { value: "fixed", label: "Fixed (One-time)" },
-];
-
-const STATUS_OPTIONS: { value: HiringStatus; label: string }[] = [
-  { value: "active", label: "Active" },
-  { value: "draft", label: "Draft" },
-  { value: "inactive", label: "Inactive" },
-  { value: "closed", label: "Closed" },
-];
+/** The API rejects anything larger, and the browser can check first. */
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const CURRENCY_OPTIONS: SelectOption[] = [
   { value: "BDT", label: "BDT (৳)" },
@@ -73,9 +71,12 @@ const CURRENCY_OPTIONS: SelectOption[] = [
 
 export default function HiringPostForm({
   initialData,
-  categories,
+  categoryOptions,
+  categoriesLoading,
   onSave,
+  saving = false,
 }: HiringPostFormProps) {
+  const isEdit = !!initialData;
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -83,48 +84,101 @@ export default function HiringPostForm({
   const [reqInput, setReqInput] = useState("");
   const [benefitInput, setBenefitInput] = useState("");
 
+  // Field names match the API body, so this state object is (almost) the
+  // payload — `slug` is absent because the server derives it from the title
+  // and its strict schema rejects the field outright.
   const [formData, setFormData] = useState({
     title: initialData?.title ?? "",
     companyName: initialData?.companyName ?? "",
-    companyLogo: initialData?.companyLogo ?? "",
-    bannerImage: initialData?.bannerImage ?? "",
     categoryId: initialData?.categoryId ?? "",
     address: initialData?.address ?? "",
     city: initialData?.city ?? "",
     country: initialData?.country ?? "Bangladesh",
-    jobType: (initialData?.jobType ?? "full-time") as JobType,
+    hiringType: (initialData?.hiringType ?? "job") as HiringType,
+    employmentType: (initialData?.employmentType ??
+      "full-time") as EmploymentType,
     salaryMin: String(initialData?.salaryMin ?? ""),
     salaryMax: String(initialData?.salaryMax ?? ""),
     salaryType: (initialData?.salaryType ?? "monthly") as SalaryType,
-    currency: initialData?.currency ?? "BDT",
+    currency: initialData?.currency ?? "USD",
     description: initialData?.description ?? "",
     requirements: initialData?.requirements ?? ([] as string[]),
     benefits: initialData?.benefits ?? ([] as string[]),
     skills: initialData?.skills ?? ([] as string[]),
     experience: initialData?.experience ?? "",
     education: initialData?.education ?? "",
-    openings: String(initialData?.openings ?? "1"),
-    deadline: initialData?.deadline?.slice(0, 10) ?? "",
+    numberOfOpenings: String(initialData?.numberOfOpenings ?? "1"),
+    applicationDeadline: initialData?.applicationDeadline?.slice(0, 10) ?? "",
     status: (initialData?.status ?? "draft") as HiringStatus,
   });
+
+  // Newly picked files, or null when the stored images are being kept.
+  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
+  // The images already on the posting; cleared when the author removes one.
+  const [storedLogoUrl, setStoredLogoUrl] = useState(
+    initialData?.companyLogo?.url ?? "",
+  );
+  const [storedBannerUrl, setStoredBannerUrl] = useState(
+    initialData?.bannerImage?.url ?? "",
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const set = (field: string, value: string | string[]) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
 
+  // Derived rather than stored, so picking a file does not need a second
+  // render pass to show its preview.
+  const logoObjectUrl = useMemo(
+    () => (companyLogoFile ? URL.createObjectURL(companyLogoFile) : ""),
+    [companyLogoFile],
+  );
+  const bannerObjectUrl = useMemo(
+    () => (bannerImageFile ? URL.createObjectURL(bannerImageFile) : ""),
+    [bannerImageFile],
+  );
+
+  // An object URL pins the file in memory until it is revoked.
+  useEffect(() => {
+    if (!logoObjectUrl) return;
+    return () => URL.revokeObjectURL(logoObjectUrl);
+  }, [logoObjectUrl]);
+
+  useEffect(() => {
+    if (!bannerObjectUrl) return;
+    return () => URL.revokeObjectURL(bannerObjectUrl);
+  }, [bannerObjectUrl]);
+
+  // A freshly picked file always wins over whatever was stored.
+  const logoPreview = logoObjectUrl || storedLogoUrl;
+  const bannerPreview = bannerObjectUrl || storedBannerUrl;
+
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     field: "bannerImage" | "companyLogo",
   ) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") set(field, reader.result);
-      };
-      reader.readAsDataURL(file);
+    // Reset so picking the same file twice still fires a change event.
+    e.target.value = "";
+    if (!file) return;
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: "Upload a JPG, PNG or WebP image",
+      }));
+      return;
     }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setErrors((prev) => ({ ...prev, [field]: "Image must be under 10MB" }));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, [field]: "" }));
+    if (field === "companyLogo") setCompanyLogoFile(file);
+    else setBannerImageFile(file);
   };
 
   const addSkill = () => {
@@ -169,44 +223,107 @@ export default function HiringPostForm({
       formData.benefits.filter((x) => x !== ben),
     );
 
+  // Mirrors the API's own rules, so a typo is caught before the round trip
+  // rather than coming back as a 400.
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!formData.title.trim()) errs.title = "Title is required";
+    else if (formData.title.trim().length < 2)
+      errs.title = "Title must be at least 2 characters";
     if (!formData.companyName.trim())
       errs.companyName = "Company name is required";
     if (!formData.categoryId) errs.categoryId = "Category is required";
     if (!formData.address.trim()) errs.address = "Address is required";
     if (!formData.city.trim()) errs.city = "City is required";
-    if (!formData.salaryMin) errs.salaryMin = "Minimum salary is required";
+    if (!formData.country.trim()) errs.country = "Country is required";
+    if (!formData.experience.trim()) errs.experience = "Experience is required";
+    if (!formData.education.trim()) errs.education = "Education is required";
+
+    const min = Number(formData.salaryMin);
+    const max = Number(formData.salaryMax);
+    if (formData.salaryMin === "" || Number.isNaN(min))
+      errs.salaryMin = "Minimum salary is required";
+    else if (min < 0) errs.salaryMin = "Salary cannot be negative";
+    if (formData.salaryMax === "" || Number.isNaN(max))
+      errs.salaryMax = "Maximum salary is required";
+    else if (max < min)
+      errs.salaryMax = "Maximum must be greater than or equal to the minimum";
+
+    const openings = Number(formData.numberOfOpenings);
+    if (!Number.isInteger(openings) || openings < 1)
+      errs.numberOfOpenings = "At least one opening is required";
+
+    if (!formData.applicationDeadline) {
+      errs.applicationDeadline = "Application deadline is required";
+    } else if (new Date(formData.applicationDeadline).getTime() <= Date.now()) {
+      // The API refuses a deadline in the past outright.
+      errs.applicationDeadline = "Deadline must be in the future";
+    }
+
     if (!formData.description.trim())
       errs.description = "Description is required";
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onSave({
-      id: initialData?.id ?? `hire_${Date.now()}`,
-      ...formData,
+
+    const title = formData.title.trim();
+
+    const payload: HiringPostPayload = {
+      title,
+      companyName: formData.companyName.trim(),
+      categoryId: formData.categoryId,
+      hiringType: formData.hiringType,
+      employmentType: formData.employmentType,
+      address: formData.address.trim(),
+      city: formData.city.trim(),
+      country: formData.country.trim(),
+      currency: formData.currency,
       salaryMin: Number(formData.salaryMin),
       salaryMax: Number(formData.salaryMax),
-      openings: Number(formData.openings),
-      deadline: formData.deadline
-        ? new Date(formData.deadline).toISOString()
-        : undefined,
-      views: initialData?.views ?? 0,
-      applicationCount: initialData?.applicationCount ?? 0,
-      createdAt: initialData?.createdAt ?? new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    } as Partial<HiringPost>);
-  };
+      salaryType: formData.salaryType,
+      status: formData.status,
+      numberOfOpenings: Number(formData.numberOfOpenings),
+      // The API coerces this with `z.coerce.date()`, so a full ISO string is
+      // what it expects rather than the yyyy-mm-dd the date input holds.
+      applicationDeadline: new Date(formData.applicationDeadline).toISOString(),
+      experience: formData.experience.trim(),
+      education: formData.education.trim(),
+      skills: formData.skills,
+      requirements: formData.requirements,
+      benefits: formData.benefits,
+      description: formData.description,
+    };
 
-  const categoryOptions = categories.map((c) => ({
-    value: c.id,
-    label: `${c.name} (${c.type})`,
-  }));
+    try {
+      await onSave(payload, { companyLogoFile, bannerImageFile });
+      toast.success(
+        isEdit
+          ? `Posting "${title}" updated successfully`
+          : `Posting "${title}" created successfully`,
+      );
+      router.push("/hiring/manage");
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        isEdit
+          ? "Could not update the posting. Please try again."
+          : "Could not create the posting. Please try again.",
+      );
+
+      // 409 here is the duplicate-title conflict, which the author fixes in
+      // the title field rather than in a dismissible toast.
+      if (getApiErrorStatus(error) === 409) {
+        setErrors((prev) => ({ ...prev, title: message }));
+      }
+
+      toast.error(message);
+    }
+  };
 
   const sectionClass = "bg-card rounded-lg border border-border/50";
   const sectionTitle =
@@ -237,14 +354,17 @@ export default function HiringPostForm({
             variant="outline"
             onClick={() => router.back()}
             className="h-10 px-5 text-muted-foreground"
+            disabled={saving}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             className="h-10 px-6 bg-primary hover:bg-primary/90"
+            loading={saving}
+            loadingText="Saving..."
           >
-            {initialData ? "Update Post" : "Publish Post"}
+            {isEdit ? "Update Post" : "Create Post"}
           </Button>
         </div>
       </div>
@@ -328,7 +448,11 @@ export default function HiringPostForm({
                 >
                   <SelectTrigger error={!!errors.categoryId}>
                     <SelectValue
-                      placeholder="Select a category"
+                      placeholder={
+                        categoriesLoading
+                          ? "Loading categories..."
+                          : "Select a category"
+                      }
                       options={categoryOptions}
                     />
                   </SelectTrigger>
@@ -416,17 +540,40 @@ export default function HiringPostForm({
                 </FieldLabel>
                 <Select
                   id="hiring-job-type"
-                  value={formData.jobType}
-                  onValueChange={(v) => set("jobType", v)}
+                  value={formData.employmentType}
+                  onValueChange={(v) => set("employmentType", v)}
                 >
                   <SelectTrigger>
                     <SelectValue
-                      placeholder="Select job type"
-                      options={JOB_TYPE_OPTIONS}
+                      placeholder="Select employment type"
+                      options={EMPLOYMENT_TYPE_OPTIONS}
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItems options={JOB_TYPE_OPTIONS} />
+                    <SelectItems options={EMPLOYMENT_TYPE_OPTIONS} />
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {/* What is being advertised — distinct from the employment
+                  arrangement above, and a separate field on the API. */}
+              <Field>
+                <FieldLabel id="hiring-type-label" htmlFor="hiring-type">
+                  Listing Type
+                </FieldLabel>
+                <Select
+                  id="hiring-type"
+                  value={formData.hiringType}
+                  onValueChange={(v) => set("hiringType", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder="Select listing type"
+                      options={HIRING_TYPE_OPTIONS}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItems options={HIRING_TYPE_OPTIONS} />
                   </SelectContent>
                 </Select>
               </Field>
@@ -761,11 +908,11 @@ export default function HiringPostForm({
                   <SelectTrigger>
                     <SelectValue
                       placeholder="Select status"
-                      options={STATUS_OPTIONS}
+                      options={HIRING_STATUS_OPTIONS}
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItems options={STATUS_OPTIONS} />
+                    <SelectItems options={HIRING_STATUS_OPTIONS} />
                   </SelectContent>
                 </Select>
               </Field>
@@ -776,13 +923,18 @@ export default function HiringPostForm({
                 </FieldLabel>
                 <Input
                   id="hiring-openings"
-                  name="openings"
+                  name="numberOfOpenings"
                   type="number"
+                  min={1}
                   placeholder="e.g. 2"
-                  value={formData.openings}
-                  onValueChange={(v) => set("openings", v)}
+                  value={formData.numberOfOpenings}
+                  onValueChange={(v) => set("numberOfOpenings", v)}
+                  aria-invalid={errors.numberOfOpenings ? true : undefined}
                   className="bg-transparent"
                 />
+                {errors.numberOfOpenings && (
+                  <FieldError>{errors.numberOfOpenings}</FieldError>
+                )}
               </Field>
 
               {/* Application Deadline */}
@@ -793,14 +945,14 @@ export default function HiringPostForm({
                 <HugeCalender
                   id="hiring-deadline"
                   value={{
-                    start: formData.deadline
-                      ? new Date(formData.deadline)
+                    start: formData.applicationDeadline
+                      ? new Date(formData.applicationDeadline)
                       : null,
                     end: null,
                   }}
                   onChange={(v) =>
                     set(
-                      "deadline",
+                      "applicationDeadline",
                       v.start
                         ? new Date(
                             v.start.getTime() -
@@ -836,19 +988,22 @@ export default function HiringPostForm({
                   accept="image/*"
                   onChange={(e) => handleFileChange(e, "companyLogo")}
                 />
-                {formData.companyLogo ? (
+                {logoPreview ? (
                   <div className="absolute inset-2 rounded-lg overflow-hidden">
                     <Image
-                      src={formData.companyLogo}
-                      alt="Logo"
+                      src={logoPreview}
+                      alt="Company logo preview"
                       fill
                       className="object-contain p-2"
+                      // Blob previews and S3 URLs both bypass the optimiser.
+                      unoptimized
                     />
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        set("companyLogo", "");
+                        setCompanyLogoFile(null);
+                        setStoredLogoUrl("");
                       }}
                       className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
                     >
@@ -886,19 +1041,21 @@ export default function HiringPostForm({
                   accept="image/*"
                   onChange={(e) => handleFileChange(e, "bannerImage")}
                 />
-                {formData.bannerImage ? (
+                {bannerPreview ? (
                   <div className="absolute inset-0">
                     <Image
-                      src={formData.bannerImage}
-                      alt="Banner"
+                      src={bannerPreview}
+                      alt="Banner preview"
                       fill
                       className="object-cover"
+                      unoptimized
                     />
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        set("bannerImage", "");
+                        setBannerImageFile(null);
+                        setStoredBannerUrl("");
                       }}
                       className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5"
                     >
