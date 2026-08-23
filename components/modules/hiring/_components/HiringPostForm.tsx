@@ -62,6 +62,27 @@ interface HiringPostFormProps {
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+/**
+ * Validation keys paired with the element they belong to, in the order the
+ * fields appear on the page — so a failed submit can jump to the first thing
+ * that actually needs fixing rather than an arbitrary one.
+ */
+const ERROR_FIELD_IDS: [string, string][] = [
+  ["title", "hiring-title"],
+  ["companyName", "hiring-company"],
+  ["categoryId", "hiring-category"],
+  ["address", "hiring-address"],
+  ["city", "hiring-city"],
+  ["country", "hiring-country"],
+  ["salaryMin", "hiring-salary-min"],
+  ["salaryMax", "hiring-salary-max"],
+  ["experience", "hiring-experience"],
+  ["education", "hiring-education"],
+  ["description", "hiring-description"],
+  ["numberOfOpenings", "hiring-openings"],
+  ["applicationDeadline", "hiring-deadline"],
+];
+
 const CURRENCY_OPTIONS: SelectOption[] = [
   { value: "BDT", label: "BDT (৳)" },
   { value: "USD", label: "USD ($)" },
@@ -127,6 +148,14 @@ export default function HiringPostForm({
 
   const set = (field: string, value: string | string[]) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
+
+  // The earliest day a deadline may fall on. `validate()` wants it strictly in
+  // the future, so today is out — offering it would leave one selectable day
+  // that only fails on submit. Read once when the form mounts: "tomorrow" must
+  // not drift between renders, and nobody fills this form across midnight.
+  const [minDeadlineDate] = useState(
+    () => new Date(Date.now() + 24 * 60 * 60 * 1000),
+  );
 
   // Derived rather than stored, so picking a file does not need a second
   // render pass to show its preview.
@@ -264,12 +293,36 @@ export default function HiringPostForm({
       errs.description = "Description is required";
 
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    return errs;
+  };
+
+  /**
+   * Puts the first failing field on screen.
+   *
+   * This form is several screens tall, so a message rendered under a field two
+   * sections up is invisible — the submit button just appears to do nothing.
+   */
+  const revealFirstError = (errs: Record<string, string>) => {
+    const first = ERROR_FIELD_IDS.find(([key]) => errs[key]);
+    if (!first) return;
+
+    const el = document.getElementById(first[1]);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // The date picker and the editor are not focusable inputs, hence the guard.
+    if (el instanceof HTMLInputElement) el.focus({ preventScroll: true });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      revealFirstError(errs);
+      toast.error("Please fill in the highlighted fields.");
+      return;
+    }
 
     const title = formData.title.trim();
 
@@ -329,8 +382,11 @@ export default function HiringPostForm({
   const sectionTitle =
     "bg-border/20 p-3 font-semibold text-foreground flex items-center gap-2 rounded-t-lg";
 
+  // noValidate: `validate()` owns every rule, so the browser's own constraints
+  // (`min` on the openings field) cannot block the submit with a bubble this
+  // form has no control over — the same as the blog and promotion forms.
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-5">
       {/* ── Header Actions ── */}
       <div className="flex items-center justify-between gap-5 mb-5">
         <button
@@ -520,15 +576,26 @@ export default function HiringPostForm({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="hiring-country">Country</FieldLabel>
+                <FieldLabel htmlFor="hiring-country">
+                  Country
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
                 <Input
                   id="hiring-country"
                   name="country"
                   placeholder="e.g. Bangladesh"
                   value={formData.country}
-                  onValueChange={(v) => set("country", v)}
+                  onValueChange={(v) => {
+                    set("country", v);
+                    if (errors.country)
+                      setErrors((p) => ({ ...p, country: "" }));
+                  }}
+                  aria-invalid={errors.country ? true : undefined}
                   className="bg-transparent"
                 />
+                {errors.country && <FieldError>{errors.country}</FieldError>}
               </Field>
 
               <Field>
@@ -640,6 +707,9 @@ export default function HiringPostForm({
               <Field>
                 <FieldLabel htmlFor="hiring-salary-max">
                   Maximum Salary
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Input
                   id="hiring-salary-max"
@@ -647,9 +717,17 @@ export default function HiringPostForm({
                   type="number"
                   placeholder="e.g. 80000"
                   value={formData.salaryMax}
-                  onValueChange={(v) => set("salaryMax", v)}
+                  onValueChange={(v) => {
+                    set("salaryMax", v);
+                    if (errors.salaryMax)
+                      setErrors((p) => ({ ...p, salaryMax: "" }));
+                  }}
+                  aria-invalid={errors.salaryMax ? true : undefined}
                   className="bg-transparent"
                 />
+                {errors.salaryMax && (
+                  <FieldError>{errors.salaryMax}</FieldError>
+                )}
               </Field>
 
               <Field>
@@ -688,29 +766,51 @@ export default function HiringPostForm({
               <Field>
                 <FieldLabel htmlFor="hiring-experience">
                   Experience Required
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Input
                   id="hiring-experience"
                   name="experience"
                   placeholder="e.g. 3-5 years"
                   value={formData.experience}
-                  onValueChange={(v) => set("experience", v)}
+                  onValueChange={(v) => {
+                    set("experience", v);
+                    if (errors.experience)
+                      setErrors((p) => ({ ...p, experience: "" }));
+                  }}
+                  aria-invalid={errors.experience ? true : undefined}
                   className="bg-transparent"
                 />
+                {errors.experience && (
+                  <FieldError>{errors.experience}</FieldError>
+                )}
               </Field>
 
               <Field>
                 <FieldLabel htmlFor="hiring-education">
                   Education Level
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Input
                   id="hiring-education"
                   name="education"
                   placeholder="e.g. Bachelor's in CSE"
                   value={formData.education}
-                  onValueChange={(v) => set("education", v)}
+                  onValueChange={(v) => {
+                    set("education", v);
+                    if (errors.education)
+                      setErrors((p) => ({ ...p, education: "" }));
+                  }}
+                  aria-invalid={errors.education ? true : undefined}
                   className="bg-transparent"
                 />
+                {errors.education && (
+                  <FieldError>{errors.education}</FieldError>
+                )}
               </Field>
             </div>
 
@@ -864,7 +964,7 @@ export default function HiringPostForm({
           </div>
 
           {/* Rich-Text Sections */}
-          <div className={`${sectionClass} p-3 sm:p-5`}>
+          <div id="hiring-description" className={`${sectionClass} p-3 sm:p-5`}>
             <FieldLabel className="mb-2.5">
               Job Description
               <span className="text-destructive" aria-hidden="true">
@@ -920,6 +1020,9 @@ export default function HiringPostForm({
               <Field>
                 <FieldLabel htmlFor="hiring-openings">
                   Number of Openings
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Input
                   id="hiring-openings"
@@ -941,16 +1044,27 @@ export default function HiringPostForm({
               <Field>
                 <FieldLabel htmlFor="hiring-deadline">
                   Application Deadline
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <HugeCalender
                   id="hiring-deadline"
+                  mode="single"
+                  placeholder="Select deadline"
+                  // A deadline that has already passed is refused by both
+                  // validate() and the API, so those days are not offered.
+                  minDate={minDeadlineDate}
+                  error={errors.applicationDeadline}
                   value={{
                     start: formData.applicationDeadline
                       ? new Date(formData.applicationDeadline)
                       : null,
-                    end: null,
+                    end: formData.applicationDeadline
+                      ? new Date(formData.applicationDeadline)
+                      : null,
                   }}
-                  onChange={(v) =>
+                  onChange={(v) => {
                     set(
                       "applicationDeadline",
                       v.start
@@ -961,8 +1075,13 @@ export default function HiringPostForm({
                             .toISOString()
                             .slice(0, 10)
                         : "",
-                    )
-                  }
+                    );
+                    if (errors.applicationDeadline)
+                      setErrors((prev) => ({
+                        ...prev,
+                        applicationDeadline: "",
+                      }));
+                  }}
                   fullWidth
                   inputClass="w-full h-10 bg-transparent"
                   align="right"

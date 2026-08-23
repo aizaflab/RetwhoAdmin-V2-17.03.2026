@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
-import { CloudUploadIcon, XIcon } from "lucide-react";
+import { CloudUploadIcon, PlusIcon, XIcon } from "lucide-react";
 import {
   Field,
   FieldError,
@@ -50,6 +50,25 @@ interface BlogPostFormProps {
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+/**
+ * The id the category select binds to.
+ *
+ * `categoryId` is a plain id, but a populated response can hand back the whole
+ * category document in its place — the select then matches no option and shows
+ * its placeholder, which reads as "the category did not load". Both shapes are
+ * accepted here, with the joined `category` as the last resort.
+ */
+const resolveCategoryId = (post?: BlogPost | null): string => {
+  const raw: unknown = post?.categoryId;
+
+  if (typeof raw === "string") return raw;
+  if (raw && typeof raw === "object" && "_id" in raw) {
+    return String((raw as { _id: string })._id);
+  }
+
+  return post?.category?._id ?? "";
+};
+
 export default function BlogPostForm({
   initialData,
   categoryOptions,
@@ -66,7 +85,7 @@ export default function BlogPostForm({
   // and its strict schema rejects the field outright.
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
-    categoryId: initialData?.categoryId || "",
+    categoryId: resolveCategoryId(initialData),
     alt: initialData?.image?.alt || "",
     imageTitle: initialData?.image?.title || "",
     tags: initialData?.tags || [],
@@ -418,30 +437,47 @@ export default function BlogPostForm({
           <FieldLabel htmlFor="post-tags">
             Tags
             <span className="text-xs font-normal text-muted-foreground">
-              press Enter to add
+              press Enter or Add
             </span>
           </FieldLabel>
-          <Input
-            id="post-tags"
-            name="tags"
-            placeholder="e.g. web, frontend"
-            value={tagDraft}
-            onValueChange={setTagDraft}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === ",") {
-                // Enter would submit the form — the key adds a tag instead.
-                e.preventDefault();
-                addTag();
-              } else if (e.key === "Backspace" && !tagDraft) {
-                setFormData((prev) => ({
-                  ...prev,
-                  tags: prev.tags.slice(0, -1),
-                }));
-              }
-            }}
-            onBlur={addTag}
-            className="bg-transparent"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="post-tags"
+              name="tags"
+              placeholder="e.g. web, frontend"
+              value={tagDraft}
+              onValueChange={setTagDraft}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  // Enter would submit the form — the key adds a tag instead.
+                  e.preventDefault();
+                  addTag();
+                } else if (e.key === "Backspace" && !tagDraft) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    tags: prev.tags.slice(0, -1),
+                  }));
+                }
+              }}
+              onBlur={addTag}
+              className="bg-transparent flex-1"
+            />
+            {/* Never disabled — `addTag` already ignores a blank draft, so an
+                empty click is a no-op rather than a dead control. Blocking the
+                mousedown keeps the input from blurring, which would otherwise
+                commit the tag before the click lands and leave this button
+                acting on an emptied draft. */}
+            <Button
+              type="button"
+              startIcon={<PlusIcon className="size-4" />}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={addTag}
+              aria-label="Add tag"
+              className="h-10 shrink-0 px-4"
+            >
+              Add
+            </Button>
+          </div>
           {formData.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-1">
               {formData.tags.map((tag) => (

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
-import { CloudUploadIcon, MoveLeft, XIcon } from "lucide-react";
+import { CloudUploadIcon, MoveLeft, PlusIcon, XIcon } from "lucide-react";
 import {
   Checkbox,
   Field,
@@ -115,6 +115,13 @@ export default function PromotionForm({
   }, [objectUrl]);
 
   const bannerPreview = objectUrl || storedBannerUrl;
+
+  // The earliest day the end date may land on. `validate()` wants the end
+  // strictly after the start, so the day after — handing the picker the start
+  // itself would leave one selectable day that only fails on submit.
+  const minEndDate = formData.startDate
+    ? new Date(new Date(formData.startDate).getTime() + 24 * 60 * 60 * 1000)
+    : undefined;
 
   const set = (field: string, value: string | string[]) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -424,30 +431,47 @@ export default function PromotionForm({
                 <FieldLabel htmlFor="promo-tags">
                   Tags
                   <span className="text-xs font-normal text-muted-foreground">
-                    press Enter to add
+                    press Enter or Add
                   </span>
                 </FieldLabel>
-                <Input
-                  id="promo-tags"
-                  name="tags"
-                  placeholder="e.g. ramadan, discount"
-                  value={tagDraft}
-                  onValueChange={setTagDraft}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === ",") {
-                      // Enter would submit the form — the key adds a tag.
-                      e.preventDefault();
-                      addTag();
-                    } else if (e.key === "Backspace" && !tagDraft) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        tags: prev.tags.slice(0, -1),
-                      }));
-                    }
-                  }}
-                  onBlur={addTag}
-                  className="bg-transparent"
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="promo-tags"
+                    name="tags"
+                    placeholder="e.g. ramadan, discount"
+                    value={tagDraft}
+                    onValueChange={setTagDraft}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === ",") {
+                        // Enter would submit the form — the key adds a tag.
+                        e.preventDefault();
+                        addTag();
+                      } else if (e.key === "Backspace" && !tagDraft) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          tags: prev.tags.slice(0, -1),
+                        }));
+                      }
+                    }}
+                    onBlur={addTag}
+                    className="bg-transparent flex-1"
+                  />
+                  {/* Never disabled — `addTag` already ignores a blank draft,
+                      so an empty click is a no-op rather than a dead control.
+                      Blocking the mousedown keeps the input from blurring,
+                      which would otherwise commit the tag before the click
+                      lands and leave this button acting on an emptied draft. */}
+                  <Button
+                    type="button"
+                    startIcon={<PlusIcon className="size-4" />}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={addTag}
+                    aria-label="Add tag"
+                    className="h-10 shrink-0 px-4"
+                  >
+                    Add
+                  </Button>
+                </div>
                 {formData.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 pt-1">
                     {formData.tags.map((tag) => (
@@ -484,11 +508,15 @@ export default function PromotionForm({
                 <FieldLabel htmlFor="promo-start">Start Date</FieldLabel>
                 <HugeCalender
                   id="promo-start"
+                  mode="single"
+                  placeholder="Select start date"
                   value={{
                     start: formData.startDate
                       ? new Date(formData.startDate)
                       : null,
-                    end: null,
+                    end: formData.startDate
+                      ? new Date(formData.startDate)
+                      : null,
                   }}
                   onChange={(v) => {
                     set("startDate", fromPickedDate(v.start));
@@ -507,9 +535,15 @@ export default function PromotionForm({
                 <FieldLabel htmlFor="promo-end">End Date</FieldLabel>
                 <HugeCalender
                   id="promo-end"
+                  mode="single"
+                  placeholder="Select end date"
+                  // The end can never precede the start, so the picker refuses
+                  // those days outright instead of letting validate() scold
+                  // the author after the fact.
+                  minDate={minEndDate}
                   value={{
                     start: formData.endDate ? new Date(formData.endDate) : null,
-                    end: null,
+                    end: formData.endDate ? new Date(formData.endDate) : null,
                   }}
                   onChange={(v) => {
                     set("endDate", fromPickedDate(v.start));
