@@ -238,7 +238,7 @@ export default function HiringViewDialog({
           <Fact
             icon={<Users className="size-4" />}
             label="Openings"
-            value={shown.numberOfOpenings}
+            value={shown.numberOfOpenings ?? "-"}
           />
           <Fact
             icon={<CalendarClock className="size-4" />}

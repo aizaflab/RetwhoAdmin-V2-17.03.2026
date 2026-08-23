@@ -49,6 +49,20 @@ interface PromotionFormProps {
   saving?: boolean;
 }
 
+/**
+ * Validation keys paired with the element they belong to, in the order the
+ * fields appear on the page — so a failed submit can jump to the first thing
+ * that actually needs fixing rather than an arbitrary one.
+ */
+const ERROR_FIELD_IDS: [string, string][] = [
+  ["title", "promo-title"],
+  ["videoUrl", "promo-video"],
+  ["startDate", "promo-start"],
+  ["endDate", "promo-end"],
+  ["priority", "promo-priority"],
+  ["bannerImage", "promo-banner"],
+];
+
 /** The API rejects anything larger, and the browser can check first. */
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -185,8 +199,10 @@ export default function PromotionForm({
     else if (formData.title.trim().length < 2)
       next.title = "Title must be at least 2 characters";
 
-    if (formData.targetAudience.length === 0)
-      next.targetAudience = "Pick at least one audience";
+    // A promotion is a banner, so it needs one: a new promotion needs a file
+    // and an edit needs either a new file or the one already stored.
+    if (!bannerFile && !bannerPreview)
+      next.bannerImage = "A banner image is required";
 
     if (!formData.startDate) next.startDate = "Start date is required";
     if (!formData.endDate) next.endDate = "End date is required";
@@ -208,12 +224,37 @@ export default function PromotionForm({
       next.priority = "Priority must be zero or a positive whole number";
 
     setErrors(next);
-    return Object.keys(next).length === 0;
+    return next;
+  };
+
+  /**
+   * Puts the first failing field on screen.
+   *
+   * This form is several screens tall, so a message rendered under a field two
+   * sections up is invisible — the submit button just appears to do nothing.
+   */
+  const revealFirstError = (errs: Record<string, string>) => {
+    const first = ERROR_FIELD_IDS.find(([key]) => errs[key]);
+    if (!first) return;
+
+    const el = document.getElementById(first[1]);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // The date pickers and the dropzone are not focusable inputs, hence the
+    // guard.
+    if (el instanceof HTMLInputElement) el.focus({ preventScroll: true });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      revealFirstError(errs);
+      toast.error("Please fill in the highlighted fields.");
+      return;
+    }
 
     const title = formData.title.trim();
 
@@ -310,7 +351,12 @@ export default function PromotionForm({
             </h2>
             <div className="p-3 sm:p-5 space-y-4">
               <Field>
-                <FieldLabel htmlFor="promo-title">Title</FieldLabel>
+                <FieldLabel htmlFor="promo-title">
+                  Title
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
                 <Input
                   id="promo-title"
                   name="title"
@@ -334,7 +380,12 @@ export default function PromotionForm({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="promo-description">Description</FieldLabel>
+                <FieldLabel htmlFor="promo-description">
+                  Description{" "}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (optional)
+                  </span>
+                </FieldLabel>
                 <Textarea
                   id="promo-description"
                   name="description"
@@ -350,6 +401,9 @@ export default function PromotionForm({
                 <Field>
                   <FieldLabel id="promo-type-label" htmlFor="promo-type">
                     Promotion Type
+                    <span className="text-destructive" aria-hidden="true">
+                      *
+                    </span>
                   </FieldLabel>
                   <Select
                     id="promo-type"
@@ -403,7 +457,12 @@ export default function PromotionForm({
 
               {/* Audience */}
               <Field>
-                <FieldLabel>Target Audience</FieldLabel>
+                <FieldLabel>
+                  Target Audience{" "}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (optional)
+                  </span>
+                </FieldLabel>
                 <div className="flex flex-wrap gap-4 pt-1">
                   {TARGET_AUDIENCE_OPTIONS.map((option) => {
                     const value = String(option.value) as TargetAudience;
@@ -505,7 +564,12 @@ export default function PromotionForm({
             </h2>
             <div className="p-3 sm:p-5 space-y-4">
               <Field>
-                <FieldLabel htmlFor="promo-start">Start Date</FieldLabel>
+                <FieldLabel htmlFor="promo-start">
+                  Start Date
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
                 <HugeCalender
                   id="promo-start"
                   mode="single"
@@ -532,7 +596,12 @@ export default function PromotionForm({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="promo-end">End Date</FieldLabel>
+                <FieldLabel htmlFor="promo-end">
+                  End Date
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </FieldLabel>
                 <HugeCalender
                   id="promo-end"
                   mode="single"
@@ -559,6 +628,9 @@ export default function PromotionForm({
               <Field>
                 <FieldLabel id="promo-status-label" htmlFor="promo-status">
                   Status
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Select
                   id="promo-status"
@@ -611,9 +683,14 @@ export default function PromotionForm({
           <div className="bg-card rounded-lg border border-border/50">
             <h2 className="bg-border/20 p-3 font-semibold text-foreground rounded-t-lg">
               Banner Image
+              <span className="text-destructive" aria-hidden="true">
+                {" "}
+                *
+              </span>
             </h2>
             <div className="p-3 sm:p-5">
               <div
+                id="promo-banner"
                 role="button"
                 onClick={() => fileInputRef.current?.click()}
                 className={`relative border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors min-h-40 overflow-hidden ${

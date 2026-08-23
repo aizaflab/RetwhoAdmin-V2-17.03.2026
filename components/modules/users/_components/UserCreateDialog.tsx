@@ -71,12 +71,17 @@ export default function UserCreateDialog({
   const validate = (): FormErrors => {
     const next: FormErrors = {};
     if (!formData.name.trim()) next.name = "Name is required";
+    else if (formData.name.trim().length < 2)
+      next.name = "Name must be at least 2 characters";
     if (!formData.email.trim()) next.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
       next.email = "Enter a valid email address";
     if (!formData.password) next.password = "Password is required";
-    else if (formData.password.length < 8)
-      next.password = "Use at least 8 characters";
+    // Mirrors the API's password policy, so a weak one is caught here rather
+    // than coming back as a 400.
+    else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(formData.password))
+      next.password =
+        "Use at least 8 characters with an uppercase letter, a lowercase letter and a number";
     return next;
   };
 
@@ -85,6 +90,7 @@ export default function UserCreateDialog({
     const found = validate();
     if (Object.keys(found).length > 0) {
       setErrors(found);
+      toast.error("Please fill in the highlighted fields.");
       return;
     }
 
@@ -95,7 +101,7 @@ export default function UserCreateDialog({
         ...formData,
         name,
         email: formData.email.trim(),
-        phoneNumber: formData.phoneNumber?.trim(),
+        phoneNumber: formData.phoneNumber?.trim() || undefined,
       });
       toast.success(`User "${name}" created — credentials have been emailed`);
       onClose();
@@ -145,7 +151,12 @@ export default function UserCreateDialog({
         className="grid grid-cols-1 gap-4 sm:grid-cols-2"
       >
         <Field className="sm:col-span-2">
-          <FieldLabel htmlFor="create-user-name">Name</FieldLabel>
+          <FieldLabel htmlFor="create-user-name">
+            Name
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="create-user-name"
             name="name"
@@ -159,7 +170,12 @@ export default function UserCreateDialog({
         </Field>
 
         <Field className="sm:col-span-2">
-          <FieldLabel htmlFor="create-user-email">Email</FieldLabel>
+          <FieldLabel htmlFor="create-user-email">
+            Email
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="create-user-email"
             name="email"
@@ -174,7 +190,12 @@ export default function UserCreateDialog({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="create-user-password">Password</FieldLabel>
+          <FieldLabel htmlFor="create-user-password">
+            Password
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="create-user-password"
             name="password"
@@ -222,6 +243,9 @@ export default function UserCreateDialog({
             htmlFor="create-user-status"
           >
             Status
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
           </FieldLabel>
           <Select
             id="create-user-status"

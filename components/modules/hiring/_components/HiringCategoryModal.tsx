@@ -68,7 +68,10 @@ export default function HiringCategoryModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      toast.error("Please fill in the highlighted fields.");
+      return;
+    }
 
     const title = formData.title.trim();
 
@@ -165,6 +168,9 @@ export default function HiringCategoryModal({
             htmlFor="hiring-category-status"
           >
             Status
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
           </FieldLabel>
           <Select
             id="hiring-category-status"

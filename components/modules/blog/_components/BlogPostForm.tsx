@@ -46,6 +46,19 @@ interface BlogPostFormProps {
   saving?: boolean;
 }
 
+/**
+ * Validation keys paired with the element they belong to, in the order the
+ * fields appear on the page — so a failed submit can jump to the first thing
+ * that actually needs fixing rather than an arbitrary one.
+ */
+const ERROR_FIELD_IDS: [string, string][] = [
+  ["title", "post-title"],
+  ["categoryId", "post-category"],
+  ["metaTitle", "post-meta-title"],
+  ["metaDescription", "post-meta-description"],
+  ["content", "post-content"],
+];
+
 /** The API rejects anything larger, and the browser can check before uploading. */
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -174,21 +187,45 @@ export default function BlogPostForm({
       next.title = "Title must be at least 2 characters";
     if (!formData.categoryId) next.categoryId = "Category is required";
     if (!formData.content.trim()) next.content = "Content is required";
-    // The API insists a post ends up with an image, so a new post needs a file
-    // and an edit needs either a new file or the one already stored.
-    if (!imageFile && !imagePreview) next.image = "An image is required";
+    // The image is optional — a post without one is valid, so the only rules
+    // left are the type and size checks `handleFileChange` already applies.
     if (formData.metaTitle.length > 60)
       next.metaTitle = "Meta title exceeds 60 characters";
     if (formData.metaDescription.length > 160)
       next.metaDescription = "Meta description exceeds 160 characters";
 
     setErrors(next);
-    return Object.keys(next).length === 0;
+    return next;
+  };
+
+  /**
+   * Puts the first failing field on screen.
+   *
+   * This form is several screens tall, so a message rendered under a field two
+   * sections up is invisible — the submit button just appears to do nothing.
+   */
+  const revealFirstError = (errs: Record<string, string>) => {
+    const first = ERROR_FIELD_IDS.find(([key]) => errs[key]);
+    if (!first) return;
+
+    const el = document.getElementById(first[1]);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // The category select and the editor are not focusable inputs, hence the
+    // guard.
+    if (el instanceof HTMLInputElement) el.focus({ preventScroll: true });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      revealFirstError(errs);
+      toast.error("Please fill in the highlighted fields.");
+      return;
+    }
 
     const title = formData.title.trim();
 
@@ -247,7 +284,12 @@ export default function BlogPostForm({
         {/* Left Column */}
         <div className="space-y-4">
           <Field>
-            <FieldLabel htmlFor="post-title">Blog Title</FieldLabel>
+            <FieldLabel htmlFor="post-title">
+              Blog Title
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
+            </FieldLabel>
             <Input
               id="post-title"
               name="title"
@@ -272,6 +314,9 @@ export default function BlogPostForm({
           <Field>
             <FieldLabel id="post-category-label" htmlFor="post-category">
               Blog Category
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </FieldLabel>
             <Select
               id="post-category"
@@ -311,6 +356,9 @@ export default function BlogPostForm({
           <Field>
             <FieldLabel id="post-status-label" htmlFor="post-status">
               Blog Status
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </FieldLabel>
             <Select
               id="post-status"
@@ -363,7 +411,12 @@ export default function BlogPostForm({
         {/* Right Column */}
         <div className="flex flex-col h-full space-y-4">
           <Field className="flex-1">
-            <FieldLabel htmlFor="post-banner">Image</FieldLabel>
+            <FieldLabel htmlFor="post-banner">
+              Image{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </FieldLabel>
             <div
               id="post-banner"
               role="button"
@@ -552,8 +605,16 @@ export default function BlogPostForm({
       </div>
 
       {/* Content Section */}
-      <div className="bg-card p-3 sm:p-5 rounded-xl border border-border/50">
-        <FieldLabel className="mb-1.5">Content</FieldLabel>
+      <div
+        id="post-content"
+        className="bg-card p-3 sm:p-5 rounded-xl border border-border/50"
+      >
+        <FieldLabel className="mb-1.5">
+          Content
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>
+        </FieldLabel>
 
         <TextEditor
           value={formData.content}

@@ -61,7 +61,8 @@ export interface HiringPost {
   salaryMax: number;
   salaryType: SalaryType;
   status: HiringStatus;
-  numberOfOpenings: number;
+  /** Optional — a posting need not state how many openings it has. */
+  numberOfOpenings?: number;
   /** ISO date; the API insists it is in the future when creating. */
   applicationDeadline: string;
   experience: string;
@@ -115,7 +116,8 @@ export interface HiringPostPayload {
   salaryMax: number;
   salaryType: SalaryType;
   status: HiringStatus;
-  numberOfOpenings: number;
+  /** Optional — a posting need not state how many openings it has. */
+  numberOfOpenings?: number;
   applicationDeadline: string;
   experience: string;
   education: string;

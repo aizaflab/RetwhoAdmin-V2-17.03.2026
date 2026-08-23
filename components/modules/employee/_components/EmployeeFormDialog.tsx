@@ -113,11 +113,14 @@ export default function EmployeeFormDialog({
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
         next.email = "Enter a valid email address";
       if (!formData.password) next.password = "Password is required";
-      else if (formData.password.length < 8)
-        next.password = "Use at least 8 characters";
+      // Mirrors the API's password policy, so a weak one is caught here
+      // rather than coming back as a 400.
+      else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(formData.password))
+        next.password =
+          "Use at least 8 characters with an uppercase letter, a lowercase letter and a number";
     }
 
-    if (!formData.phone.trim()) next.phone = "Phone is required";
+    // Phone is optional — the API stores it as-is and never requires it.
     if (!formData.roleId) next.roleId = "Role is required";
     return next;
   };
@@ -127,6 +130,7 @@ export default function EmployeeFormDialog({
     const found = validate();
     if (Object.keys(found).length > 0) {
       setErrors(found);
+      toast.error("Please fill in the highlighted fields.");
       return;
     }
 
@@ -207,7 +211,12 @@ export default function EmployeeFormDialog({
         className="grid grid-cols-1 gap-4 "
       >
         <Field>
-          <FieldLabel htmlFor="employee-name">Name</FieldLabel>
+          <FieldLabel htmlFor="employee-name">
+            Name
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="employee-name"
             name="name"
@@ -221,7 +230,12 @@ export default function EmployeeFormDialog({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="employee-email">Email</FieldLabel>
+          <FieldLabel htmlFor="employee-email">
+            Email
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="employee-email"
             name="email"
@@ -248,7 +262,12 @@ export default function EmployeeFormDialog({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field>
-            <FieldLabel htmlFor="employee-phone">Phone</FieldLabel>
+            <FieldLabel htmlFor="employee-phone">
+              Phone{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </FieldLabel>
             <Input
               id="employee-phone"
               name="phone"
@@ -266,7 +285,12 @@ export default function EmployeeFormDialog({
               the forgot-password flow, so the field is not offered on edit. */}
           {!isEdit && (
             <Field>
-              <FieldLabel htmlFor="employee-password">Password</FieldLabel>
+              <FieldLabel htmlFor="employee-password">
+                Password
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
               <Input
                 id="employee-password"
                 name="password"
@@ -296,6 +320,9 @@ export default function EmployeeFormDialog({
           <Field>
             <FieldLabel id="employee-roleId-label" htmlFor="employee-roleId">
               Role
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </FieldLabel>
             <Select
               id="employee-roleId"
@@ -329,6 +356,9 @@ export default function EmployeeFormDialog({
           <Field>
             <FieldLabel id="employee-status-label" htmlFor="employee-status">
               Status
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </FieldLabel>
             <Select
               id="employee-status"

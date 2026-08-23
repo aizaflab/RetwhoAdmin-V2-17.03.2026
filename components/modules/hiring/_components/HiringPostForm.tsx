@@ -128,7 +128,9 @@ export default function HiringPostForm({
     skills: initialData?.skills ?? ([] as string[]),
     experience: initialData?.experience ?? "",
     education: initialData?.education ?? "",
-    numberOfOpenings: String(initialData?.numberOfOpenings ?? "1"),
+    // No default — an unspecified opening count is left to the API, which
+    // simply does not store one.
+    numberOfOpenings: String(initialData?.numberOfOpenings ?? ""),
     applicationDeadline: initialData?.applicationDeadline?.slice(0, 10) ?? "",
     status: (initialData?.status ?? "draft") as HiringStatus,
   });
@@ -278,9 +280,12 @@ export default function HiringPostForm({
     else if (max < min)
       errs.salaryMax = "Maximum must be greater than or equal to the minimum";
 
-    const openings = Number(formData.numberOfOpenings);
-    if (!Number.isInteger(openings) || openings < 1)
-      errs.numberOfOpenings = "At least one opening is required";
+    // Optional — left blank, the count is simply not sent.
+    if (formData.numberOfOpenings.trim()) {
+      const openings = Number(formData.numberOfOpenings);
+      if (!Number.isInteger(openings) || openings < 1)
+        errs.numberOfOpenings = "Enter a whole number of 1 or more";
+    }
 
     if (!formData.applicationDeadline) {
       errs.applicationDeadline = "Application deadline is required";
@@ -340,7 +345,9 @@ export default function HiringPostForm({
       salaryMax: Number(formData.salaryMax),
       salaryType: formData.salaryType,
       status: formData.status,
-      numberOfOpenings: Number(formData.numberOfOpenings),
+      ...(formData.numberOfOpenings.trim()
+        ? { numberOfOpenings: Number(formData.numberOfOpenings) }
+        : {}),
       // The API coerces this with `z.coerce.date()`, so a full ISO string is
       // what it expects rather than the yyyy-mm-dd the date input holds.
       applicationDeadline: new Date(formData.applicationDeadline).toISOString(),
@@ -604,6 +611,9 @@ export default function HiringPostForm({
                   htmlFor="hiring-job-type"
                 >
                   Job Type
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Select
                   id="hiring-job-type"
@@ -627,6 +637,9 @@ export default function HiringPostForm({
               <Field>
                 <FieldLabel id="hiring-type-label" htmlFor="hiring-type">
                   Listing Type
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Select
                   id="hiring-type"
@@ -660,6 +673,9 @@ export default function HiringPostForm({
                   htmlFor="hiring-currency"
                 >
                   Currency
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Select
                   id="hiring-currency"
@@ -736,6 +752,9 @@ export default function HiringPostForm({
                   htmlFor="hiring-salary-type"
                 >
                   Salary Type
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Select
                   id="hiring-salary-type"
@@ -999,6 +1018,9 @@ export default function HiringPostForm({
               <Field>
                 <FieldLabel id="hiring-status-label" htmlFor="hiring-status">
                   Status
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </FieldLabel>
                 <Select
                   id="hiring-status"
@@ -1019,9 +1041,9 @@ export default function HiringPostForm({
 
               <Field>
                 <FieldLabel htmlFor="hiring-openings">
-                  Number of Openings
-                  <span className="text-destructive" aria-hidden="true">
-                    *
+                  Number of Openings{" "}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (optional)
                   </span>
                 </FieldLabel>
                 <Input

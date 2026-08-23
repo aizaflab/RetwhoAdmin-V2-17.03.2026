@@ -83,7 +83,10 @@ export default function RoleFormEditor({
     } else if (name.trim().length < 2) {
       next.name = "Role name must be at least 2 characters";
     }
-    if (!description.trim()) next.description = "Description is required";
+    // Optional field — only the API's own length cap is mirrored, so an
+    // over-long description is caught before the round trip.
+    if (description.trim().length > 300)
+      next.description = "Description must be at most 300 characters";
     return next;
   };
 
@@ -92,6 +95,7 @@ export default function RoleFormEditor({
     const found = validate();
     if (Object.keys(found).length > 0) {
       setErrors(found);
+      toast.error("Please fill in the highlighted fields.");
       return;
     }
 
@@ -153,7 +157,12 @@ export default function RoleFormEditor({
         <div className="space-y-5 lg:col-span-1">
           <div className="space-y-5 rounded-xl border border-border bg-card p-5">
             <Field>
-              <FieldLabel htmlFor="role-name">Role Name</FieldLabel>
+              <FieldLabel htmlFor="role-name">
+                Role Name
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
               <Input
                 id="role-name"
                 name="name"
@@ -171,7 +180,12 @@ export default function RoleFormEditor({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="role-description">Description</FieldLabel>
+              <FieldLabel htmlFor="role-description">
+                Description{" "}
+                <span className="text-xs font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </FieldLabel>
               <Textarea
                 id="role-description"
                 name="description"
@@ -194,6 +208,9 @@ export default function RoleFormEditor({
             <Field>
               <FieldLabel id="role-status-label" htmlFor="role-status">
                 Status
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
               </FieldLabel>
               <Select
                 id="role-status"
