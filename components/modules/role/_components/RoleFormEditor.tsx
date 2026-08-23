@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ArrowLeftIcon } from "lucide-react";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 import {
   Field,
   FieldError,
@@ -33,7 +35,11 @@ import type {
 interface RoleFormEditorProps {
   /** Present in edit mode; omit to create a new role. */
   initialRole?: Role;
-  onSave?: (payload: RolePayload) => void | Promise<void>;
+  /** Sends the payload to the API. Must reject on failure — the rejection is
+   *  what turns a 409 into an inline "name taken" error on the field. */
+  onSave: (payload: RolePayload) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
 
 const STATUS_OPTIONS: SelectOption[] = [
@@ -47,6 +53,7 @@ type FormErrors = Partial<Record<"name" | "description", string>>;
 export default function RoleFormEditor({
   initialRole,
   onSave,
+  saving = false,
 }: RoleFormEditorProps) {
   const router = useRouter();
   const isEdit = !!initialRole;
@@ -66,12 +73,20 @@ export default function RoleFormEditor({
   );
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [saving, setSaving] = useState(false);
 
   const validate = (): FormErrors => {
     const next: FormErrors = {};
-    if (!name.trim()) next.name = "Role name is required";
-    if (!description.trim()) next.description = "Description is required";
+    // Mirrors the API's own rule, so a too-short name is caught before the
+    // round trip rather than coming back as a 400.
+    if (!name.trim()) {
+      next.name = "Role name is required";
+    } else if (name.trim().length < 2) {
+      next.name = "Role name must be at least 2 characters";
+    }
+    // Optional field — only the API's own length cap is mirrored, so an
+    // over-long description is caught before the round trip.
+    if (description.trim().length > 300)
+      next.description = "Description must be at most 300 characters";
     return next;
   };
 
@@ -80,20 +95,38 @@ export default function RoleFormEditor({
     const found = validate();
     if (Object.keys(found).length > 0) {
       setErrors(found);
+      toast.error("Please fill in the highlighted fields.");
       return;
     }
 
-    setSaving(true);
     try {
-      await onSave?.({
+      await onSave({
         name: name.trim(),
         description: description.trim(),
         permissions,
         status,
       });
+      toast.success(
+        isEdit
+          ? `Role "${name.trim()}" updated successfully`
+          : `Role "${name.trim()}" created successfully`,
+      );
       router.push("/role/manage");
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        isEdit
+          ? "Could not update the role. Please try again."
+          : "Could not create the role. Please try again.",
+      );
+
+      // 409 is only ever the duplicate-name conflict, so it belongs on the
+      // field the user has to change rather than in a toast they can dismiss.
+      if (getApiErrorStatus(error) === 409) {
+        setErrors((prev) => ({ ...prev, name: message }));
+      }
+
+      toast.error(message);
     }
   };
 
@@ -124,7 +157,12 @@ export default function RoleFormEditor({
         <div className="space-y-5 lg:col-span-1">
           <div className="space-y-5 rounded-xl border border-border bg-card p-5">
             <Field>
-              <FieldLabel htmlFor="role-name">Role Name</FieldLabel>
+              <FieldLabel htmlFor="role-name">
+                Role Name
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
               <Input
                 id="role-name"
                 name="name"
@@ -142,7 +180,12 @@ export default function RoleFormEditor({
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="role-description">Description</FieldLabel>
+              <FieldLabel htmlFor="role-description">
+                Description{" "}
+                <span className="text-xs font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </FieldLabel>
               <Textarea
                 id="role-description"
                 name="description"
@@ -165,6 +208,9 @@ export default function RoleFormEditor({
             <Field>
               <FieldLabel id="role-status-label" htmlFor="role-status">
                 Status
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
               </FieldLabel>
               <Select
                 id="role-status"

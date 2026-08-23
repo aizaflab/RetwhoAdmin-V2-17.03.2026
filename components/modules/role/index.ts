@@ -3,7 +3,6 @@ export { default as RoleListTable } from "./_components/RoleListTable";
 export { default as RoleFormEditor } from "./_components/RoleFormEditor";
 export { default as RoleViewDrawer } from "./_components/RoleViewDrawer";
 export { default as PermissionMatrix } from "./_components/PermissionMatrix";
-export { MOCK_ROLES } from "./_data/mock-roles";
 export {
   ROLE_PAGES,
   PERMISSION_ACTIONS,
@@ -19,5 +18,8 @@ export type {
   RolePermission,
   RolePayload,
   RoleListMeta,
+  RoleListQuery,
   RoleListResponse,
+  RoleListResult,
+  RoleStats as RoleStatsData,
 } from "./_types/role.types";

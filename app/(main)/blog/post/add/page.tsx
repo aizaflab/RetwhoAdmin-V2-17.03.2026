@@ -1,21 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BlogPost } from "@/components/modules/blog/_types/blog.types";
-import { MOCK_BLOG_CATEGORIES } from "@/components/modules/blog/_data/mock-blog";
-import BlogPostForm from "@/components/modules/blog/_components/BlogPostForm";
 import { MoveLeft } from "lucide-react";
-import { toast } from "sonner";
+import { BlogPostForm } from "@/components/modules/blog";
+import type { BlogPostPayload } from "@/components/modules/blog";
+import {
+  useCreateBlogPostMutation,
+  useGetBlogCategoryOptionsQuery,
+} from "@/featured/blog/blogApiSlice";
 
 export default function AddBlogPage() {
   const router = useRouter();
 
-  const handleSave = (data: Partial<BlogPost>) => {
-    // Here you would typically make an API call to save the data
-    console.log("Saving new blog post:", data);
-    toast.success("Blog post created successfully!");
-    router.push("/blog/post/manage");
-  };
+  const { data: categoryOptions, isLoading: categoriesLoading } =
+    useGetBlogCategoryOptionsQuery(undefined);
+  const [createBlogPost, { isLoading }] = useCreateBlogPostMutation();
+
+  // `.unwrap()` rethrows the API error, which is what lets the form surface
+  // the reason instead of failing silently.
+  const handleSave = (payload: BlogPostPayload, imageFile: File | null) =>
+    createBlogPost({ payload, imageFile }).unwrap();
 
   return (
     <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
@@ -33,7 +37,12 @@ export default function AddBlogPage() {
         </div>
       </div>
 
-      <BlogPostForm categories={MOCK_BLOG_CATEGORIES} onSave={handleSave} />
+      <BlogPostForm
+        categoryOptions={categoryOptions ?? []}
+        categoriesLoading={categoriesLoading}
+        onSave={handleSave}
+        saving={isLoading}
+      />
     </div>
   );
 }

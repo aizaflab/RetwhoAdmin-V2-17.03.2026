@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 import { Dialog, Field, FieldError, FieldLabel } from "@/components/ui";
 import { Input } from "@/components/ui/input/Input";
 import { Button } from "@/components/ui/button/Button";
@@ -11,21 +13,19 @@ import {
   SelectItems,
   SelectTrigger,
   SelectValue,
-  type SelectOption,
 } from "@/components/ui/select/Select";
 
+import { STATUS_OPTIONS } from "../_data/user-options";
 import type { UserPayload } from "../_types/users.types";
 
 interface UserCreateDialogProps {
   open: boolean;
   onClose: () => void;
-  onSubmit?: (payload: UserPayload) => void | Promise<void>;
+  /** Must reject on failure — the rejection is what puts a 409 on the field. */
+  onSubmit: (payload: UserPayload) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
-
-const STATUS_OPTIONS: SelectOption[] = [
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
-];
 
 /** Field names match the API body, so this state object is the payload. */
 const EMPTY_FORM: UserPayload = {
@@ -43,19 +43,25 @@ export default function UserCreateDialog({
   open,
   onClose,
   onSubmit,
+  saving = false,
 }: UserCreateDialogProps) {
   const [formData, setFormData] = useState<UserPayload>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
-  const [saving, setSaving] = useState(false);
 
-  // Reset on every open so a half-filled attempt never carries over.
-  useEffect(() => {
-    if (!open) return;
-    setFormData(EMPTY_FORM);
-    setErrors({});
-    setShowPassword(false);
-  }, [open]);
+  // Reset on every open so a half-filled attempt never carries over. Adjusted
+  // during render rather than in an effect: an effect would paint the stale
+  // form for a frame first.
+  const [wasOpen, setWasOpen] = useState(open);
+
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setFormData(EMPTY_FORM);
+      setErrors({});
+      setShowPassword(false);
+    }
+  }
 
   const handleFieldChange = (field: keyof UserPayload, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -65,12 +71,17 @@ export default function UserCreateDialog({
   const validate = (): FormErrors => {
     const next: FormErrors = {};
     if (!formData.name.trim()) next.name = "Name is required";
+    else if (formData.name.trim().length < 2)
+      next.name = "Name must be at least 2 characters";
     if (!formData.email.trim()) next.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
       next.email = "Enter a valid email address";
     if (!formData.password) next.password = "Password is required";
-    else if (formData.password.length < 8)
-      next.password = "Use at least 8 characters";
+    // Mirrors the API's password policy, so a weak one is caught here rather
+    // than coming back as a 400.
+    else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(formData.password))
+      next.password =
+        "Use at least 8 characters with an uppercase letter, a lowercase letter and a number";
     return next;
   };
 
@@ -79,20 +90,34 @@ export default function UserCreateDialog({
     const found = validate();
     if (Object.keys(found).length > 0) {
       setErrors(found);
+      toast.error("Please fill in the highlighted fields.");
       return;
     }
 
-    setSaving(true);
+    const name = formData.name.trim();
+
     try {
-      await onSubmit?.({
+      await onSubmit({
         ...formData,
-        name: formData.name.trim(),
+        name,
         email: formData.email.trim(),
-        phoneNumber: formData.phoneNumber?.trim(),
+        phoneNumber: formData.phoneNumber?.trim() || undefined,
       });
+      toast.success(`User "${name}" created — credentials have been emailed`);
       onClose();
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        "Could not create the user. Please try again.",
+      );
+
+      // 409 on this endpoint is only ever the duplicate email, so it belongs on
+      // the field the user has to change rather than in a dismissible toast.
+      if (getApiErrorStatus(error) === 409) {
+        setErrors((prev) => ({ ...prev, email: message }));
+      }
+
+      toast.error(message);
     }
   };
 
@@ -126,7 +151,12 @@ export default function UserCreateDialog({
         className="grid grid-cols-1 gap-4 sm:grid-cols-2"
       >
         <Field className="sm:col-span-2">
-          <FieldLabel htmlFor="create-user-name">Name</FieldLabel>
+          <FieldLabel htmlFor="create-user-name">
+            Name
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="create-user-name"
             name="name"
@@ -140,7 +170,12 @@ export default function UserCreateDialog({
         </Field>
 
         <Field className="sm:col-span-2">
-          <FieldLabel htmlFor="create-user-email">Email</FieldLabel>
+          <FieldLabel htmlFor="create-user-email">
+            Email
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="create-user-email"
             name="email"
@@ -155,7 +190,12 @@ export default function UserCreateDialog({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="create-user-password">Password</FieldLabel>
+          <FieldLabel htmlFor="create-user-password">
+            Password
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="create-user-password"
             name="password"
@@ -203,6 +243,9 @@ export default function UserCreateDialog({
             htmlFor="create-user-status"
           >
             Status
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
           </FieldLabel>
           <Select
             id="create-user-status"

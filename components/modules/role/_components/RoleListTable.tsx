@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Edit2, Trash2, Eye } from "lucide-react";
+import { Shield, Edit2, Trash2, Eye, Users } from "lucide-react";
 import { Input } from "@/components/ui";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
@@ -22,7 +22,21 @@ import type { Role } from "../_types/role.types";
 
 interface RoleListTableProps {
   roles: Role[];
-  onDelete?: (id: string) => void;
+  /** Row count across every page — drives the pagination footer. */
+  total: number;
+  loading?: boolean;
+  /** Search / filter / paging are all server-side; this component only reports
+   *  the changes and renders whatever the API sent back. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  page: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  onDelete?: (role: Role) => Promise<void> | void;
+  deleting?: boolean;
 }
 
 /* Tinted from the semantic tokens so both themes resolve from the same source. */
@@ -40,6 +54,16 @@ const STATUS_OPTIONS = [
   { value: "inactive", label: "Inactive" },
 ];
 
+/** Why the row's delete button is off — empty string means it is available. */
+function deleteBlockedReason(role: Role): string {
+  if (role.isSystem) return "System role";
+  const count = role.employeeCount ?? 0;
+  if (count > 0) {
+    return `Assigned to ${count} employee${count === 1 ? "" : "s"}`;
+  }
+  return "";
+}
+
 function formatDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
@@ -48,13 +72,22 @@ function formatDate(iso: string): string {
   );
 }
 
-export default function RoleListTable({ roles, onDelete }: RoleListTableProps) {
+export default function RoleListTable({
+  roles,
+  total,
+  loading,
+  search,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  page,
+  onPageChange,
+  limit,
+  onLimitChange,
+  onDelete,
+  deleting,
+}: RoleListTableProps) {
   const router = useRouter();
-
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
 
   const [roleToView, setRoleToView] = useState<Role | null>(null);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
@@ -102,6 +135,24 @@ export default function RoleListTable({ roles, onDelete }: RoleListTableProps) {
       ),
     },
     {
+      id: "employeeCount",
+      header: "Employees",
+      className: "text-center",
+      cell: (value, role) => {
+        const count = role.employeeCount ?? 0;
+        return (
+          <span
+            className={`inline-flex items-center gap-1.5 text-sm font-medium ${
+              count > 0 ? "text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            <Users className="size-3.5" />
+            {count}
+          </span>
+        );
+      },
+    },
+    {
       id: "status",
       header: "Status",
       className: "text-center",
@@ -143,25 +194,32 @@ export default function RoleListTable({ roles, onDelete }: RoleListTableProps) {
             </button>
           </SimpleTooltip>
 
-          <SimpleTooltip content="Edit" position="top">
+          {/* The API rejects edits to system roles, so the button is not offered. */}
+          <SimpleTooltip
+            content={role.isSystem ? "System role" : "Edit"}
+            position="top"
+          >
             <button
+              disabled={role.isSystem}
               onClick={(e) => {
                 e.stopPropagation();
                 openEdit(role);
               }}
-              className={`${ACTION_BUTTON} hover:border-primary/50 hover:text-primary`}
+              className={`${ACTION_BUTTON} enabled:hover:border-primary/50 enabled:hover:text-primary disabled:cursor-not-allowed disabled:opacity-40`}
             >
               <Edit2 className="size-3.5" />
             </button>
           </SimpleTooltip>
 
-          {/* System roles are seeded by the backend and can't be removed. */}
+          {/* Mirrors what the API itself refuses: system roles are seeded and
+              permanent, and a role still held by employees would leave them
+              with a dangling roleId. */}
           <SimpleTooltip
-            content={role.isSystem ? "System role" : "Delete"}
+            content={deleteBlockedReason(role) || "Delete"}
             position="top"
           >
             <button
-              disabled={role.isSystem}
+              disabled={!!deleteBlockedReason(role)}
               onClick={(e) => {
                 e.stopPropagation();
                 setRoleToDelete(role);
@@ -176,26 +234,6 @@ export default function RoleListTable({ roles, onDelete }: RoleListTableProps) {
     },
   ];
 
-  // this is dummy filtering logic, remove it when the API is wired up with search and filter params
-  const filtered = roles.filter((role) => {
-    const query = search.toLowerCase();
-    const matchSearch =
-      role.name.toLowerCase().includes(query) ||
-      role.description.toLowerCase().includes(query);
-    const matchStatus = statusFilter === "all" || role.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
-
-  // Clamp instead of resetting `page` in an effect, so filtering down to fewer
-  // pages can never leave the table showing an empty slice.
-  const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
-  const currentPage = Math.min(page, totalPages);
-  // Client-side slicing — drop this once the API takes page/limit params.
-  const paginated = filtered.slice(
-    (currentPage - 1) * limit,
-    currentPage * limit,
-  );
-
   return (
     <div>
       {/* Toolbar */}
@@ -207,7 +245,7 @@ export default function RoleListTable({ roles, onDelete }: RoleListTableProps) {
             <Input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search roles..."
               startIcon={
                 <SearchIcon className="size-4 text-muted-foreground" />
@@ -218,7 +256,7 @@ export default function RoleListTable({ roles, onDelete }: RoleListTableProps) {
 
           {/* Status filter */}
           <div className="relative w-32">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               <SelectTrigger className="h-10 rounded-md bg-card text-foreground">
                 <SelectValue
                   options={STATUS_OPTIONS}
@@ -235,17 +273,15 @@ export default function RoleListTable({ roles, onDelete }: RoleListTableProps) {
 
       {/* Table */}
       <Table<Role>
-        data={paginated}
+        data={roles}
         columns={columns}
+        loading={loading}
         pagination
-        page={currentPage}
-        setPage={setPage}
+        page={page}
+        setPage={onPageChange}
         limit={limit}
-        setLimit={(next) => {
-          setLimit(next);
-          setPage(1);
-        }}
-        totalData={filtered.length}
+        setLimit={onLimitChange}
+        totalData={total}
         bordered
         emptyMessage="No roles found"
         headerColor="bg-muted/60"
@@ -272,11 +308,14 @@ export default function RoleListTable({ roles, onDelete }: RoleListTableProps) {
           if (!open) setRoleToDelete(null);
         }}
         selectedRow={roleToDelete}
-        handleDelete={(role) => {
-          if (role) {
-            onDelete?.(role._id);
-            setRoleToDelete(null);
-          }
+        isLoading={deleting}
+        handleDelete={async (role) => {
+          if (!role) return;
+          await onDelete?.(role);
+          // Closed unconditionally: on failure the page has already toasted the
+          // reason (system role, still assigned to employees), and leaving the
+          // modal open would only invite the same rejected click again.
+          setRoleToDelete(null);
         }}
       />
     </div>

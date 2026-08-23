@@ -1,63 +1,61 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
-import PromotionForm from "@/components/modules/promotion/_components/PromotionForm";
+import { use } from "react";
+import { PromotionForm } from "@/components/modules/promotion";
+import type { PromotionPayload } from "@/components/modules/promotion";
 import {
-  MOCK_WHOLESALERS,
-  MOCK_PROMOTIONS,
-} from "@/components/modules/promotion/_data/mock-promotion";
-import { Promotion } from "@/components/modules/promotion/_types/promotion.types";
-import { toast } from "sonner";
+  useGetPromotionQuery,
+  useUpdatePromotionMutation,
+} from "@/featured/promotion/promotionApiSlice";
+import { getApiErrorMessage } from "@/lib/apiError";
+import { Skeleton } from "@/components/ui/skeleton/Skeleton";
 
-export default function EditPromotionPage() {
-  const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+export default function EditPromotionPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
 
-  // In real app, this would be an API call fetching promotion by id
-  const promotion = MOCK_PROMOTIONS.find((p) => p.id === id) || null;
+  const {
+    data: promotion,
+    isLoading,
+    isError,
+    error,
+  } = useGetPromotionQuery(id);
+  const [updatePromotion, { isLoading: isSaving }] =
+    useUpdatePromotionMutation();
 
-  const handleSave = (data: Partial<Promotion>) => {
-    // In real app, this would be an API call updating promotion by id
-    console.log("Updating promotion:", id, data);
-    toast.success("Promotion updated successfully");
-    router.push("/promotion/manage");
-  };
-
-  if (!promotion) {
-    return (
-      <div className="center h-[80vh] flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Promotion not found</h2>
-        <button
-          onClick={() => router.push("/promotion/manage")}
-          className="text-[#0284c7] hover:underline"
-        >
-          Return to Promotions
-        </button>
-      </div>
-    );
-  }
+  const handleSave = (
+    payload: PromotionPayload,
+    bannerImageFile: File | null,
+  ) => updatePromotion({ id, payload, bannerImageFile }).unwrap();
 
   return (
     <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
-      <div className="mb-5 flex items-center justify-between">
-        <h1 className="sm:text-2xl text-xl font-medium text-foreground">
-          Edit Promotion
-        </h1>
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
-            Edit Promotion Entry
-          </span>
+      {isLoading ? (
+        <div className="space-y-6">
+          <Skeleton className="h-12 w-72" />
+          <Skeleton className="h-64" />
         </div>
-      </div>
-      <div className="bg-transparent">
+      ) : promotion ? (
+        // Remounted per promotion id so the form state is seeded from the
+        // fetched record rather than kept from whatever rendered first.
         <PromotionForm
+          key={promotion._id}
           initialData={promotion}
-          wholesalers={MOCK_WHOLESALERS}
           onSave={handleSave}
+          saving={isSaving}
         />
-      </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
+          <p className="text-sm text-muted-foreground">
+            {isError
+              ? getApiErrorMessage(error, "Promotion not found.")
+              : "Promotion not found."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

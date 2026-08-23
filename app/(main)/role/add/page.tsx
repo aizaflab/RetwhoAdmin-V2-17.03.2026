@@ -6,10 +6,17 @@ import {
 } from "@/components/modules/access-control";
 import { PERMISSIONS } from "@/components/modules/access-control/_config/permission";
 import { RoleFormEditor } from "@/components/modules/role";
+import type { RolePayload } from "@/components/modules/role";
+import { useCreateRoleMutation } from "@/featured/role/roleApiSlice";
 import { ShieldCheck } from "lucide-react";
 
 export default function AddRolePage() {
   const user = useCurrentAccess();
+  const [createRole, { isLoading }] = useCreateRoleMutation();
+
+  // `.unwrap()` rethrows the API error, which is what lets the form put a
+  // duplicate-name conflict on the name field.
+  const handleSave = (payload: RolePayload) => createRole(payload).unwrap();
 
   return (
     <PermissionGuard
@@ -32,7 +39,7 @@ export default function AddRolePage() {
       }
     >
       <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
-        <RoleFormEditor />
+        <RoleFormEditor onSave={handleSave} saving={isLoading} />
       </div>
     </PermissionGuard>
   );

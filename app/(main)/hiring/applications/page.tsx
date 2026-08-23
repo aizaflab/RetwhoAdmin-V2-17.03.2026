@@ -1,113 +1,156 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { JobApplication } from "@/components/modules/hiring/_types/hiring.types";
-import {
-  MOCK_JOB_APPLICATIONS,
-  MOCK_HIRING_POSTS,
-} from "@/components/modules/hiring/_data/mock-hiring";
-import ApplicationListTable from "@/components/modules/hiring/_components/ApplicationListTable";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { SimpleSelect } from "@/components/ui";
+import { ApplicationListTable } from "@/components/modules/hiring";
+import type {
+  ApplicationListQuery,
+  ApplicationStatus,
+  JobApplication,
+} from "@/components/modules/hiring";
+import {
+  useDeleteHiringApplicationMutation,
+  useGetHiringApplicationsQuery,
+  useGetHiringPostsQuery,
+  useUpdateApplicationStatusMutation,
+} from "@/featured/hiring/hiringApiSlice";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { getApiErrorMessage } from "@/lib/apiError";
+import { Skeleton } from "@/components/ui/skeleton/Skeleton";
 
-export default function ManageApplicationsPage() {
-  const [applications, setApplications] = useState<JobApplication[]>(
-    MOCK_JOB_APPLICATIONS,
-  );
+function ApplicationsView() {
+  // Arriving from a posting's "View Applications" pre-selects that posting.
+  const searchParams = useSearchParams();
+  const initialPost = searchParams.get("hiringId") ?? "all";
 
-  const [selectedJobId, setSelectedJobId] = useState<string>("all");
+  // Query state — everything here goes to the API, nothing is filtered locally.
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [postFilter, setPostFilter] = useState(initialPost);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const handleStatusChange = (id: string, status: JobApplication["status"]) => {
-    setApplications((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, status } : app)),
-    );
-    toast.success(`Application updated to ${status}`);
+  const debouncedSearch = useDebouncedValue(search);
+
+  // Any change to what is being listed sends the table back to page 1 — a
+  // narrowed result set can have fewer pages than the one currently in view.
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
   };
 
-  const jobOptions = useMemo(() => {
-    return [
-      { value: "all", label: "All Job Posts" },
-      ...MOCK_HIRING_POSTS.map((post) => ({
-        value: post.id,
-        label: post.title,
-      })),
-    ];
-  }, []);
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(1);
+  };
 
-  const filteredApplications = useMemo(() => {
-    if (selectedJobId === "all") return applications;
-    return applications.filter((app) => app.hiringId === selectedJobId);
-  }, [applications, selectedJobId]);
+  const handlePostFilterChange = (value: string) => {
+    setPostFilter(value);
+    setPage(1);
+  };
 
-  const selectedJobName =
-    selectedJobId === "all"
-      ? "All Applications"
-      : MOCK_HIRING_POSTS.find((p) => p.id === selectedJobId)?.title ||
-        "Applications";
+  const handleLimitChange = (value: number) => {
+    setLimit(value);
+    setPage(1);
+  };
 
-  const stats = useMemo(() => {
-    return {
-      total: filteredApplications.length,
-      reviewed: filteredApplications.filter((a) => a.status === "reviewed")
-        .length,
-      shortlisted: filteredApplications.filter(
-        (a) => a.status === "shortlisted",
-      ).length,
-      hired: filteredApplications.filter((a) => a.status === "hired").length,
-    };
-  }, [filteredApplications]);
+  const listQuery: ApplicationListQuery = {
+    page,
+    limit,
+    ...(debouncedSearch.trim() ? { searchTerm: debouncedSearch.trim() } : {}),
+    ...(statusFilter !== "all"
+      ? { status: statusFilter as ApplicationStatus }
+      : {}),
+    ...(postFilter !== "all" ? { hiringId: postFilter } : {}),
+  };
+
+  const {
+    data: list,
+    isLoading,
+    isFetching,
+  } = useGetHiringApplicationsQuery(listQuery);
+
+  // Just enough postings to populate the filter; the list itself is paginated
+  // server-side and does not depend on this.
+  const { data: postList } = useGetHiringPostsQuery({ limit: 100 });
+
+  const [updateStatus] = useUpdateApplicationStatusMutation();
+  const [deleteApplication, { isLoading: isDeleting }] =
+    useDeleteHiringApplicationMutation();
+
+  const applications = list?.applications ?? [];
+  const total = list?.meta?.total ?? 0;
+
+  const postOptions = (postList?.posts ?? []).map((post) => ({
+    value: post._id,
+    label: post.title,
+  }));
+
+  const handleUpdateStatus = async (
+    application: JobApplication,
+    status: ApplicationStatus,
+  ) => {
+    try {
+      await updateStatus({ id: application._id, data: { status } }).unwrap();
+      toast.success(`${application.fullName} moved to ${status}`);
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(error, "Could not change the application status."),
+      );
+    }
+  };
+
+  const handleDelete = async (application: JobApplication) => {
+    try {
+      await deleteApplication(application._id).unwrap();
+      toast.success(`Application from "${application.fullName}" deleted`);
+
+      // Deleting the only row on the last page would otherwise leave the table
+      // showing an empty page that no longer exists.
+      if (applications.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Could not delete the application. Please try again.",
+        ),
+      );
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      {/* Compact Filter Row */}
-      <div className="p-3 sm:p-4 rounded-lg border bg-card border-border/70 flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Minimal Stats Inline */}
-        <div className="flex items-center gap-4 text-[13px] w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-muted-foreground font-medium">Total:</span>
-            <span className="text-foreground px-2 py-0.5 rounded bg-muted font-bold min-w-[24px] text-center">
-              {stats.total}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-muted-foreground font-medium">Reviewed:</span>
-            <span className="text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 font-bold min-w-[24px] text-center">
-              {stats.reviewed}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-muted-foreground font-medium">
-              Shortlisted:
-            </span>
-            <span className="text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/20 font-bold min-w-[24px] text-center">
-              {stats.shortlisted}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-muted-foreground font-medium">Hired:</span>
-            <span className="text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/20 font-bold min-w-[24px] text-center">
-              {stats.hired}
-            </span>
-          </div>
-        </div>
+    <ApplicationListTable
+      applications={applications}
+      total={total}
+      loading={isLoading || isFetching}
+      search={search}
+      onSearchChange={handleSearchChange}
+      statusFilter={statusFilter}
+      onStatusFilterChange={handleStatusFilterChange}
+      postFilter={postFilter}
+      onPostFilterChange={handlePostFilterChange}
+      postOptions={postOptions}
+      page={page}
+      onPageChange={setPage}
+      limit={limit}
+      onLimitChange={handleLimitChange}
+      onUpdateStatus={handleUpdateStatus}
+      onDelete={handleDelete}
+      deleting={isDeleting}
+    />
+  );
+}
 
-        <div className="w-full md:w-[280px]">
-          <SimpleSelect
-            options={jobOptions}
-            value={selectedJobId}
-            onChange={setSelectedJobId}
-            className="h-10 rounded-md bg-card"
-          />
-        </div>
-      </div>
-
-      <div className="min-h-[calc(100dvh-150px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
-        <ApplicationListTable
-          applications={filteredApplications}
-          onStatusChange={handleStatusChange}
-          title={selectedJobName}
-        />
-      </div>
+export default function HiringApplicationsPage() {
+  return (
+    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
+      {/* useSearchParams needs a Suspense boundary to keep the route static. */}
+      <Suspense fallback={<Skeleton className="h-96" />}>
+        <ApplicationsView />
+      </Suspense>
     </div>
   );
 }

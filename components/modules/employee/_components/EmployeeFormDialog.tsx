@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { Dialog, Field, FieldError, FieldLabel, Input } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
@@ -10,13 +11,16 @@ import {
   SelectItems,
   SelectTrigger,
   SelectValue,
+  type SelectOption,
 } from "@/components/ui/select/Select";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 
-import { ROLE_OPTIONS, STATUS_OPTIONS } from "../_data/employee-options";
+import { STATUS_OPTIONS } from "../_data/employee-options";
 import type {
   Employee,
   EmployeePayload,
   EmployeeStatus,
+  EmployeeUpdatePayload,
 } from "../_types/employee.types";
 
 interface EmployeeFormDialogProps {
@@ -24,7 +28,14 @@ interface EmployeeFormDialogProps {
   onClose: () => void;
   /** Present in edit mode; omit to add a new employee. */
   employee?: Employee | null;
-  onSubmit?: (payload: EmployeePayload) => void | Promise<void>;
+  /** Assignable roles from `GET /admin/roles/options`. */
+  roleOptions: SelectOption[];
+  rolesLoading?: boolean;
+  /** Must reject on failure — the rejection is what puts a 409 on the field. */
+  onCreate: (payload: EmployeePayload) => Promise<unknown>;
+  onUpdate: (id: string, payload: EmployeeUpdatePayload) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
 
 /** Field names match the API body, so this state object is the payload. */
@@ -39,38 +50,50 @@ const EMPTY_FORM: EmployeePayload = {
 
 type FormErrors = Partial<Record<keyof EmployeePayload, string>>;
 
-/** Add / edit employee in a dialog — the API only needs six fields. */
+/** Add / edit employee in a dialog. */
 export default function EmployeeFormDialog({
   open,
   onClose,
   employee,
-  onSubmit,
+  roleOptions,
+  rolesLoading,
+  onCreate,
+  onUpdate,
+  saving = false,
 }: EmployeeFormDialogProps) {
   const isEdit = !!employee;
 
   const [formData, setFormData] = useState<EmployeePayload>(EMPTY_FORM);
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   // Reset on every open so a previous edit never leaks into the next one.
-  useEffect(() => {
-    if (!open) return;
-    setFormData(
-      employee
-        ? {
-            name: employee.name,
-            email: employee.email,
-            phone: employee.phone ?? "",
-            password: "",
-            roleId: employee.roleId,
-            status: employee.status,
-          }
-        : EMPTY_FORM,
-    );
-    setErrors({});
-    setShowPassword(false);
-  }, [open, employee]);
+  // Adjusted during render rather than in an effect: an effect would paint the
+  // stale form for a frame first, and React re-runs this before committing.
+  // Null while closed, so the fields keep their content through the fade-out
+  // instead of visibly emptying as the dialog slides away.
+  const openKey = open ? (employee?._id ?? "new") : null;
+  const [lastOpenKey, setLastOpenKey] = useState<string | null>(openKey);
+
+  if (openKey !== lastOpenKey) {
+    setLastOpenKey(openKey);
+    if (openKey) {
+      setFormData(
+        employee
+          ? {
+              name: employee.name,
+              email: employee.email,
+              phone: employee.phone ?? "",
+              password: "",
+              roleId: employee.roleId,
+              status: employee.status,
+            }
+          : EMPTY_FORM,
+      );
+      setErrors({});
+      setShowPassword(false);
+    }
+  }
 
   const handleFieldChange = (field: keyof EmployeePayload, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -80,14 +103,24 @@ export default function EmployeeFormDialog({
   const validate = (): FormErrors => {
     const next: FormErrors = {};
     if (!formData.name.trim()) next.name = "Name is required";
-    if (!formData.email.trim()) next.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
-      next.email = "Enter a valid email address";
-    if (!formData.phone.trim()) next.phone = "Phone is required";
-    // On edit an empty password means "keep the current one".
-    if (!isEdit && !formData.password) next.password = "Password is required";
-    else if (formData.password && formData.password.length < 8)
-      next.password = "Use at least 8 characters";
+    else if (formData.name.trim().length < 2)
+      next.name = "Name must be at least 2 characters";
+
+    // Email is the login identity and the API will not change it on an edit,
+    // so it is only validated when creating.
+    if (!isEdit) {
+      if (!formData.email.trim()) next.email = "Email is required";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
+        next.email = "Enter a valid email address";
+      if (!formData.password) next.password = "Password is required";
+      // Mirrors the API's password policy, so a weak one is caught here
+      // rather than coming back as a 400.
+      else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(formData.password))
+        next.password =
+          "Use at least 8 characters with an uppercase letter, a lowercase letter and a number";
+    }
+
+    // Phone is optional — the API stores it as-is and never requires it.
     if (!formData.roleId) next.roleId = "Role is required";
     return next;
   };
@@ -97,20 +130,50 @@ export default function EmployeeFormDialog({
     const found = validate();
     if (Object.keys(found).length > 0) {
       setErrors(found);
+      toast.error("Please fill in the highlighted fields.");
       return;
     }
 
-    setSaving(true);
+    const name = formData.name.trim();
+
     try {
-      await onSubmit?.({
-        ...formData,
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-      });
+      if (isEdit && employee) {
+        // Only the four fields this endpoint accepts — sending email or
+        // password here would be rejected by the API's strict body schema.
+        await onUpdate(employee._id, {
+          name,
+          phone: formData.phone.trim(),
+          roleId: formData.roleId,
+          status: formData.status,
+        });
+        toast.success(`Employee "${name}" updated successfully`);
+      } else {
+        await onCreate({
+          ...formData,
+          name,
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+        });
+        toast.success(
+          `Employee "${name}" created — an invite email is on its way`,
+        );
+      }
       onClose();
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        isEdit
+          ? "Could not update the employee. Please try again."
+          : "Could not create the employee. Please try again.",
+      );
+
+      // 409 on this endpoint is only ever the duplicate email, so it belongs on
+      // the field the user has to change rather than in a dismissible toast.
+      if (getApiErrorStatus(error) === 409) {
+        setErrors((prev) => ({ ...prev, email: message }));
+      }
+
+      toast.error(message);
     }
   };
 
@@ -148,7 +211,12 @@ export default function EmployeeFormDialog({
         className="grid grid-cols-1 gap-4 "
       >
         <Field>
-          <FieldLabel htmlFor="employee-name">Name</FieldLabel>
+          <FieldLabel htmlFor="employee-name">
+            Name
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="employee-name"
             name="name"
@@ -162,7 +230,12 @@ export default function EmployeeFormDialog({
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="employee-email">Email</FieldLabel>
+          <FieldLabel htmlFor="employee-email">
+            Email
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </FieldLabel>
           <Input
             id="employee-email"
             name="email"
@@ -171,14 +244,30 @@ export default function EmployeeFormDialog({
             value={formData.email}
             onChange={(e) => handleFieldChange("email", e.target.value)}
             aria-invalid={errors.email ? true : undefined}
-            className="bg-transparent"
+            // The address is the login identity; changing it is not something
+            // this endpoint supports.
+            disabled={isEdit}
+            className="bg-transparent disabled:cursor-not-allowed disabled:opacity-60"
           />
-          {errors.email && <FieldError>{errors.email}</FieldError>}
+          {errors.email ? (
+            <FieldError>{errors.email}</FieldError>
+          ) : (
+            isEdit && (
+              <p className="text-xs text-muted-foreground">
+                Email cannot be changed after the account is created.
+              </p>
+            )
+          )}
         </Field>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field>
-            <FieldLabel htmlFor="employee-phone">Phone</FieldLabel>
+            <FieldLabel htmlFor="employee-phone">
+              Phone{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </FieldLabel>
             <Input
               id="employee-phone"
               name="phone"
@@ -192,37 +281,48 @@ export default function EmployeeFormDialog({
             {errors.phone && <FieldError>{errors.phone}</FieldError>}
           </Field>
 
-          <Field>
-            <FieldLabel htmlFor="employee-password">Password</FieldLabel>
-            <Input
-              id="employee-password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder={
-                isEdit
-                  ? "Leave blank to keep current"
-                  : "Enter a strong password"
-              }
-              value={formData.password}
-              onChange={(e) => handleFieldChange("password", e.target.value)}
-              aria-invalid={errors.password ? true : undefined}
-              endIcon={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="cursor-pointer text-foreground transition-colors hover:text-primary"
-                >
-                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              }
-              className="bg-transparent"
-            />
-            {errors.password && <FieldError>{errors.password}</FieldError>}
-          </Field>
+          {/* Passwords are set once at creation; afterwards the employee uses
+              the forgot-password flow, so the field is not offered on edit. */}
+          {!isEdit && (
+            <Field>
+              <FieldLabel htmlFor="employee-password">
+                Password
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
+              </FieldLabel>
+              <Input
+                id="employee-password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter a strong password"
+                value={formData.password}
+                onChange={(e) => handleFieldChange("password", e.target.value)}
+                aria-invalid={errors.password ? true : undefined}
+                endIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    className="cursor-pointer text-foreground transition-colors hover:text-primary"
+                  >
+                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                }
+                className="bg-transparent"
+              />
+              {errors.password && <FieldError>{errors.password}</FieldError>}
+            </Field>
+          )}
+
           <Field>
             <FieldLabel id="employee-roleId-label" htmlFor="employee-roleId">
               Role
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </FieldLabel>
             <Select
               id="employee-roleId"
@@ -231,20 +331,34 @@ export default function EmployeeFormDialog({
             >
               <SelectTrigger error={!!errors.roleId}>
                 <SelectValue
-                  placeholder="Select a role"
-                  options={ROLE_OPTIONS}
+                  placeholder={
+                    rolesLoading ? "Loading roles..." : "Select a role"
+                  }
+                  options={roleOptions}
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectItems options={ROLE_OPTIONS} />
+                <SelectItems options={roleOptions} />
               </SelectContent>
             </Select>
-            {errors.roleId && <FieldError>{errors.roleId}</FieldError>}
+            {errors.roleId ? (
+              <FieldError>{errors.roleId}</FieldError>
+            ) : (
+              !rolesLoading &&
+              roleOptions.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No active roles to assign. Create or activate a role first.
+                </p>
+              )
+            )}
           </Field>
 
           <Field>
             <FieldLabel id="employee-status-label" htmlFor="employee-status">
               Status
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </FieldLabel>
             <Select
               id="employee-status"

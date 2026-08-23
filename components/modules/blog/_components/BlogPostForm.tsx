@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { BlogPost, BlogCategory } from "../_types/blog.types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { toast } from "sonner";
+import { CloudUploadIcon, PlusIcon, XIcon } from "lucide-react";
 import {
   Field,
   FieldError,
@@ -10,9 +13,6 @@ import {
   Textarea,
 } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
-import { useRouter } from "next/navigation";
-import { CloudUploadIcon, XIcon } from "lucide-react";
-import Image from "next/image";
 import {
   Select,
   SelectContent,
@@ -22,57 +22,146 @@ import {
   type SelectOption,
 } from "@/components/ui/select/Select";
 import TextEditor from "@/components/ui/editor/TextEditor";
+import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 
-const STATUS_OPTIONS: SelectOption[] = [
-  { value: "published", label: "Published" },
-  { value: "draft", label: "Draft" },
-  { value: "archived", label: "Archived" },
-];
+import { POST_STATUS_OPTIONS } from "../_data/blog-options";
+import type {
+  BlogPost,
+  BlogPostPayload,
+  BlogStatus,
+} from "../_types/blog.types";
 
 interface BlogPostFormProps {
+  /** Present in edit mode; omit to create a new post. */
   initialData?: BlogPost | null;
-  categories: BlogCategory[];
-  onSave: (data: Partial<BlogPost>) => void;
+  /** Assignable categories from `GET /blogs/categories/options`. */
+  categoryOptions: SelectOption[];
+  categoriesLoading?: boolean;
+  /** Must reject on failure — the rejection is what surfaces the API's reason. */
+  onSave: (
+    payload: BlogPostPayload,
+    imageFile: File | null,
+  ) => Promise<unknown>;
+  /** The mutation's own pending flag, so the button reflects the real request. */
+  saving?: boolean;
 }
+
+/**
+ * Validation keys paired with the element they belong to, in the order the
+ * fields appear on the page — so a failed submit can jump to the first thing
+ * that actually needs fixing rather than an arbitrary one.
+ */
+const ERROR_FIELD_IDS: [string, string][] = [
+  ["title", "post-title"],
+  ["categoryId", "post-category"],
+  ["metaTitle", "post-meta-title"],
+  ["metaDescription", "post-meta-description"],
+  ["content", "post-content"],
+];
+
+/** The API rejects anything larger, and the browser can check before uploading. */
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+/**
+ * The id the category select binds to.
+ *
+ * `categoryId` is a plain id, but a populated response can hand back the whole
+ * category document in its place — the select then matches no option and shows
+ * its placeholder, which reads as "the category did not load". Both shapes are
+ * accepted here, with the joined `category` as the last resort.
+ */
+const resolveCategoryId = (post?: BlogPost | null): string => {
+  const raw: unknown = post?.categoryId;
+
+  if (typeof raw === "string") return raw;
+  if (raw && typeof raw === "object" && "_id" in raw) {
+    return String((raw as { _id: string })._id);
+  }
+
+  return post?.category?._id ?? "";
+};
 
 export default function BlogPostForm({
   initialData,
-  categories,
+  categoryOptions,
+  categoriesLoading,
   onSave,
+  saving = false,
 }: BlogPostFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isEdit = !!initialData;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result;
-        if (typeof result === "string") {
-          setFormData((prev) => ({ ...prev, image: result }));
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+  // Field names match the API body, so this state object is (almost) the
+  // payload — `slug` is absent because the server derives it from the title
+  // and its strict schema rejects the field outright.
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
-    slug: initialData?.slug || "",
-    categoryId: initialData?.categoryId || "",
-    image: initialData?.image || "",
-    altText: initialData?.altText || "",
-    imageTitle: initialData?.imageTitle || "",
+    categoryId: resolveCategoryId(initialData),
+    alt: initialData?.image?.alt || "",
+    imageTitle: initialData?.image?.title || "",
     tags: initialData?.tags || [],
     metaTitle: initialData?.metaTitle || "",
     metaDescription: initialData?.metaDescription || "",
     content: initialData?.content || "",
-    status: initialData?.status || "draft",
+    status: (initialData?.status || "draft") as BlogStatus,
   });
+
+  /** The newly picked file, or null when the stored image is being kept. */
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  /** The image already on the post; cleared when the author removes it. */
+  const [storedImageUrl, setStoredImageUrl] = useState(
+    initialData?.image?.url || "",
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [tagDraft, setTagDraft] = useState("");
+
+  // Derived rather than stored, so picking a file does not need a second
+  // render pass to show its preview.
+  const objectUrl = useMemo(
+    () => (imageFile ? URL.createObjectURL(imageFile) : ""),
+    [imageFile],
+  );
+
+  // An object URL pins the file in memory until it is revoked, so each one is
+  // released as soon as it is replaced or the form goes away.
+  useEffect(() => {
+    if (!objectUrl) return;
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [objectUrl]);
+
+  // A freshly picked file always wins over whatever was stored.
+  const imagePreview = objectUrl || storedImageUrl;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset so picking the same file twice still fires a change event.
+    e.target.value = "";
+    if (!file) return;
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setErrors((prev) => ({
+        ...prev,
+        image: "Upload a JPG, PNG or WebP image",
+      }));
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setErrors((prev) => ({ ...prev, image: "Image must be under 10MB" }));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, image: "" }));
+    setImageFile(file);
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setStoredImageUrl("");
+  };
 
   /** Commits the draft as a tag; duplicates and blanks are ignored. */
   const addTag = () => {
@@ -91,90 +180,160 @@ export default function BlogPostForm({
     }));
   };
 
-  const handleTitleChange = (val: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      title: val,
-      slug: !initialData
-        ? val
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)+/g, "")
-        : prev.slug,
-    }));
-    if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
-  };
-
   const validate = () => {
-    const newErrs: Record<string, string> = {};
-    if (!formData.title.trim()) newErrs.title = "Title is required";
-    if (!formData.slug.trim()) newErrs.slug = "Slug is required";
-    if (!formData.categoryId) newErrs.categoryId = "Category is required";
+    const next: Record<string, string> = {};
+    if (!formData.title.trim()) next.title = "Title is required";
+    else if (formData.title.trim().length < 2)
+      next.title = "Title must be at least 2 characters";
+    if (!formData.categoryId) next.categoryId = "Category is required";
+    if (!formData.content.trim()) next.content = "Content is required";
+    // The image is optional — a post without one is valid, so the only rules
+    // left are the type and size checks `handleFileChange` already applies.
     if (formData.metaTitle.length > 60)
-      newErrs.metaTitle = "Meta title exceeds 60 characters";
+      next.metaTitle = "Meta title exceeds 60 characters";
     if (formData.metaDescription.length > 160)
-      newErrs.metaDescription = "Meta description exceeds 160 characters";
+      next.metaDescription = "Meta description exceeds 160 characters";
 
-    setErrors(newErrs);
-    return Object.keys(newErrs).length === 0;
+    setErrors(next);
+    return next;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /**
+   * Puts the first failing field on screen.
+   *
+   * This form is several screens tall, so a message rendered under a field two
+   * sections up is invisible — the submit button just appears to do nothing.
+   */
+  const revealFirstError = (errs: Record<string, string>) => {
+    const first = ERROR_FIELD_IDS.find(([key]) => errs[key]);
+    if (!first) return;
+
+    const el = document.getElementById(first[1]);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // The category select and the editor are not focusable inputs, hence the
+    // guard.
+    if (el instanceof HTMLInputElement) el.focus({ preventScroll: true });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
 
-    onSave({
-      id: initialData?.id || `post_${Date.now()}`,
-      ...formData,
-      views: initialData?.views || 0,
-      createdAt: initialData?.createdAt || new Date().toISOString(),
-    } as Partial<BlogPost>);
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      revealFirstError(errs);
+      toast.error("Please fill in the highlighted fields.");
+      return;
+    }
+
+    const title = formData.title.trim();
+
+    const payload: BlogPostPayload = {
+      title,
+      content: formData.content,
+      categoryId: formData.categoryId,
+      tags: formData.tags,
+      status: formData.status,
+      ...(formData.metaTitle.trim()
+        ? { metaTitle: formData.metaTitle.trim() }
+        : {}),
+      ...(formData.metaDescription.trim()
+        ? { metaDescription: formData.metaDescription.trim() }
+        : {}),
+      // Only the author-typed halves — url/publicId are filled in by the
+      // upload middleware and merged over the stored image server-side.
+      image: {
+        ...(formData.imageTitle.trim()
+          ? { title: formData.imageTitle.trim() }
+          : {}),
+        ...(formData.alt.trim() ? { alt: formData.alt.trim() } : {}),
+      },
+    };
+
+    try {
+      await onSave(payload, imageFile);
+      toast.success(
+        isEdit
+          ? `Post "${title}" updated successfully`
+          : `Post "${title}" created successfully`,
+      );
+      router.push("/blog/post/manage");
+    } catch (error) {
+      const message = getApiErrorMessage(
+        error,
+        isEdit
+          ? "Could not update the post. Please try again."
+          : "Could not create the post. Please try again.",
+      );
+
+      // 409 here is the duplicate-title conflict, which the author fixes in
+      // the title field rather than in a dismissible toast.
+      if (getApiErrorStatus(error) === 409) {
+        setErrors((prev) => ({ ...prev, title: message }));
+      }
+
+      toast.error(message);
+    }
   };
-
-  const categoryOptions: SelectOption[] = categories.map((c) => ({
-    value: c.id,
-    label: c.name,
-  }));
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} noValidate className="space-y-6">
       {/* Top Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-card p-3 sm:p-5 rounded-xl border border-border/50">
         {/* Left Column */}
         <div className="space-y-4">
           <Field>
-            <FieldLabel htmlFor="post-title">Blog Title</FieldLabel>
+            <FieldLabel htmlFor="post-title">
+              Blog Title
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
+            </FieldLabel>
             <Input
               id="post-title"
               name="title"
               placeholder="Enter blog title"
               value={formData.title}
-              onValueChange={handleTitleChange}
+              onValueChange={(val) => {
+                setFormData((prev) => ({ ...prev, title: val }));
+                if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
+              }}
               aria-invalid={errors.title ? true : undefined}
               className="bg-transparent"
             />
-            {errors.title && <FieldError>{errors.title}</FieldError>}
+            {errors.title ? (
+              <FieldError>{errors.title}</FieldError>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                The URL slug is generated from this title.
+              </p>
+            )}
           </Field>
 
           <Field>
             <FieldLabel id="post-category-label" htmlFor="post-category">
               Blog Category
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </FieldLabel>
             <Select
               id="post-category"
               value={formData.categoryId}
               onValueChange={(val) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  categoryId: val,
-                }));
+                setFormData((prev) => ({ ...prev, categoryId: val }));
                 if (errors.categoryId)
                   setErrors((prev) => ({ ...prev, categoryId: "" }));
               }}
             >
               <SelectTrigger error={!!errors.categoryId}>
                 <SelectValue
-                  placeholder="Select a category"
+                  placeholder={
+                    categoriesLoading
+                      ? "Loading categories..."
+                      : "Select a category"
+                  }
                   options={categoryOptions}
                 />
               </SelectTrigger>
@@ -182,31 +341,40 @@ export default function BlogPostForm({
                 <SelectItems options={categoryOptions} />
               </SelectContent>
             </Select>
-            {errors.categoryId && <FieldError>{errors.categoryId}</FieldError>}
+            {errors.categoryId ? (
+              <FieldError>{errors.categoryId}</FieldError>
+            ) : (
+              !categoriesLoading &&
+              categoryOptions.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No active categories. Create one first.
+                </p>
+              )
+            )}
           </Field>
 
           <Field>
             <FieldLabel id="post-status-label" htmlFor="post-status">
               Blog Status
+              <span className="text-destructive" aria-hidden="true">
+                *
+              </span>
             </FieldLabel>
             <Select
               id="post-status"
               value={formData.status}
-              onValueChange={(val) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  status: val as "published" | "draft" | "archived",
-                }));
-              }}
+              onValueChange={(val) =>
+                setFormData((prev) => ({ ...prev, status: val as BlogStatus }))
+              }
             >
               <SelectTrigger>
                 <SelectValue
                   placeholder="Select status"
-                  options={STATUS_OPTIONS}
+                  options={POST_STATUS_OPTIONS}
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectItems options={STATUS_OPTIONS} />
+                <SelectItems options={POST_STATUS_OPTIONS} />
               </SelectContent>
             </Select>
           </Field>
@@ -215,11 +383,11 @@ export default function BlogPostForm({
             <FieldLabel htmlFor="post-alt-text">Alternative Text</FieldLabel>
             <Input
               id="post-alt-text"
-              name="altText"
-              placeholder="Enter blog alternative text"
-              value={formData.altText}
+              name="alt"
+              placeholder="Describes the image for screen readers"
+              value={formData.alt}
               onValueChange={(val) =>
-                setFormData((prev) => ({ ...prev, altText: val }))
+                setFormData((prev) => ({ ...prev, alt: val }))
               }
               className="bg-transparent"
             />
@@ -242,70 +410,51 @@ export default function BlogPostForm({
 
         {/* Right Column */}
         <div className="flex flex-col h-full space-y-4">
-          <Field>
-            <FieldLabel htmlFor="post-slug">Slug</FieldLabel>
-            <Input
-              id="post-slug"
-              name="slug"
-              placeholder="Enter blog slug"
-              value={formData.slug}
-              onValueChange={(val) => {
-                setFormData((prev) => ({ ...prev, slug: val }));
-                if (errors.slug) setErrors((prev) => ({ ...prev, slug: "" }));
-              }}
-              aria-invalid={errors.slug ? true : undefined}
-              className="bg-transparent"
-            />
-            {errors.slug && <FieldError>{errors.slug}</FieldError>}
-          </Field>
-
           <Field className="flex-1">
-            <FieldLabel htmlFor="post-banner">Featured Image</FieldLabel>
+            <FieldLabel htmlFor="post-banner">
+              Image{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </FieldLabel>
             <div
               id="post-banner"
               role="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center flex-1 cursor-pointer hover:border-primary/50 transition-colors bg-transparent min-h-45"
+              className={`relative border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center flex-1 cursor-pointer transition-colors bg-transparent min-h-45 ${
+                errors.image
+                  ? "border-destructive"
+                  : "border-border hover:border-primary/50"
+              }`}
             >
               <input
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={handleFileChange}
               />
-              {formData.image ? (
-                <div className="absolute inset-2 rounded-md overflow-hidden animate-fadeIn">
+              {imagePreview ? (
+                <div className="absolute inset-2 rounded-md overflow-hidden">
                   <Image
-                    src={formData.image}
+                    src={imagePreview}
                     className="w-full h-full object-cover"
-                    alt="Preview"
-                    width={100}
-                    height={100}
+                    alt={formData.alt || "Image preview"}
+                    width={600}
+                    height={400}
+                    // Blob previews and S3 URLs both bypass the optimiser.
+                    unoptimized
                   />
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setFormData((prev) => ({ ...prev, image: "" }));
+                      clearImage();
                     }}
+                    aria-label="Remove image"
                     className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 shadow"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <XIcon className="size-4" />
                   </button>
                 </div>
               ) : (
@@ -319,12 +468,18 @@ export default function BlogPostForm({
                       drag and drop
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      SVG, PNG, JPG or GIF (MAX. 800x400px)
+                      JPG, PNG or WebP — max 10MB
                     </p>
                   </div>
                 </div>
               )}
             </div>
+            {errors.image && <FieldError>{errors.image}</FieldError>}
+            {isEdit && imagePreview && !imageFile && (
+              <p className="text-xs text-muted-foreground">
+                Keeping the current image. Pick a new file to replace it.
+              </p>
+            )}
           </Field>
         </div>
       </div>
@@ -335,30 +490,47 @@ export default function BlogPostForm({
           <FieldLabel htmlFor="post-tags">
             Tags
             <span className="text-xs font-normal text-muted-foreground">
-              press Enter to add
+              press Enter or Add
             </span>
           </FieldLabel>
-          <Input
-            id="post-tags"
-            name="tags"
-            placeholder="e.g. web, frontend"
-            value={tagDraft}
-            onValueChange={setTagDraft}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === ",") {
-                // Enter would submit the form — the key adds a tag instead.
-                e.preventDefault();
-                addTag();
-              } else if (e.key === "Backspace" && !tagDraft) {
-                setFormData((prev) => ({
-                  ...prev,
-                  tags: prev.tags.slice(0, -1),
-                }));
-              }
-            }}
-            onBlur={addTag}
-            className="bg-transparent"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="post-tags"
+              name="tags"
+              placeholder="e.g. web, frontend"
+              value={tagDraft}
+              onValueChange={setTagDraft}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  // Enter would submit the form — the key adds a tag instead.
+                  e.preventDefault();
+                  addTag();
+                } else if (e.key === "Backspace" && !tagDraft) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    tags: prev.tags.slice(0, -1),
+                  }));
+                }
+              }}
+              onBlur={addTag}
+              className="bg-transparent flex-1"
+            />
+            {/* Never disabled — `addTag` already ignores a blank draft, so an
+                empty click is a no-op rather than a dead control. Blocking the
+                mousedown keeps the input from blurring, which would otherwise
+                commit the tag before the click lands and leave this button
+                acting on an emptied draft. */}
+            <Button
+              type="button"
+              startIcon={<PlusIcon className="size-4" />}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={addTag}
+              aria-label="Add tag"
+              className="h-10 shrink-0 px-4"
+            >
+              Add
+            </Button>
+          </div>
           {formData.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-1">
               {formData.tags.map((tag) => (
@@ -414,7 +586,10 @@ export default function BlogPostForm({
             name="metaDescription"
             value={formData.metaDescription}
             onChange={(e) =>
-              setFormData({ ...formData, metaDescription: e.target.value })
+              setFormData((prev) => ({
+                ...prev,
+                metaDescription: e.target.value,
+              }))
             }
             rows={3}
             invalid={
@@ -430,28 +605,46 @@ export default function BlogPostForm({
       </div>
 
       {/* Content Section */}
-      <div className="bg-card p-3 sm:p-5 rounded-xl border border-border/50">
-        <FieldLabel className="mb-1.5">Content</FieldLabel>
+      <div
+        id="post-content"
+        className="bg-card p-3 sm:p-5 rounded-xl border border-border/50"
+      >
+        <FieldLabel className="mb-1.5">
+          Content
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>
+        </FieldLabel>
 
         <TextEditor
           value={formData.content}
-          onChange={(val) => setFormData((prev) => ({ ...prev, content: val }))}
+          onChange={(val) => {
+            setFormData((prev) => ({ ...prev, content: val }));
+            if (errors.content) setErrors((prev) => ({ ...prev, content: "" }));
+          }}
           placeholder="Start writing..."
         />
+        {errors.content && <FieldError>{errors.content}</FieldError>}
       </div>
 
       {/* Footer Buttons */}
       <div className="flex items-center justify-end gap-5">
-        <Button type="submit" className="px-8">
-          Save
-        </Button>
         <Button
           type="button"
           variant="outline"
           onClick={() => router.back()}
           className="px-7 text-muted-foreground"
+          disabled={saving}
         >
           Cancel
+        </Button>
+        <Button
+          type="submit"
+          className="px-8"
+          loading={saving}
+          loadingText="Saving..."
+        >
+          {isEdit ? "Update Post" : "Create Post"}
         </Button>
       </div>
     </form>

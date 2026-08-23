@@ -1,199 +1,246 @@
 "use client";
 
-import {
-  Promotion,
-  AdvertisementType,
-  PromotionStatus,
-} from "../_types/promotion.types";
-import {
-  Video,
-  Headphones,
-  FileText,
-  Award,
-  ExternalLink,
-  Info,
-} from "lucide-react";
+import { useState } from "react";
 import Image from "next/image";
-import { format } from "date-fns";
-import { useState, useEffect } from "react";
+import { Megaphone, ExternalLink, Eye } from "lucide-react";
+import { Drawer } from "@/components/ui/drawer/Drawer";
+import { Button } from "@/components/ui/button/Button";
+
+import {
+  PHASE_LABELS,
+  PHASE_STYLES,
+  audienceLabel,
+  promotionPhase,
+  promotionStatusStyle,
+  promotionTypeLabel,
+} from "../_data/promotion-options";
+import type { Promotion } from "../_types/promotion.types";
 
 interface PromotionViewDrawerProps {
-  promotion: Promotion;
+  open: boolean;
+  promotion?: Promotion | null;
   onClose: () => void;
-  onEdit?: () => void;
+  onEdit?: (promotion: Promotion) => void;
 }
 
-const STATUS_STYLES: Record<PromotionStatus, string> = {
-  active:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
-  inactive:
-    "bg-muted/50 text-muted-foreground dark:bg-muted dark:text-muted-foreground",
-  scheduled: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400",
-  expired: "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400",
-};
+function formatDate(iso?: string | null): string {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    date,
+  );
+}
 
-const TYPE_ICONS: Record<AdvertisementType, React.ReactNode> = {
-  video: <Video className="w-4 h-4" />,
-  audio: <Headphones className="w-4 h-4" />,
-  pdf: <FileText className="w-4 h-4" />,
-};
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1 rounded-lg border border-border bg-muted/30 p-3">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm wrap-break-word text-foreground">{value}</span>
+    </div>
+  );
+}
 
+/** Read-only campaign detail. */
 export default function PromotionViewDrawer({
+  open,
   promotion,
   onClose,
+  onEdit,
 }: PromotionViewDrawerProps) {
-  const [visible, setVisible] = useState(false);
+  // The caller clears its selection the moment the drawer closes. Hold on to
+  // the last campaign so the panel still has content while it slides out.
+  const [lastPromotion, setLastPromotion] = useState(promotion);
+  if (promotion && promotion !== lastPromotion) setLastPromotion(promotion);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 10);
-    return () => clearTimeout(timer);
-  }, []);
+  const shown = promotion ?? lastPromotion;
+  if (!shown) return null;
 
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 300);
-  };
+  const phase = promotionPhase(shown);
 
   return (
-    <>
-      <div
-        onClick={handleClose}
-        className="fixed inset-0 h-screen z-500 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0 }}
-        aria-hidden="true"
-      />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="fixed top-0 right-0 z-501 h-full w-full max-w-[420px]
-                   flex flex-col
-                   bg-popover
-                   border-l border-border/40 dark:border-white/5
-                   shadow-[-20px_0_50px_-12px_rgba(0,0,0,0.1)]
-                   transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
-        style={{ transform: visible ? "translateX(0)" : "translateX(100%)" }}
-      >
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
-          <div className="space-y-2">
-            <div className="relative w-full aspect-16/10 rounded-xl overflow-hidden bg-muted/50 dark:bg-card border border-border">
-              {promotion.bannerImage ? (
-                <Image
-                  src={promotion.bannerImage}
-                  alt={promotion.title}
-                  className="w-full h-full object-cover"
-                  fill
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-2">
-                  <Info className="w-6 h-6 opacity-30" />
-                </div>
-              )}
-              <div className="absolute top-2 left-2">
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-popover/80 backdrop-blur-md rounded-full text-[10px] font-bold text-muted-foreground uppercase tracking-wider border border-border">
-                  {TYPE_ICONS[promotion.adType]}
-                  {promotion.adType}
-                </div>
-              </div>
-            </div>
-
-            <div>
+    <Drawer
+      open={open}
+      onClose={onClose}
+      side="right"
+      size="lg"
+      title={
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <Megaphone className="size-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-base font-semibold text-foreground">
+                {shown.title}
+              </span>
               <span
-                className={`text-[9px] font-medium px-2 py-0.5 rounded-full uppercase tracking-widest mb-1 ${STATUS_STYLES[promotion.status]}`}
+                className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${promotionStatusStyle(
+                  shown.status,
+                )}`}
               >
-                {promotion.status}
-              </span>
-
-              <h1 className="text-xl mb-0.5 font-semibold text-foreground tracking-tight">
-                {promotion.title}
-              </h1>
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                Managed by{" "}
-                <span className="text-[#0284c7]">
-                  {promotion.wholesalerName}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          {/* Grid Stats */}
-          <div className="grid grid-cols-2 divide-x divide-border bg-muted rounded-md overflow-hidden border border-border">
-            <div className="bg-card p-3 pl-5 flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                Target
-              </span>
-              <span className="text-sm font-semibold text-foreground capitalize">
-                {promotion.targetAudience}
+                {shown.status}
               </span>
             </div>
-            <div className="bg-card p-3 pl-5 flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                Priority
-              </span>
-              <span className="text-sm font-semibold text-foreground">
-                Grade {promotion.priority}
-              </span>
-            </div>
-          </div>
-          {/* start and end timeline */}
-          <div className="grid grid-cols-2 divide-x divide-border bg-muted rounded-md overflow-hidden border border-border">
-            <div className="bg-card p-3 pl-5 flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                Start
-              </span>
-              <span className="text-sm font-semibold text-foreground capitalize">
-                {promotion.startDate
-                  ? format(new Date(promotion.startDate), "MMM dd, yyyy")
-                  : "ASAP"}
-              </span>
-            </div>
-            <div className="bg-card p-3 pl-5 flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                End
-              </span>
-              <span className="text-sm font-semibold text-foreground">
-                {promotion.endDate
-                  ? format(new Date(promotion.endDate), "MMM dd, yyyy")
-                  : "Ongoing"}
-              </span>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-[0.15em] border-b border-border pb-2">
-              Description
-            </h3>
-            <p className="text-sm leading-relaxed text-muted-foreground font-normal italic">
-              &ldquo;{promotion.shortDescription}&rdquo;
+            <p className="mt-0.5 text-xs font-normal text-muted-foreground">
+              Campaign Details
             </p>
           </div>
-
-          {/* Link */}
-          <a
-            href={promotion.mediaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between p-4 mt-7 rounded-md bg-muted/50 bborder border-border group hover:bg-muted dark:hover:bg-card transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-card flex items-center justify-center text-muted-foreground group-hover:text-[#0284c7] transition-colors shadow-sm cursor-pointer">
-                <ExternalLink className="w-4 h-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Source Link
-                </span>
-                <span className="text-xs font-medium text-muted-foreground truncate max-w-[220px]">
-                  {promotion.mediaUrl}
-                </span>
-              </div>
-            </div>
-            <Award className="w-4 h-4 text-muted-foreground group-hover:text-amber-400 transition-colors" />
-          </a>
         </div>
+      }
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          {onEdit && (
+            <Button onClick={() => onEdit(shown)}>Edit Campaign</Button>
+          )}
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* Banner */}
+        {shown.bannerImage?.url && (
+          <div className="relative h-40 w-full overflow-hidden rounded-xl border border-border">
+            <Image
+              src={shown.bannerImage.url}
+              alt={shown.bannerImage.alt || shown.title}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+        )}
+
+        {/* Description */}
+        <div>
+          <h3 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            Description
+          </h3>
+          <p className="text-sm leading-relaxed text-foreground">
+            {shown.description || "No description provided."}
+          </p>
+        </div>
+
+        {/* Summary */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-border bg-muted/30 p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <Eye className="size-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">
+                Views
+              </span>
+            </div>
+            <p className="text-2xl font-semibold tabular-nums text-foreground">
+              {(shown.viewCount ?? 0).toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-muted/30 p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <Megaphone className="size-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">
+                Priority
+              </span>
+            </div>
+            <p className="text-2xl font-semibold tabular-nums text-foreground">
+              {shown.priority ?? 0}
+            </p>
+          </div>
+        </div>
+
+        {/* Details */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <DetailRow
+            label="Type"
+            value={promotionTypeLabel(shown.promotionType)}
+          />
+          <DetailRow
+            label="Lifecycle"
+            value={
+              // Derived from the dates, not stored — the status alone only
+              // says whether it was approved.
+              <span
+                className={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium ${PHASE_STYLES[phase]}`}
+              >
+                {PHASE_LABELS[phase]}
+              </span>
+            }
+          />
+          <DetailRow label="Starts" value={formatDate(shown.startDate)} />
+          <DetailRow label="Ends" value={formatDate(shown.endDate)} />
+          <DetailRow
+            label="Sponsor"
+            value={shown.wholesaler?.companyName || "Platform-wide"}
+          />
+          <DetailRow
+            label="Video URL"
+            value={
+              shown.videoUrl ? (
+                <a
+                  href={shown.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                >
+                  <ExternalLink className="size-3.5" />
+                  Open
+                </a>
+              ) : (
+                "—"
+              )
+            }
+          />
+        </div>
+
+        {/* Audience */}
+        <div>
+          <h3 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            Target Audience
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {(shown.targetAudience ?? []).length > 0 ? (
+              shown.targetAudience.map((audience) => (
+                <span
+                  key={audience}
+                  className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+                >
+                  {audienceLabel(audience)}
+                </span>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No audience selected
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Tags */}
+        {(shown.tags ?? []).length > 0 && (
+          <div>
+            <h3 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              Tags
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {shown.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </>
+    </Drawer>
   );
 }

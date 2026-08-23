@@ -41,6 +41,13 @@ export interface DateRange {
   end: Date | null;
 }
 
+/**
+ * `range` picks a start and an end; `single` picks one day and reports it as
+ * `{ start: day, end: day }`, so a caller reading `value.start` works either
+ * way and nothing downstream has to learn a second shape.
+ */
+export type DateMode = "range" | "single";
+
 type DateDesignStyle = "minimal" | "box";
 type DateShape = "" | "rounded-sm" | "rounded-md" | "rounded-full";
 type Variant = "professional";
@@ -67,6 +74,8 @@ export interface HugeCalenderProps extends Omit<
   className?: string;
   value?: DateRange;
   onChange?: (range: DateRange) => void;
+  /** One day (`single`) or a start/end pair (`range`, the default). */
+  mode?: DateMode;
   placeholder?: string;
   minDate?: Date;
   maxDate?: Date;
@@ -166,6 +175,22 @@ const QUICK_SHORTCUTS: Shortcut[] = [
   { label: "Custom" },
 ];
 
+/** One day, expressed in the range shape the component works in. */
+const asSingleDay = (date: Date): DateRange => ({ start: date, end: date });
+
+// The range presets ("This Week", "Last Year") mean nothing when only one day
+// is being picked, so single mode gets its own set — pointed forward, since a
+// lone date is nearly always something being scheduled.
+const SINGLE_SHORTCUTS: Shortcut[] = [
+  { label: "Today", getValue: () => asSingleDay(new Date()) },
+  { label: "Tomorrow", getValue: () => asSingleDay(addDays(new Date(), 1)) },
+  { label: "In a Week", getValue: () => asSingleDay(addDays(new Date(), 7)) },
+  {
+    label: "In a Month",
+    getValue: () => asSingleDay(addMonths(new Date(), 1)),
+  },
+];
+
 const DAYS_OF_WEEK = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
 
 const MONTHS_OPTIONS = [
@@ -196,7 +221,8 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       className,
       value = { start: null, end: null },
       onChange,
-      placeholder = "Select date range",
+      mode = "range",
+      placeholder = mode === "single" ? "Select date" : "Select date range",
       minDate,
       maxDate,
       disabled = false,
@@ -223,6 +249,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
     ref,
   ) => {
     /* ---------- RANGE STATE ---------- */
+    const isSingle = mode === "single";
     const [dateRange, setDateRange] = useState<DateRange>(value);
     const [selectingStart, setSelectingStart] = useState<boolean>(true);
     const [hoverDate, setHoverDate] = useState<Date | null>(null);
@@ -385,6 +412,8 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
       !!dateRange.end && isSameDay(date, dateRange.end);
 
     const isInHoverRange = (date: Date): boolean => {
+      // Nothing is being spanned in single mode, so no hover trail.
+      if (isSingle) return false;
       if (!dateRange.start || !hoverDate || selectingStart) return false;
       const start = dateRange.start;
       const end = hoverDate;
@@ -410,6 +439,15 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
     };
 
     const formatDateHeader = (): string => {
+      if (isSingle) {
+        const picked = dateRange.start ?? dateRange.end;
+        if (!picked) return placeholder ?? "";
+        const dateStr = format(picked, "MM.d.yyyy");
+        return showTime
+          ? `${dateStr} ${startHour}:${startMin} ${startPeriod}`
+          : dateStr;
+      }
+
       if (dateRange.start && dateRange.end) {
         const startStr = format(dateRange.start, "MM.d.yyyy");
         const endStr = format(dateRange.end, "MM.d.yyyy");
@@ -472,6 +510,22 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
     const handleDateClick = (date: Date) => {
       if (isDateDisabled(date)) return;
 
+      // One click is the whole interaction in single mode: commit the day and
+      // get out of the way, rather than waiting for a second click that is
+      // never coming.
+      if (isSingle) {
+        const picked = asSingleDay(date);
+        setDateRange(picked);
+        setSelectingStart(true);
+        setActiveShortcut(null);
+        setHoverDate(null);
+        setFocusedDate(date);
+        onChange?.(picked);
+        closePopup();
+        inputRef.current?.focus();
+        return;
+      }
+
       let newRange: DateRange = { ...dateRange };
 
       if (
@@ -499,7 +553,12 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
     };
 
     const handleShortcut = (label: string, getValue: () => DateRange) => {
-      const range = getValue();
+      const picked = getValue();
+      // A shortcut is allowed to hand back a span; single mode keeps its first
+      // day so `start` and `end` can never disagree.
+      const range =
+        isSingle && picked.start ? asSingleDay(picked.start) : picked;
+
       setDateRange(range);
       setSelectingStart(true);
       setActiveShortcut(label);
@@ -769,42 +828,44 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
               {/* Shortcuts */}
               <div className="dark:border-darkBorder relative w-28 shrink-0 border-r border-border py-3 lg:w-32">
                 <div className="space-y-0.75 px-2 lg:px-3">
-                  {QUICK_SHORTCUTS.map((shortcut) => {
-                    const isCustom = shortcut.label === "Custom";
-                    const isActive = activeShortcut === shortcut.label;
+                  {(isSingle ? SINGLE_SHORTCUTS : QUICK_SHORTCUTS).map(
+                    (shortcut) => {
+                      const isCustom = shortcut.label === "Custom";
+                      const isActive = activeShortcut === shortcut.label;
 
-                    return (
-                      <button
-                        key={shortcut.label}
-                        type="button"
-                        disabled={
-                          isCustom && (!dateRange.start || !dateRange.end)
-                        }
-                        onClick={() => {
-                          if (isCustom) {
-                            if (!dateRange.start || !dateRange.end) return;
-                            setActiveShortcut("Custom");
-                            return;
+                      return (
+                        <button
+                          key={shortcut.label}
+                          type="button"
+                          disabled={
+                            isCustom && (!dateRange.start || !dateRange.end)
                           }
-                          if (shortcut.getValue) {
-                            handleShortcut(shortcut.label, shortcut.getValue);
-                          }
-                        }}
-                        className={cn(
-                          "w-full cursor-pointer truncate rounded-sm px-2 py-1.5 text-left text-[11px] font-medium transition-all lg:px-2.5 lg:text-xs",
-                          isActive
-                            ? isCustom
-                              ? "bg-purple-600 text-white"
-                              : "bg-primary text-white"
-                            : isCustom && (!dateRange.start || !dateRange.end)
-                              ? "cursor-not-allowed text-gray-400 dark:text-gray-500"
-                              : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-[#3A3A3A]",
-                        )}
-                      >
-                        {shortcut.label}
-                      </button>
-                    );
-                  })}
+                          onClick={() => {
+                            if (isCustom) {
+                              if (!dateRange.start || !dateRange.end) return;
+                              setActiveShortcut("Custom");
+                              return;
+                            }
+                            if (shortcut.getValue) {
+                              handleShortcut(shortcut.label, shortcut.getValue);
+                            }
+                          }}
+                          className={cn(
+                            "w-full cursor-pointer truncate rounded-sm px-2 py-1.5 text-left text-[11px] font-medium transition-all lg:px-2.5 lg:text-xs",
+                            isActive
+                              ? isCustom
+                                ? "bg-purple-600 text-white"
+                                : "bg-primary text-white"
+                              : isCustom && (!dateRange.start || !dateRange.end)
+                                ? "cursor-not-allowed text-gray-400 dark:text-gray-500"
+                                : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-[#3A3A3A]",
+                          )}
+                        >
+                          {shortcut.label}
+                        </button>
+                      );
+                    },
+                  )}
                 </div>
               </div>
 
@@ -832,7 +893,14 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
                 <div className="dark:border-darkBorder flex flex-col items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 lg:flex-row lg:gap-0">
                   <div className="flex w-full items-center justify-between gap-2 lg:w-auto lg:justify-start">
                     <div className="dark:bg-darkBorder center h-8 rounded-sm bg-secondary px-3 text-xs font-medium whitespace-nowrap">
-                      {getDaysCount()} days
+                      {isSingle
+                        ? (dateRange.start ?? dateRange.end)
+                          ? format(
+                              (dateRange.start ?? dateRange.end) as Date,
+                              "MMM d, yyyy",
+                            )
+                          : "No date"
+                        : `${getDaysCount()} days`}
                     </div>
                     <Button
                       type="button"
@@ -945,7 +1013,7 @@ const HugeCalender = forwardRef<HTMLInputElement, HugeCalenderProps>(
               type="button"
               className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer text-gray-500 dark:text-gray-300"
               onClick={(e) => handleClear(e)}
-              aria-label="Clear date range"
+              aria-label={isSingle ? "Clear date" : "Clear date range"}
             >
               <XIcon className="h-4 w-4" />
             </button>
