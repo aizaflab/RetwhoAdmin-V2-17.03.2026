@@ -669,7 +669,7 @@ function SimpleTooltip({
   size = "md",
   icon,
   iconPosition = "right",
-  delayDuration = 100,
+  delayDuration = 500,
   contentClassName,
   color,
   trigger = "hover",

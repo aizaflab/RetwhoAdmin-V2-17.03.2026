@@ -28,12 +28,7 @@ const SHAPE: Record<SkeletonShape, string> = {
 };
 
 const ANIMATION: Record<SkeletonAnimation, string> = {
-  // Respect users who ask for reduced motion — freeze on a static surface.
   pulse: "animate-pulse motion-reduce:animate-none",
-  // Shimmer sweep — a soft highlight band driven across the element by the
-  // `skeleton-shimmer` keyframes (see globals.css). A wide, low-opacity
-  // gradient keeps the colour ramp gentle; `linear` timing sweeps at an even
-  // pace instead of easing (which reads as a pause) at the edges.
   shimmer:
     "relative overflow-hidden after:absolute after:inset-0 after:animate-[skeleton-shimmer_1.8s_linear_infinite] after:bg-gradient-to-r after:from-transparent after:via-foreground/10 after:to-transparent dark:after:via-foreground/[0.14] motion-reduce:after:hidden",
   none: "",
@@ -48,8 +43,6 @@ const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
     { className, shape = "rect", animation = "pulse", lines, ...props },
     ref,
   ) => {
-    // Loading placeholders are noise for screen readers — hide them and let
-    // the consumer announce loading state on the region (aria-busy).
     if (shape === "text" && lines && lines > 1) {
       return (
         <div
@@ -65,7 +58,6 @@ const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
                 BASE,
                 SHAPE.text,
                 ANIMATION[animation],
-                // Shorten the last line so the block reads like real prose.
                 i === lines - 1 ? "w-3/5" : "w-full",
               )}
             />

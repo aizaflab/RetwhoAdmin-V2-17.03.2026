@@ -61,6 +61,8 @@ export const apiSlice = createApi({
     "hiring-applications",
     "promotion",
     "promotions",
+    "product",
+    "products",
   ],
   endpoints: () => ({}),
   refetchOnReconnect: true,
