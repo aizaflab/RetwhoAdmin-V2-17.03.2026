@@ -100,6 +100,17 @@ const productApiSlice = apiSlice.injectEndpoints({
       transformResponse: (response: Envelope<GlobalProduct>) => response?.data,
       invalidatesTags: ["products"],
     }),
+
+    // DELETE : soft. The API flips the deleted flag and drops the row from the
+    // list, so invalidating `products` is enough to bring the table back in sync.
+    deleteProduct: builder.mutation({
+      query: (productId: string) => ({
+        url: `/admin/products/${productId}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response: Envelope<GlobalProduct>) => response?.data,
+      invalidatesTags: ["products"],
+    }),
   }),
 });
 
@@ -108,4 +119,5 @@ export const {
   useGetProductQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
+  useDeleteProductMutation,
 } = productApiSlice;

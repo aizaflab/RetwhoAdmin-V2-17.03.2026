@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 import {
   useCurrentAccess,
@@ -12,9 +13,16 @@ import {
   parseSort,
   ProductListTable,
 } from "@/components/modules/product";
-import type { ProductListQuery } from "@/components/modules/product";
-import { useGetProductsQuery } from "@/featured/product/productApiSlice";
+import type {
+  GlobalProduct,
+  ProductListQuery,
+} from "@/components/modules/product";
+import {
+  useDeleteProductMutation,
+  useGetProductsQuery,
+} from "@/featured/product/productApiSlice";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { getApiErrorMessage } from "@/lib/apiError";
 
 export default function ProductManagePage() {
   const user = useCurrentAccess();
@@ -61,10 +69,34 @@ export default function ProductManagePage() {
   const { data, isLoading, isFetching, refetch } =
     useGetProductsQuery(listQuery);
 
+  const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
+
+  const products = data?.products ?? [];
+
+  const handleDelete = async (product: GlobalProduct) => {
+    try {
+      await deleteProduct(product._id).unwrap();
+      toast.success(`Product "${product.name}" deleted successfully`);
+
+      // Deleting the only row on the last page would otherwise leave the table
+      // showing an empty page that no longer exists.
+      if (products.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Could not delete the product. Please try again.",
+        ),
+      );
+    }
+  };
+
   return (
     <PermissionGuard user={user} permissions={[PERMISSIONS.PRODUCT_LIST]}>
       <ProductListTable
-        products={data?.products ?? []}
+        products={products}
         total={data?.meta?.total ?? 0}
         loading={isLoading || isFetching}
         title="Manage Products"
@@ -79,6 +111,8 @@ export default function ProductManagePage() {
         limit={limit}
         onLimitChange={handleLimitChange}
         onRefresh={refetch}
+        onDelete={handleDelete}
+        deleting={isDeleting}
       />
     </PermissionGuard>
   );

@@ -104,6 +104,8 @@ interface ProductListTableProps {
   limit: number;
   onLimitChange: (limit: number) => void;
   onRefresh?: () => void;
+  onDelete?: (product: GlobalProduct) => Promise<void> | void;
+  deleting?: boolean;
 }
 
 export default function ProductListTable({
@@ -122,6 +124,8 @@ export default function ProductListTable({
   limit,
   onLimitChange,
   onRefresh,
+  onDelete,
+  deleting = false,
 }: ProductListTableProps) {
   const router = useRouter();
   const [productToDelete, setProductToDelete] = useState<GlobalProduct | null>(
@@ -453,11 +457,11 @@ export default function ProductListTable({
           if (!open) setProductToDelete(null);
         }}
         selectedRow={productToDelete}
-        handleDelete={(product) => {
-          if (product) {
-            console.log("Delete product", product._id);
-            setProductToDelete(null);
-          }
+        isLoading={deleting}
+        handleDelete={async (product) => {
+          if (!product) return;
+          await onDelete?.(product);
+          setProductToDelete(null);
         }}
       />
     </div>
