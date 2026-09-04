@@ -63,6 +63,7 @@ export const apiSlice = createApi({
     "promotions",
     "product",
     "products",
+    "bulk-uploads",
   ],
   endpoints: () => ({}),
   refetchOnReconnect: true,

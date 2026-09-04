@@ -48,6 +48,13 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         requiredPermissions: [PERMISSIONS.PRODUCT_CREATE],
       },
       {
+        id: "product-bulk-upload",
+        title: "Bulk Upload",
+        type: "item",
+        path: "/product/bulk-upload",
+        requiredPermissions: [PERMISSIONS.PRODUCT_CREATE],
+      },
+      {
         id: "product-manage",
         title: "Manage Product",
         type: "item",
