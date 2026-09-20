@@ -46,7 +46,7 @@ interface ProductFormProps {
 const ERROR_FIELD_IDS: [string, string][] = [
   ["name", "product-name"],
   ["upc", "product-upc"],
-  ["boxUpc", "product-box-upc"],
+  ["caseUpc", "product-case-upc"],
   ["percentage", "product-profit-percentage"],
 ];
 
@@ -74,11 +74,11 @@ const TOGGLE_CARD =
 
 /**
  * Which field a duplicate-key error belongs to, and what to call it. The
- * index name is what the error carries — `upc_1`, `boxUpc_1`.
+ * index name is what the error carries — `upc_1`, `caseUpc_1`.
  */
 const DUPLICATE_FIELDS: Record<string, { field: string; label: string }> = {
   upc: { field: "upc", label: "Unit UPC" },
-  boxUpc: { field: "boxUpc", label: "Box UPC" },
+  caseUpc: { field: "caseUpc", label: "Case UPC" },
   name: { field: "name", label: "Product name" },
   slug: { field: "name", label: "Product name" },
 };
@@ -175,7 +175,7 @@ export default function ProductForm({
     description: product?.description ?? "",
     tags: (product?.tags ?? []) as string[],
     upc: product?.upc ?? "",
-    boxUpc: product?.boxUpc ?? "",
+    caseUpc: product?.caseUpc ?? "",
     isGlobal: product?.isGlobal ?? true,
     profitEnabled: product?.profit?.enabled ?? false,
     percentage:
@@ -255,7 +255,7 @@ export default function ProductForm({
   };
 
   /** Barcodes are digits only, so non-digits never make it into state. */
-  const setBarcode = (field: "upc" | "boxUpc", value: string) =>
+  const setBarcode = (field: "upc" | "caseUpc", value: string) =>
     set(field, value.replace(/\D/g, "").slice(0, 14));
 
   /**
@@ -316,13 +316,13 @@ export default function ProductForm({
     else if (!UPC_PATTERN.test(formData.upc))
       next.upc = "UPC must be either 12 or 14 digits";
 
-    if (!formData.boxUpc) next.boxUpc = "Box UPC is required";
-    else if (!UPC_PATTERN.test(formData.boxUpc))
-      next.boxUpc = "Box UPC must be either 12 or 14 digits";
-    // A box and the unit inside it are different things, so one barcode
+    if (!formData.caseUpc) next.caseUpc = "Case UPC is required";
+    else if (!UPC_PATTERN.test(formData.caseUpc))
+      next.caseUpc = "Case UPC must be either 12 or 14 digits";
+    // A case and the unit inside it are different things, so one barcode
     // cannot stand for both.
-    else if (formData.boxUpc === formData.upc)
-      next.boxUpc = "Box UPC must differ from the unit UPC";
+    else if (formData.caseUpc === formData.upc)
+      next.caseUpc = "Case UPC must differ from the unit UPC";
 
     // The percentage only ships when profit is on, so it is only checked then.
     if (formData.profitEnabled) {
@@ -365,7 +365,7 @@ export default function ProductForm({
     const payload: ProductPayload = {
       name,
       upc: formData.upc,
-      boxUpc: formData.boxUpc,
+      caseUpc: formData.caseUpc,
       isGlobal: formData.isGlobal,
       ...(formData.description.trim()
         ? { description: formData.description.trim() }
@@ -537,25 +537,25 @@ export default function ProductForm({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="product-box-upc">
-                  Box UPC
+                <FieldLabel htmlFor="product-case-upc">
+                  Case UPC
                   <span className="text-destructive" aria-hidden="true">
                     *
                   </span>
                 </FieldLabel>
                 <Input
-                  id="product-box-upc"
-                  name="boxUpc"
+                  id="product-case-upc"
+                  name="caseUpc"
                   inputMode="numeric"
                   placeholder="12 or 14 digit barcode"
-                  value={formData.boxUpc}
-                  onValueChange={(val) => setBarcode("boxUpc", val)}
-                  aria-invalid={errors.boxUpc ? true : undefined}
+                  value={formData.caseUpc}
+                  onValueChange={(val) => setBarcode("caseUpc", val)}
+                  aria-invalid={errors.caseUpc ? true : undefined}
                   className="bg-transparent"
                 />
                 <div className={HINT_SLOT}>
-                  {errors.boxUpc ? (
-                    <FieldError>{errors.boxUpc}</FieldError>
+                  {errors.caseUpc ? (
+                    <FieldError>{errors.caseUpc}</FieldError>
                   ) : (
                     <FieldDescription>
                       Must be exactly 12 or 14 digits.

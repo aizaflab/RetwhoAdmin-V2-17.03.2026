@@ -134,7 +134,7 @@ export default function ProductViewDialog({
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <DetailRow label="UPC" value={shown.upc || "—"} />
-          <DetailRow label="Box UPC" value={shown.boxUpc || "—"} />
+          <DetailRow label="Case UPC" value={shown.caseUpc || "—"} />
           <DetailRow
             label="Profit"
             value={

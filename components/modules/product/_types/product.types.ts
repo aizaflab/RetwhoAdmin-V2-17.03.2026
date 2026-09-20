@@ -11,7 +11,7 @@ export interface Product {
   shortDescription: string;
   upc: string;
   sku: string;
-  boxUpc: string;
+  caseUpc: string;
   modifier: string;
   unit: "pcs" | "kg" | "box" | "pack" | string;
   tag: string[];
@@ -30,7 +30,7 @@ export interface ProductProfit {
 /**
  * Body for `POST /admin/products/create`.
  *
- * Required: `name`, `upc`, `boxUpc`. Both barcodes must be exactly 12 or 14
+ * Required: `name`, `upc`, `caseUpc`. Both barcodes must be exactly 12 or 14
  * digits — the API rejects any other length.
  */
 export interface ProductPayload {
@@ -39,7 +39,7 @@ export interface ProductPayload {
   tags?: string[];
   profit?: ProductProfit;
   upc: string;
-  boxUpc: string;
+  caseUpc: string;
   isGlobal?: boolean;
 }
 

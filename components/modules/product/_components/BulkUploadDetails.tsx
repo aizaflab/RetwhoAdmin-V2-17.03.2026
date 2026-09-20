@@ -207,7 +207,7 @@ export default function BulkUploadDetails({
       },
       {
         id: "uploadId",
-        header: "UPC / Box UPC",
+        header: "UPC / Case UPC",
         minWidth: 160,
         cell: (_value, entry) => (
           <div className="space-y-0.5">
@@ -215,7 +215,7 @@ export default function BulkUploadDetails({
               <Code value={entry.product?.upc} />
             </div>
             <div className="opacity-70">
-              <Code value={entry.product?.boxUpc} />
+              <Code value={entry.product?.caseUpc} />
             </div>
           </div>
         ),

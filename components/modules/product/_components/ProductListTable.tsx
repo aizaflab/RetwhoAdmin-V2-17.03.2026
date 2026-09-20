@@ -185,7 +185,7 @@ export default function ProductListTable({
             {product.upc}
           </span>
           <span className="text-[11px] text-text5">
-            Box: {product.boxUpc || "—"}
+            Case: {product.caseUpc || "—"}
           </span>
         </div>
       ),

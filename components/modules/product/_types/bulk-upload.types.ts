@@ -105,7 +105,7 @@ export interface BulkUploadErrorProduct {
   description?: string;
   tags?: string[];
   upc?: string;
-  boxUpc?: string;
+  caseUpc?: string;
   isGlobal?: boolean;
   profit?: { enabled?: boolean; percentage?: number };
 }
