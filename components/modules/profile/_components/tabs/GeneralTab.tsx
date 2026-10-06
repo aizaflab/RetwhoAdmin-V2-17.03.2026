@@ -4,6 +4,7 @@ import { User, Mail, Phone, MapPin, Globe, Building2 } from "lucide-react";
 import { Section } from "../shared/Section";
 import { GeneralFormData } from "../../_types/profile.types";
 import { Field, FieldLabel, Input, Textarea } from "@/components/ui";
+import { PHONE_PLACEHOLDER } from "@/lib/phone";
 import {
   Select,
   SelectContent,
@@ -92,6 +93,7 @@ export default function GeneralTab({
               id="profile-phone"
               name="phone"
               type="tel"
+              placeholder={`e.g. ${PHONE_PLACEHOLDER}`}
               value={data.phone}
               onValueChange={set("phone")}
               startIcon={<Phone className="size-4.5" />}

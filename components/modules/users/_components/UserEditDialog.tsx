@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Dialog, Field, FieldError, FieldLabel, Input } from "@/components/ui";
 import { getApiErrorMessage } from "@/lib/apiError";
+import { PHONE_PLACEHOLDER } from "@/lib/phone";
 import { Button } from "@/components/ui/button/Button";
 import {
   Select,
@@ -197,6 +198,7 @@ export default function UserEditDialog({
             id="edit-user-phone"
             name="phone"
             type="tel"
+            placeholder={`e.g. ${PHONE_PLACEHOLDER}`}
             value={formData.phoneNumber || ""}
             onValueChange={(val) => handleFieldChange("phoneNumber", val)}
             className="bg-transparent"

@@ -3,6 +3,7 @@
 import type React from "react";
 import { forwardRef, useRef, useState, type ReactNode } from "react";
 
+import { formatPhoneNumber } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
 /** Supported input types — text-like controls only. */
@@ -47,6 +48,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     ref,
   ) => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      // Phone fields always hold `(xxx) xxx-xxxx`, formatted as the user types.
+      if (type === "tel") formatPhoneInput(e.target);
       onChange?.(e);
       onValueChange?.(e.target.value);
     };
@@ -99,6 +102,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           className,
         )}
         {...props}
+        value={
+          type === "tel" && typeof props.value === "string"
+            ? formatPhoneNumber(props.value)
+            : props.value
+        }
       />
     );
 
@@ -121,5 +129,29 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = "Input";
+
+/**
+ * Rewrites a phone input's value in place, keeping the caret after the same
+ * number of digits so editing mid-number doesn't jump it to the end.
+ */
+function formatPhoneInput(el: HTMLInputElement) {
+  const caret = el.selectionStart ?? el.value.length;
+  const digitsBeforeCaret = el.value.slice(0, caret).replace(/\D/g, "").length;
+  const formatted = formatPhoneNumber(el.value);
+  if (formatted === el.value) return;
+
+  el.value = formatted;
+  let pos = 0;
+  for (
+    let seen = 0;
+    pos < formatted.length && seen < digitsBeforeCaret;
+    pos++
+  ) {
+    if (/\d/.test(formatted[pos])) seen++;
+  }
+  // React re-applies the controlled value after this handler, so the caret is
+  // placed on the next frame.
+  requestAnimationFrame(() => el.setSelectionRange(pos, pos));
+}
 
 export { Input };

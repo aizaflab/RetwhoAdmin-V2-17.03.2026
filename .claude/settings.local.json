@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(npx prettier --write \"app/\\(auth\\)/reset-password/_components/ResetPasswordForm.tsx\" \"app/\\(auth\\)/reset-password/page.tsx\" \"app/\\(auth\\)/login/_components/LoginForm.tsx\" \"lib/validation/password.ts\" \"featured/auth/authApiSlice.js\" | Out-Null; npx tsc --noEmit -p tsconfig.json; echo \"TSC_EXIT=$LASTEXITCODE\")",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:8000/api/v1/admin/employees/auth/reset-password\" -Method POST -ContentType \"application/json\" -Body '{\"token\":\"bad.token.here\",\"newPassword\":\"Test1234\",\"confirmPassword\":\"Test1234\"}' -UseBasicParsing -TimeoutSec 15; echo \"OK $\\($r.StatusCode\\) $\\($r.Content\\)\" } catch { $m = $_.ErrorDetails.Message; echo \"ERR $\\($_.Exception.Response.StatusCode.value__\\) $\\($m.Substring\\(0,[Math]::Min\\(300,$m.Length\\)\\)\\)\" })",
+      "Bash(grep -n \"passwordSchema\" -A 20 \"D:/Retwho/retwho_server/src/globals/global.validation.ts\" | head -40)",
+      "Read(//d/Retwho/retwho_server/src/globals/**)",
+      "PowerShell(npx eslint \"app/\\(auth\\)/reset-password/_components/ResetPasswordForm.tsx\" \"app/\\(auth\\)/login/_components/LoginForm.tsx\" \"lib/validation/password.ts\" \"featured/auth/authApiSlice.js\" \"app/\\(auth\\)/reset-password/page.tsx\"; echo \"ESLINT_EXIT=$LASTEXITCODE\")",
+      "PowerShell(npx eslint \"featured/api/apiSlice.js\"; echo \"ESLINT_EXIT=$LASTEXITCODE\"; npx tsc --noEmit -p tsconfig.json; echo \"TSC_EXIT=$LASTEXITCODE\")"
+    ]
+  }
+}

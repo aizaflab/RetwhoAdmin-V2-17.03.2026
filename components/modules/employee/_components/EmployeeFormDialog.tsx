@@ -14,6 +14,7 @@ import {
   type SelectOption,
 } from "@/components/ui/select/Select";
 import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
+import { PHONE_PLACEHOLDER } from "@/lib/phone";
 
 import { STATUS_OPTIONS } from "../_data/employee-options";
 import type {
@@ -272,7 +273,7 @@ export default function EmployeeFormDialog({
               id="employee-phone"
               name="phone"
               type="tel"
-              placeholder="e.g. 01712345678"
+              placeholder={`e.g. ${PHONE_PLACEHOLDER}`}
               value={formData.phone}
               onChange={(e) => handleFieldChange("phone", e.target.value)}
               aria-invalid={errors.phone ? true : undefined}

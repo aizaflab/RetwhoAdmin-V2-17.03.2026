@@ -329,7 +329,8 @@ export default function ProductForm({
       const percentage = Number(formData.percentage);
       if (formData.percentage === "" || Number.isNaN(percentage))
         next.percentage = "Enter a profit percentage";
-      else if (percentage <= 0 || percentage > 100)
+      // 0 is allowed — an admin may switch profit on with no margin yet.
+      else if (percentage < 0 || percentage > 100)
         next.percentage = "Percentage must be between 0 and 100";
     }
 

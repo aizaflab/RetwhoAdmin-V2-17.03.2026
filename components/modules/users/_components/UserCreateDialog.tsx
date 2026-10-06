@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
+import { PHONE_PLACEHOLDER } from "@/lib/phone";
 import { Dialog, Field, FieldError, FieldLabel } from "@/components/ui";
 import { Input } from "@/components/ui/input/Input";
 import { Button } from "@/components/ui/button/Button";
@@ -230,7 +231,7 @@ export default function UserCreateDialog({
             id="create-user-phone"
             name="phoneNumber"
             type="tel"
-            placeholder="e.g. (555) 123-4567"
+            placeholder={`e.g. ${PHONE_PLACEHOLDER}`}
             value={formData.phoneNumber ?? ""}
             onChange={(e) => handleFieldChange("phoneNumber", e.target.value)}
             className="bg-transparent"
