@@ -574,6 +574,7 @@ export default function PromotionForm({
                   id="promo-start"
                   mode="single"
                   placeholder="Select start date"
+                  align="right"
                   value={{
                     start: formData.startDate
                       ? new Date(formData.startDate)
@@ -606,6 +607,7 @@ export default function PromotionForm({
                   id="promo-end"
                   mode="single"
                   placeholder="Select end date"
+                  align="right"
                   // The end can never precede the start, so the picker refuses
                   // those days outright instead of letting validate() scold
                   // the author after the fact.
