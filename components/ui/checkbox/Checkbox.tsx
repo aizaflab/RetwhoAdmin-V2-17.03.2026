@@ -146,7 +146,11 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
 
         <motion.div
           aria-hidden="true"
-          onClick={() => {
+          onClick={(e) => {
+            // Inside a <label> the click would also run the label's default
+            // activation — clicking the hidden input and toggling a second
+            // time, so the box appears dead. This handler already toggles.
+            e.preventDefault();
             toggle();
             innerRef.current?.focus();
           }}

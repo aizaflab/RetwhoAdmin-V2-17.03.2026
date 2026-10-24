@@ -8,6 +8,8 @@ import type {
   PromotionListResult,
   PromotionOverview,
   PromotionPayload,
+  ShopOption,
+  TargetAudience,
 } from "@/components/modules/promotion";
 
 // Promotions live at `/promotions` (under the NEXT_PUBLIC_BACKEND_URL
@@ -30,7 +32,7 @@ interface Envelope<T> {
 }
 
 /** Drops empty values so the URL never carries `?searchTerm=&status=`. */
-function buildQueryString(params: PromotionListQuery = {}): string {
+function buildQueryString(params: object = {}): string {
   const search = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
@@ -108,6 +110,16 @@ const promotionApiSlice = apiSlice.injectEndpoints({
       ],
     }),
 
+    // Active shops as { label, value, businessType } — for the sponsor
+    // picker. Without a `businessType` the API returns every type.
+    getShopOptions: builder.query({
+      query: (businessType?: TargetAudience) => ({
+        url: `/shop/options${buildQueryString({ businessType })}`,
+      }),
+      transformResponse: (response: Envelope<ShopOption[]>) =>
+        response?.data ?? [],
+    }),
+
     // DELETE : soft. The API flips `isDeleted` and hides the row; the
     // promotion and its banner both survive, ready for a v2 restore.
     deletePromotion: builder.mutation({
@@ -124,4 +136,5 @@ export const {
   useCreatePromotionMutation,
   useUpdatePromotionMutation,
   useDeletePromotionMutation,
+  useGetShopOptionsQuery,
 } = promotionApiSlice;

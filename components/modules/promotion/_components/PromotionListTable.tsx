@@ -130,7 +130,7 @@ export default function PromotionListTable({
                 {promotionTypeLabel(row.promotionType)}
               </span>
               <span className="text-xs text-muted-foreground truncate">
-                {row.wholesaler?.companyName || "Platform-wide"}
+                {row.shop?.companyName || "Platform-wide"}
               </span>
             </div>
           </div>

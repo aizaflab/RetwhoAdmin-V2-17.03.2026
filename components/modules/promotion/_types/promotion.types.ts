@@ -19,10 +19,18 @@ export interface PromotionImage {
 }
 
 /** The slice of the sponsoring shop the API embeds, when there is one. */
-export interface PromotionWholesaler {
+export interface PromotionShop {
   _id: string;
   companyName?: string;
-  businessType?: string;
+  dbaName?: string;
+  businessType?: TargetAudience;
+}
+
+/** A row from `GET /shop/options` — active shops, for the sponsor picker. */
+export interface ShopOption {
+  label: string;
+  value: string;
+  businessType: TargetAudience;
 }
 
 /** A row as returned by `GET /promotions`. */
@@ -35,9 +43,9 @@ export interface Promotion {
   promotionType: PromotionType;
   bannerImage?: PromotionImage | null;
   videoUrl?: string;
-  /** Null for a platform-wide campaign; set when a wholesaler sponsors it. */
-  wholesalerId?: string | null;
-  wholesaler?: PromotionWholesaler | null;
+  /** Null for a platform-wide campaign; set when a shop sponsors it. */
+  shopId?: string | null;
+  shop?: PromotionShop | null;
   targetAudience: TargetAudience[];
   startDate: string;
   endDate: string;
@@ -63,7 +71,8 @@ export interface PromotionPayload {
   promotionType: PromotionType;
   /** Required by the API when `promotionType` is `video`. */
   videoUrl?: string;
-  wholesalerId?: string;
+  /** A shop's id to sponsor it; `null` on update returns it to platform-wide. */
+  shopId?: string | null;
   targetAudience: TargetAudience[];
   startDate: string;
   endDate: string;
@@ -88,7 +97,7 @@ export interface PromotionListQuery {
   searchTerm?: string;
   status?: PromotionStatus;
   promotionType?: PromotionType;
-  wholesalerId?: string;
+  shopId?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }

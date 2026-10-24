@@ -1,13 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
 import {
-  SupportLearningVideo,
-  SupportResource,
-} from "../../_types/support.types";
-import { Input, SimpleSelect } from "@/components/ui";
+  Archive,
+  Clock,
+  Eye,
+  FileEdit,
+  Globe,
+  PlayCircle,
+  Trash2,
+} from "lucide-react";
+import { Input } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
+import {
+  Select,
+  SelectContent,
+  SelectItems,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/Select";
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
@@ -17,157 +28,195 @@ import {
   DropdownMenu,
   DropdownItem,
   DropdownSeparator,
+  DropdownLabel,
 } from "@/components/ui/dropdown/Dropdown";
-import VideoModal from "./VideoModal";
-import VideoViewDrawer from "./VideoViewDrawer";
 import {
   PlusIcon,
   EditIcon,
   SearchIcon,
   MoreIcon,
 } from "@/components/icons/Icons";
-import { Eye, Trash2, PlayCircle, Globe, FileEdit, Clock } from "lucide-react";
 
-const STATUS_STYLES: Record<string, string> = {
-  published:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
-  draft: "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400",
-};
+import {
+  SUPPORT_STATUS_FILTER_OPTIONS,
+  resourceRefTitle,
+  supportStatusStyle,
+} from "../../_data/support-options";
+import type {
+  SupportResourceOption,
+  SupportStatus,
+  SupportVideoItem,
+  SupportVideoPayload,
+} from "../../_types/support.types";
+import VideoModal from "./VideoModal";
+import VideoViewDrawer from "./VideoViewDrawer";
 
 interface VideoListTableProps {
-  videos: SupportLearningVideo[];
-  resources: SupportResource[];
+  videos: SupportVideoItem[];
+  /** Row count across every page — drives the pagination footer. */
+  total: number;
+  loading?: boolean;
+  /** Search / filter / paging are all server-side; this component only reports
+   *  the changes and renders whatever the API sent back. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  resourceFilter: string;
+  onResourceFilterChange: (value: string) => void;
+  resourceOptions: SupportResourceOption[];
+  resourcesLoading?: boolean;
+  page: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  /** Create when no id is given, update when there is one. */
+  onSave: (
+    payload: SupportVideoPayload | Partial<SupportVideoPayload>,
+    id?: string,
+  ) => Promise<unknown>;
+  saving?: boolean;
+  onUpdateStatus?: (
+    video: SupportVideoItem,
+    status: SupportStatus,
+  ) => Promise<void> | void;
+  onDelete?: (video: SupportVideoItem) => Promise<void> | void;
+  deleting?: boolean;
+}
+
+const ACTION_BUTTON =
+  "cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground transition-all duration-150";
+
+const STATUS_FILTER_OPTIONS = SUPPORT_STATUS_FILTER_OPTIONS.map((o) => ({
+  value: String(o.value),
+  label: o.label,
+}));
+
+function formatDate(iso?: string | null): string {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+    date,
+  );
+}
+
+/** Small 16:9 still; a broken URL falls back to the play icon. */
+function Thumbnail({ video }: { video: SupportVideoItem }) {
+  const [broken, setBroken] = useState(false);
+
+  return (
+    <div className="relative h-11 w-18 shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted">
+      {video.thumbnailUrl && !broken ? (
+        <>
+          {/* Arbitrary hosts — next/image would need each one allowlisted. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={video.thumbnailUrl}
+            alt={video.title}
+            className="h-full w-full object-cover"
+            onError={() => setBroken(true)}
+          />
+          <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+            <PlayCircle className="size-4 text-white" />
+          </span>
+        </>
+      ) : (
+        <span className="flex h-full w-full items-center justify-center text-muted-foreground">
+          <PlayCircle className="size-5" />
+        </span>
+      )}
+    </div>
+  );
 }
 
 export default function VideoListTable({
-  videos: initialVideos,
-  resources,
+  videos,
+  total,
+  loading,
+  search,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  resourceFilter,
+  onResourceFilterChange,
+  resourceOptions,
+  resourcesLoading,
+  page,
+  onPageChange,
+  limit,
+  onLimitChange,
+  onSave,
+  saving,
+  onUpdateStatus,
+  onDelete,
+  deleting,
 }: VideoListTableProps) {
-  const [videos, setVideos] = useState<SupportLearningVideo[]>(initialVideos);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [resourceFilter, setResourceFilter] = useState("all");
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editing, setEditing] = useState<SupportLearningVideo | null>(null);
-  const [viewing, setViewing] = useState<SupportLearningVideo | null>(null);
-  const [deleting, setDeleting] = useState<SupportLearningVideo | null>(null);
+  const [editing, setEditing] = useState<SupportVideoItem | null>(null);
+  const [viewing, setViewing] = useState<SupportVideoItem | null>(null);
+  const [deletingRow, setDeletingRow] = useState<SupportVideoItem | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
 
-  const filtered = videos.filter((v) => {
-    const matchSearch =
-      v.title.toLowerCase().includes(search.toLowerCase()) ||
-      v.description.toLowerCase().includes(search.toLowerCase()) ||
-      v.tags.some((t) => t.includes(search.toLowerCase()));
-    const matchStatus = statusFilter === "all" || v.status === statusFilter;
-    const matchResource =
-      resourceFilter === "all" || v.resourceId === resourceFilter;
-    return matchSearch && matchStatus && matchResource;
-  });
-
-  const handleSave = (data: Partial<SupportLearningVideo>) => {
-    setVideos((prev) => {
-      const exists = prev.find((v) => v.id === data.id);
-      if (exists) {
-        return prev.map((v) => (v.id === data.id ? { ...v, ...data } : v));
-      }
-      return [data as SupportLearningVideo, ...prev];
-    });
-    setIsAddOpen(false);
-    setEditing(null);
-  };
-
-  const handleDelete = (row: SupportLearningVideo | null) => {
-    if (!row) return;
-    setVideos((prev) => prev.filter((v) => v.id !== row.id));
-    setDeleting(null);
-  };
-
-  const handleUpdateStatus = (id: string, status: "published" | "draft") => {
-    setVideos((prev) => prev.map((v) => (v.id === id ? { ...v, status } : v)));
-  };
-
-  const resourceOptions = [
+  const resourceFilterOptions = [
     { value: "all", label: "All Resources" },
-    ...resources.map((r) => ({ value: r.id, label: `${r.name}` })),
-  ];
-  const statusOptions = [
-    { value: "all", label: "All Status" },
-    { value: "published", label: "Published" },
-    { value: "draft", label: "Draft" },
+    ...resourceOptions,
   ];
 
-  const columns: Column<SupportLearningVideo>[] = [
+  const columns: Column<SupportVideoItem>[] = [
     {
       id: "title",
       header: "Video",
-      cell: (_v, row) => {
-        const res = resources.find((r) => r.id === row.resourceId);
-        return (
-          <div className="flex items-center gap-3">
-            {/* Thumbnail */}
-            <div className="relative w-14 h-10 rounded-lg bg-gray-100 dark:bg-darkBorder overflow-hidden shrink-0 group">
-              {row.thumbnailUrl ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={row.thumbnailUrl}
-                    alt={row.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <PlayCircle className="w-4 h-4 text-white" />
-                  </div>
-                </>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-text5">
-                  <PlayCircle className="w-5 h-5" />
-                </div>
-              )}
-            </div>
-            <div className="max-w-xs">
-              <p className="text-sm font-semibold text-black dark:text-white truncate">
-                {row.title}
-              </p>
-              <div className="flex items-center gap-2 mt-0.5">
-                {res && (
-                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary dark:text-blue-400">
-                    {res.name}
-                  </span>
-                )}
-                {row.duration && (
-                  <span className="flex items-center gap-0.5 text-[10px] text-text5">
-                    <Clock className="w-3 h-3" />
-                    {row.duration}
-                  </span>
-                )}
-              </div>
-            </div>
+      cell: (_v, row) => (
+        <div className="flex items-center gap-3">
+          <Thumbnail video={row} />
+          <div className="min-w-0 max-w-64">
+            <p className="text-sm font-semibold text-foreground truncate">
+              {row.title}
+            </p>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
+              {row.description}
+            </p>
           </div>
+        </div>
+      ),
+    },
+    {
+      id: "supportResourcesId",
+      header: "Resource",
+      className: "hidden md:table-cell",
+      cell: (_v, row) => {
+        const title = resourceRefTitle(row);
+        return title ? (
+          <span className="inline-block max-w-44 truncate text-[11px] font-medium px-2 py-0.5 rounded bg-primary/10 text-primary dark:text-blue-400">
+            {title}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
         );
       },
     },
     {
-      id: "views",
-      header: "Views",
-      className: "text-center hidden sm:table-cell",
-      cell: (_v, row) => (
-        <span className="text-sm font-semibold text-text6 dark:text-text5">
-          {row.views.toLocaleString()}
-        </span>
-      ),
+      id: "duration",
+      header: "Duration",
+      className: "hidden sm:table-cell",
+      cell: (_v, row) =>
+        row.duration ? (
+          <span className="inline-flex items-center gap-1 text-sm text-foreground">
+            <Clock className="size-3.5 text-muted-foreground" />
+            {row.duration}
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        ),
     },
     {
-      id: "createdAt",
-      header: "Added",
-      className: "hidden md:table-cell",
+      id: "publishedAt",
+      header: "Published",
+      className: "hidden lg:table-cell",
       cell: (_v, row) => (
-        <span className="text-sm text-text6 dark:text-text5">
-          {format(new Date(row.createdAt), "dd MMM yyyy")}
+        <span className="text-sm text-foreground">
+          {formatDate(row.publishedAt)}
         </span>
       ),
     },
@@ -177,14 +226,14 @@ export default function VideoListTable({
       className: "text-center",
       cell: (_v, row) => (
         <span
-          className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${STATUS_STYLES[row.status]}`}
+          className={`text-xs font-semibold px-2.5 w-20 center py-1 rounded-full capitalize ${supportStatusStyle(row.status)}`}
         >
           {row.status}
         </span>
       ),
     },
     {
-      id: "id" as keyof SupportLearningVideo,
+      id: "actions" as keyof SupportVideoItem,
       header: "Actions",
       className: "justify-end text-right",
       cell: (_v, row) => (
@@ -195,23 +244,25 @@ export default function VideoListTable({
                 e.stopPropagation();
                 setEditing(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className={`${ACTION_BUTTON} hover:border-primary/50 hover:text-primary`}
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
           </SimpleTooltip>
 
           <Dropdown
-            onOpenChange={(isOpen) => setOpenDropdownId(isOpen ? row.id : null)}
+            onOpenChange={(isOpen) =>
+              setOpenDropdownId(isOpen ? row._id : null)
+            }
           >
             <SimpleTooltip
               content="More"
               position="top"
-              disabled={openDropdownId === row.id}
+              disabled={openDropdownId === row._id}
             >
               <DropdownTrigger asChild showChevron={false}>
                 <button
-                  className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
+                  className={`${ACTION_BUTTON} hover:border-destructive/50 hover:text-destructive`}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreIcon className="w-4 h-4" />
@@ -219,53 +270,61 @@ export default function VideoListTable({
               </DropdownTrigger>
             </SimpleTooltip>
 
-            <DropdownMenu align="right" className="min-w-38 p-1 font-medium">
+            <DropdownMenu align="right" className="min-w-37.5 p-1 font-medium">
               <DropdownItem
                 icon={<Eye className="w-4 h-4" />}
                 onClick={(e) => {
                   e.stopPropagation();
                   setViewing(row);
                 }}
-                className="text-text6 dark:text-text5 text-xs rounded-sm py-2 cursor-pointer"
+                className="text-foreground text-xs rounded-sm py-2 cursor-pointer"
               >
-                View Details
-              </DropdownItem>
-              <DropdownItem
-                icon={<PlayCircle className="w-4 h-4" />}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.open(row.videoUrl, "_blank", "noopener,noreferrer");
-                }}
-                className="text-rose-600 dark:text-rose-400 text-xs rounded-sm py-2 cursor-pointer hover:bg-rose-50 dark:hover:bg-rose-950/20"
-              >
-                Watch Video
+                Watch &amp; Details
               </DropdownItem>
 
-              <DropdownSeparator />
-
-              {row.status !== "published" && (
-                <DropdownItem
-                  icon={<Globe className="w-3.5 h-3.5" />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateStatus(row.id, "published");
-                  }}
-                  className="text-emerald-600 dark:text-emerald-400 text-xs rounded-sm py-2 cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                >
-                  Publish
-                </DropdownItem>
-              )}
-              {row.status !== "draft" && (
-                <DropdownItem
-                  icon={<FileEdit className="w-3.5 h-3.5" />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleUpdateStatus(row.id, "draft");
-                  }}
-                  className="text-amber-600 dark:text-amber-400 text-xs rounded-sm py-2 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-950/20"
-                >
-                  Revert to Draft
-                </DropdownItem>
+              {onUpdateStatus && (
+                <>
+                  <DropdownSeparator />
+                  <DropdownLabel className="text-[9px] items-center gap-1.5 uppercase tracking-wider text-muted-foreground py-1.5 pb-2 pl-0 flex">
+                    Status Actions
+                  </DropdownLabel>
+                  {row.status !== "published" && (
+                    <DropdownItem
+                      icon={<Globe className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "published");
+                      }}
+                      className="text-success text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Publish
+                    </DropdownItem>
+                  )}
+                  {row.status !== "draft" && (
+                    <DropdownItem
+                      icon={<FileEdit className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "draft");
+                      }}
+                      className="text-warning text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Revert to Draft
+                    </DropdownItem>
+                  )}
+                  {row.status !== "archived" && (
+                    <DropdownItem
+                      icon={<Archive className="w-3.5 h-3.5" />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onUpdateStatus(row, "archived");
+                      }}
+                      className="text-muted-foreground text-xs rounded-sm py-2 cursor-pointer"
+                    >
+                      Move to Archive
+                    </DropdownItem>
+                  )}
+                </>
               )}
 
               <DropdownSeparator />
@@ -274,7 +333,7 @@ export default function VideoListTable({
                 destructive
                 onClick={(e) => {
                   e.stopPropagation();
-                  setDeleting(row);
+                  setDeletingRow(row);
                 }}
                 className="text-xs rounded-sm py-2 cursor-pointer"
               >
@@ -290,38 +349,51 @@ export default function VideoListTable({
   return (
     <div>
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5">
-        <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
-          Learning Videos
-        </h1>
-        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
-          <div className="relative flex-1 md:w-56 min-w-48">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-5">
+        <h1 className="sm:text-2xl text-xl font-medium">Learning Videos</h1>
+        <div className="flex items-center gap-3 w-full lg:w-auto flex-wrap">
+          <div className="relative flex-1 lg:w-56 min-w-48">
             <Input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search videos..."
-              startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 w-full bg-card"
             />
           </div>
 
-          <div className="relative w-40">
-            <SimpleSelect
-              options={resourceOptions}
+          <div className="relative w-44">
+            <Select
               value={resourceFilter}
-              onChange={(val) => setResourceFilter(val)}
-              className="h-10 rounded-md bg-white dark:bg-darkBg"
-            />
+              onValueChange={onResourceFilterChange}
+            >
+              <SelectTrigger className="h-10 rounded-md bg-card">
+                <SelectValue
+                  options={resourceFilterOptions}
+                  placeholder="All Resources"
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={resourceFilterOptions} />
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="relative w-28">
-            <SimpleSelect
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(val) => setStatusFilter(val)}
-              className="h-10 rounded-md bg-white dark:bg-darkBg"
-            />
+          <div className="relative w-36">
+            <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+              <SelectTrigger className="h-10 rounded-md bg-card">
+                <SelectValue
+                  options={STATUS_FILTER_OPTIONS}
+                  placeholder="All Status"
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItems options={STATUS_FILTER_OPTIONS} />
+              </SelectContent>
+            </Select>
           </div>
 
           <Button
@@ -335,54 +407,67 @@ export default function VideoListTable({
       </div>
 
       {/* Table */}
-      <Table<SupportLearningVideo>
-        data={filtered}
+      <Table<SupportVideoItem>
+        data={videos}
         columns={columns}
+        loading={loading}
         pagination
-        totalData={filtered.length}
+        totalData={total}
         page={page}
-        setPage={setPage}
+        setPage={onPageChange}
         limit={limit}
-        setLimit={setLimit}
+        setLimit={onLimitChange}
         bordered
-        emptyMessage="No learning videos found"
-        headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
+        onRowClick={setViewing}
+        emptyMessage="No videos found"
+        headerColor="bg-muted/50"
         tableClassName="min-w-full"
+        rowClass="py-2.5"
       />
 
       {/* Add / Edit Modal */}
       {(isAddOpen || editing) && (
         <VideoModal
+          // Remounted per video so the form is seeded from the row opened.
+          key={editing?._id ?? "new"}
           video={editing}
-          resources={resources}
+          resourceOptions={resourceOptions}
+          resourcesLoading={resourcesLoading}
           onClose={() => {
             setIsAddOpen(false);
             setEditing(null);
           }}
-          onSave={handleSave}
+          onSave={onSave}
+          saving={saving}
         />
       )}
 
       {/* View Drawer */}
-      {viewing && (
-        <VideoViewDrawer
-          video={viewing}
-          resource={resources.find((r) => r.id === viewing.resourceId)}
-          onClose={() => setViewing(null)}
-          onEdit={() => setEditing(viewing)}
-        />
-      )}
+      <VideoViewDrawer
+        open={!!viewing}
+        video={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={(row) => {
+          setViewing(null);
+          setEditing(row);
+        }}
+      />
 
       {/* Delete Modal */}
       <DeleteModal
         title="Delete Video"
-        text={`Are you sure you want to delete "${deleting?.title}"? This action cannot be undone.`}
-        deleteModal={!!deleting}
+        text={`Delete the video "${deletingRow?.title}"? It will be removed from the help centre.`}
+        deleteModal={!!deletingRow}
         setDeleteModal={(open) => {
-          if (!open) setDeleting(null);
+          if (!open) setDeletingRow(null);
         }}
-        selectedRow={deleting}
-        handleDelete={handleDelete}
+        selectedRow={deletingRow}
+        isLoading={deleting}
+        handleDelete={async (row) => {
+          if (!row) return;
+          await onDelete?.(row);
+          setDeletingRow(null);
+        }}
       />
     </div>
   );

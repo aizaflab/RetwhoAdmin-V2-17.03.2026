@@ -4,7 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
-import { CloudUploadIcon, MoveLeft, PlusIcon, XIcon } from "lucide-react";
+import {
+  CloudUploadIcon,
+  MoveLeft,
+  PlusIcon,
+  StoreIcon,
+  UtensilsCrossedIcon,
+  WarehouseIcon,
+  XIcon,
+} from "lucide-react";
 import {
   Checkbox,
   Field,
@@ -21,19 +29,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select/Select";
+import { SearchSelect } from "@/components/ui/select/SearchSelect";
 import { HugeCalender } from "@/components/ui/calendar/HugeCalender";
+import { useGetShopOptionsQuery } from "@/featured/promotion/promotionApiSlice";
 import { getApiErrorMessage, getApiErrorStatus } from "@/lib/apiError";
 
 import {
   PROMOTION_STATUS_OPTIONS,
   PROMOTION_TYPE_OPTIONS,
   TARGET_AUDIENCE_OPTIONS,
+  audienceLabel,
 } from "../_data/promotion-options";
 import type {
   Promotion,
   PromotionPayload,
   PromotionStatus,
   PromotionType,
+  ShopOption,
   TargetAudience,
 } from "../_types/promotion.types";
 
@@ -62,6 +74,22 @@ const ERROR_FIELD_IDS: [string, string][] = [
   ["priority", "promo-priority"],
   ["bannerImage", "promo-banner"],
 ];
+
+/** Leading option of the shop picker — picking it clears the sponsor. */
+const PLATFORM_WIDE_OPTION = { label: "None — platform-wide", value: "" };
+
+/** Card copy for each audience — the API values are terse shop types. */
+const AUDIENCE_CARDS: Record<
+  TargetAudience,
+  { icon: typeof StoreIcon; hint: string }
+> = {
+  retailer: { icon: StoreIcon, hint: "Stores selling to shoppers" },
+  wholesaler: { icon: WarehouseIcon, hint: "Bulk suppliers" },
+  restaurant: { icon: UtensilsCrossedIcon, hint: "Food service" },
+};
+
+/** Stable fallback so the memo below does not recompute on every render. */
+const NO_SHOPS: ShopOption[] = [];
 
 /** The API rejects anything larger, and the browser can check first. */
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -100,6 +128,7 @@ export default function PromotionForm({
     promotionType: (initialData?.promotionType ?? "banner") as PromotionType,
     videoUrl: initialData?.videoUrl ?? "",
     targetAudience: (initialData?.targetAudience ?? []) as TargetAudience[],
+    shopId: initialData?.shopId ?? "",
     startDate: toDateInput(initialData?.startDate),
     endDate: toDateInput(initialData?.endDate),
     priority: String(initialData?.priority ?? "0"),
@@ -129,6 +158,44 @@ export default function PromotionForm({
   }, [objectUrl]);
 
   const bannerPreview = objectUrl || storedBannerUrl;
+
+  // One audience narrows the request server-side; several fetch every shop
+  // and the list below narrows it to the ticked types. The picker only shows
+  // once an audience is ticked, so there is nothing to fetch before that.
+  const audiences = formData.targetAudience;
+  const {
+    data: shopOptions = NO_SHOPS,
+    isFetching: isFetchingShops,
+    isError: isShopOptionsError,
+  } = useGetShopOptionsQuery(
+    audiences.length === 1 ? audiences[0] : undefined,
+    { skip: audiences.length === 0 },
+  );
+
+  const shopSelectOptions = useMemo(
+    () => [
+      PLATFORM_WIDE_OPTION,
+      ...shopOptions
+        .filter((shop) => audiences.includes(shop.businessType))
+        .map((shop) => ({
+          label: shop.label,
+          value: shop.value,
+          // With several types ticked the names alone do not say which is which.
+          ...(audiences.length > 1
+            ? { description: audienceLabel(shop.businessType) }
+            : {}),
+        })),
+    ],
+    [shopOptions, audiences],
+  );
+
+  // The sponsor's type, from the loaded list or — before it lands in edit
+  // mode — from the shop the API embedded in the promotion.
+  const selectedShopType =
+    shopOptions.find((shop) => shop.value === formData.shopId)?.businessType ??
+    (formData.shopId && formData.shopId === initialData?.shopId
+      ? initialData?.shop?.businessType
+      : undefined);
 
   // The earliest day the end date may land on. `validate()` wants the end
   // strictly after the start, so the day after — handing the picker the start
@@ -166,13 +233,25 @@ export default function PromotionForm({
     setBannerFile(file);
   };
 
-  const toggleAudience = (audience: TargetAudience) => {
-    setFormData((prev) => ({
-      ...prev,
-      targetAudience: prev.targetAudience.includes(audience)
-        ? prev.targetAudience.filter((a) => a !== audience)
-        : [...prev.targetAudience, audience],
-    }));
+  // Takes the wanted state rather than flipping, so a stray repeat event
+  // cannot undo the click that caused it.
+  const setAudience = (audience: TargetAudience, checked: boolean) => {
+    setFormData((prev) => {
+      const without = prev.targetAudience.filter((a) => a !== audience);
+      const targetAudience = checked ? [...without, audience] : without;
+
+      // Unticking the sponsor's own type would leave a shop selected that the
+      // picker no longer offers, so the sponsor goes with it.
+      const shopStillOffered =
+        !selectedShopType || targetAudience.includes(selectedShopType);
+
+      return {
+        ...prev,
+        targetAudience,
+        shopId:
+          shopStillOffered && targetAudience.length > 0 ? prev.shopId : "",
+      };
+    });
     setErrors((prev) => ({ ...prev, targetAudience: "" }));
   };
 
@@ -269,6 +348,12 @@ export default function PromotionForm({
       priority: Number(formData.priority),
       status: formData.status,
       tags: formData.tags,
+      // An edit sends `null` to drop a sponsor; a create just leaves it out.
+      ...(formData.shopId
+        ? { shopId: formData.shopId }
+        : isEdit
+          ? { shopId: null }
+          : {}),
       ...(formData.description.trim()
         ? { description: formData.description.trim() }
         : {}),
@@ -455,7 +540,7 @@ export default function PromotionForm({
                 </Field>
               </div>
 
-              {/* Audience */}
+              {/* Audience + sponsor */}
               <Field>
                 <FieldLabel>
                   Target Audience{" "}
@@ -463,25 +548,107 @@ export default function PromotionForm({
                     (optional)
                   </span>
                 </FieldLabel>
-                <div className="flex flex-wrap gap-4 pt-1">
+                <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-3">
                   {TARGET_AUDIENCE_OPTIONS.map((option) => {
                     const value = String(option.value) as TargetAudience;
+                    const checked = audiences.includes(value);
+                    const { icon: Icon, hint } = AUDIENCE_CARDS[value];
                     return (
                       <label
                         key={value}
-                        className="flex cursor-pointer items-center gap-2 text-sm text-foreground"
+                        className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
+                          checked
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/40 hover:bg-muted/40"
+                        }`}
                       >
+                        <span
+                          className={`size-9 shrink-0 flex items-center justify-center rounded-md transition-colors ${
+                            checked
+                              ? "bg-primary/10 text-primary"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          <Icon className="size-4.5" />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium text-foreground">
+                            {option.label}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {hint}
+                          </span>
+                        </span>
                         <Checkbox
-                          checked={formData.targetAudience.includes(value)}
-                          onCheckedChange={() => toggleAudience(value)}
+                          checked={checked}
+                          onCheckedChange={(next) => setAudience(value, next)}
                         />
-                        {option.label}
                       </label>
                     );
                   })}
                 </div>
-                {errors.targetAudience && (
+                {errors.targetAudience ? (
                   <FieldError>{errors.targetAudience}</FieldError>
+                ) : (
+                  audiences.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Pick an audience to aim this at a shop type and choose a
+                      sponsoring shop.
+                    </p>
+                  )
+                )}
+
+                {/* Sponsor — offered once there is an audience to pick from */}
+                {audiences.length > 0 && (
+                  <div className="mt-2 space-y-2 rounded-lg border border-border/70 bg-muted/30 p-3 sm:p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <FieldLabel htmlFor="promo-shop">
+                        Shop Account{" "}
+                        <span className="text-xs font-normal text-muted-foreground">
+                          (optional)
+                        </span>
+                      </FieldLabel>
+                      {!isFetchingShops && !isShopOptionsError && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                          {shopSelectOptions.length - 1} available
+                        </span>
+                      )}
+                    </div>
+                    <SearchSelect
+                      // SearchSelect only reads `value` on mount, so a sponsor
+                      // cleared by unticking its audience needs a remount to
+                      // show. Keyed on the loaded list too, so the label
+                      // appears once the options arrive.
+                      key={`${formData.shopId}|${shopSelectOptions.length}`}
+                      id="promo-shop"
+                      fullWidth
+                      className="w-full"
+                      startIcon={<StoreIcon className="size-4" />}
+                      options={shopSelectOptions}
+                      value={formData.shopId}
+                      placeholder={
+                        isFetchingShops ? "Loading shops…" : "Select a shop"
+                      }
+                      searchPlaceholder="Search shops..."
+                      disabled={isFetchingShops && shopOptions.length === 0}
+                      onValueChange={(val) => set("shopId", val)}
+                    />
+                    {isShopOptionsError ? (
+                      <FieldError>
+                        Could not load shops. Reload the page to try again.
+                      </FieldError>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {formData.shopId
+                          ? "This promotion runs as sponsored by the selected shop."
+                          : `Lists ${audiences
+                              .map((a) => audienceLabel(a).toLowerCase())
+                              .join(
+                                " & ",
+                              )} only. Leave empty for a platform-wide promotion.`}
+                      </p>
+                    )}
+                  </div>
                 )}
               </Field>
 

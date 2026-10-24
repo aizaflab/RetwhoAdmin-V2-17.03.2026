@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { SupportResource } from "../../_types/support.types";
+import { BookOpen } from "lucide-react";
 import { Input } from "@/components/ui";
 import { Button } from "@/components/ui/button/Button";
 import {
@@ -15,79 +15,96 @@ import {
 import { Table, Column } from "@/components/ui/table/Table";
 import { SimpleTooltip } from "@/components/ui/tooltip/Tooltip";
 import DeleteModal from "@/components/ui/modal/DeleteModal";
-import ResourceModal from "./ResourceModal";
 import {
   PlusIcon,
   EditIcon,
   DeleteIcon,
   SearchIcon,
+  EyeIcon,
 } from "@/components/icons/Icons";
 
-const STATUS_STYLES: Record<string, string> = {
-  active:
-    "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400",
-  inactive: "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400",
-};
-
-const RESOURCE_STATUS_OPTIONS = [
-  { value: "all", label: "All Status" },
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-];
+import {
+  SUPPORT_STATUS_FILTER_OPTIONS,
+  supportStatusStyle,
+} from "../../_data/support-options";
+import type {
+  SupportResourceItem,
+  SupportResourcePayload,
+} from "../../_types/support.types";
+import ResourceModal from "./ResourceModal";
+import ResourceViewDrawer from "./ResourceViewDrawer";
 
 interface ResourceListTableProps {
-  resources: SupportResource[];
+  resources: SupportResourceItem[];
+  /** Row count across every page — drives the pagination footer. */
+  total: number;
+  loading?: boolean;
+  /** Search / filter / paging are all server-side; this component only reports
+   *  the changes and renders whatever the API sent back. */
+  search: string;
+  onSearchChange: (value: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (value: string) => void;
+  page: number;
+  onPageChange: (page: number) => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
+  /** Create when no id is given, update when there is one. */
+  onSaveResource: (
+    payload: SupportResourcePayload,
+    id?: string,
+  ) => Promise<unknown>;
+  savingResource?: boolean;
+  onDelete?: (resource: SupportResourceItem) => Promise<void> | void;
+  deleting?: boolean;
 }
 
+const STATUS_FILTER_OPTIONS = SUPPORT_STATUS_FILTER_OPTIONS.map((o) => ({
+  value: String(o.value),
+  label: o.label,
+}));
+
 export default function ResourceListTable({
-  resources: initialResources,
+  resources,
+  total,
+  loading,
+  search,
+  onSearchChange,
+  statusFilter,
+  onStatusFilterChange,
+  page,
+  onPageChange,
+  limit,
+  onLimitChange,
+  onSaveResource,
+  savingResource,
+  onDelete,
+  deleting,
 }: ResourceListTableProps) {
-  const [resources, setResources] =
-    useState<SupportResource[]>(initialResources);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editing, setEditing] = useState<SupportResource | null>(null);
-  const [deleting, setDeleting] = useState<SupportResource | null>(null);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [editing, setEditing] = useState<SupportResourceItem | null>(null);
+  const [viewing, setViewing] = useState<SupportResourceItem | null>(null);
+  const [deletingRow, setDeletingRow] = useState<SupportResourceItem | null>(
+    null,
+  );
 
-  const filtered = resources.filter((r) => {
-    const matchSearch =
-      r.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.slug.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || r.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
-
-  const handleSave = (data: Partial<SupportResource>) => {
-    setResources((prev) => {
-      const exists = prev.find((r) => r.id === data.id);
-      if (exists) {
-        return prev.map((r) => (r.id === data.id ? { ...r, ...data } : r));
-      }
-      return [data as SupportResource, ...prev];
-    });
-    setIsAddOpen(false);
-    setEditing(null);
-  };
-
-  const handleDelete = (row: SupportResource | null) => {
-    if (!row) return;
-    setResources((prev) => prev.filter((r) => r.id !== row.id));
-    setDeleting(null);
-  };
-
-  const columns: Column<SupportResource>[] = [
+  const columns: Column<SupportResourceItem>[] = [
     {
-      id: "name",
+      id: "title",
       header: "Resource",
       cell: (_v, row) => (
-        <div>
-          <p className="text-sm font-semibold text-black dark:text-white">
-            {row.name}
-          </p>
-          <p className="text-[10px] text-text5">/{row.slug}</p>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/5 dark:bg-primary/20 shrink-0">
+            <BookOpen className="w-4 h-4 text-primary dark:text-blue-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate max-w-56">
+              {row.title}
+            </p>
+            <p className="text-[10px] text-muted-foreground truncate max-w-56">
+              /{row.slug}
+            </p>
+          </div>
         </div>
       ),
     },
@@ -96,19 +113,12 @@ export default function ResourceListTable({
       header: "Description",
       className: "hidden md:table-cell",
       cell: (_v, row) => (
-        <p className="text-sm text-text6 dark:text-text5 max-w-xs truncate">
+        <p
+          className="text-sm text-muted-foreground max-w-xs truncate"
+          title={row.description}
+        >
           {row.description}
         </p>
-      ),
-    },
-    {
-      id: "articleCount",
-      header: "Articles",
-      className: "text-center",
-      cell: (_v, row) => (
-        <span className="text-sm font-semibold text-text6 dark:text-text5">
-          {row.articleCount}
-        </span>
       ),
     },
     {
@@ -116,8 +126,27 @@ export default function ResourceListTable({
       header: "Created",
       className: "hidden sm:table-cell",
       cell: (_v, row) => (
-        <span className="text-sm text-text6 dark:text-text5">
-          {format(new Date(row.createdAt), "dd MMM yyyy")}
+        <div>
+          <p className="text-sm text-foreground">
+            {format(new Date(row.createdAt), "dd MMM yyyy")}
+          </p>
+          {row.createdBy?.name && (
+            <p className="text-[10px] text-muted-foreground">
+              by {row.createdBy.name}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "publishedAt",
+      header: "Published",
+      className: "hidden lg:table-cell",
+      cell: (_v, row) => (
+        <span className="text-sm text-foreground">
+          {row.publishedAt
+            ? format(new Date(row.publishedAt), "dd MMM yyyy")
+            : "—"}
         </span>
       ),
     },
@@ -126,26 +155,38 @@ export default function ResourceListTable({
       header: "Status",
       className: "text-center",
       cell: (_v, row) => (
-        <div
-          className={`text-xs  font-semibold w-18 center py-1 rounded-full capitalize ${STATUS_STYLES[row.status]}`}
+        <span
+          className={`text-xs font-semibold px-2.5 w-20 center py-1 rounded-full capitalize ${supportStatusStyle(row.status)}`}
         >
           {row.status}
-        </div>
+        </span>
       ),
     },
     {
-      id: "actions" as keyof SupportResource,
+      id: "actions" as keyof SupportResourceItem,
       header: "Actions",
       className: "justify-end text-right",
       cell: (_v, row) => (
         <div className="flex items-center justify-end gap-1">
+          <SimpleTooltip content="View" position="top">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setViewing(row);
+              }}
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
+            >
+              <EyeIcon className="w-4 h-4" />
+            </button>
+          </SimpleTooltip>
+
           <SimpleTooltip content="Edit" position="top">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setEditing(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-primary/50 hover:text-primary transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-primary/50 hover:text-primary transition-all duration-150"
             >
               <EditIcon className="w-3.5 h-3.5" />
             </button>
@@ -155,9 +196,9 @@ export default function ResourceListTable({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setDeleting(row);
+                setDeletingRow(row);
               }}
-              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 dark:border-darkBorder/50 bg-white dark:bg-darkBg text-text6 dark:text-text5 hover:border-rose-400/50 hover:text-rose-500 transition-all duration-150"
+              className="cursor-pointer center w-8 h-8 rounded-lg border border-border/60 bg-card text-foreground hover:border-destructive/50 hover:text-destructive transition-all duration-150"
             >
               <DeleteIcon className="w-4 h-4" />
             </button>
@@ -177,23 +218,25 @@ export default function ResourceListTable({
             <Input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search resources..."
-              startIcon={<SearchIcon className="w-4 h-4 text-text5" />}
-              className="h-10 w-full bg-white dark:bg-darkBg dark:border-darkBorder/80"
+              startIcon={
+                <SearchIcon className="w-4 h-4 text-muted-foreground" />
+              }
+              className="h-10 w-full bg-card"
             />
           </div>
 
-          <div className="relative w-32">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <div className="relative w-36">
+            <Select value={statusFilter} onValueChange={onStatusFilterChange}>
               <SelectTrigger className="h-10 rounded-md bg-card">
                 <SelectValue
-                  options={RESOURCE_STATUS_OPTIONS}
+                  options={STATUS_FILTER_OPTIONS}
                   placeholder="All Status"
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectItems options={RESOURCE_STATUS_OPTIONS} />
+                <SelectItems options={STATUS_FILTER_OPTIONS} />
               </SelectContent>
             </Select>
           </div>
@@ -209,44 +252,67 @@ export default function ResourceListTable({
       </div>
 
       {/* Table */}
-      <Table<SupportResource>
-        data={filtered}
+      <Table<SupportResourceItem>
+        data={resources}
         columns={columns}
+        loading={loading}
         pagination
-        totalData={filtered.length}
+        totalData={total}
         page={page}
-        setPage={setPage}
+        setPage={onPageChange}
         limit={limit}
-        setLimit={setLimit}
+        setLimit={onLimitChange}
         bordered
+        onRowClick={setViewing}
         emptyMessage="No resources found"
-        headerColor="bg-gray-50/80 dark:bg-darkPrimary/50"
+        headerColor="bg-muted/50"
         tableClassName="min-w-full"
         rowClass="py-2.5"
+      />
+
+      {/* View */}
+      <ResourceViewDrawer
+        open={!!viewing}
+        resource={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={(row) => {
+          setViewing(null);
+          setEditing(row);
+        }}
       />
 
       {/* Add / Edit Modal */}
       {(isAddOpen || editing) && (
         <ResourceModal
+          // Remounted per resource so the form is seeded from the row opened.
+          key={editing?._id ?? "new"}
           resource={editing}
           onClose={() => {
             setIsAddOpen(false);
             setEditing(null);
           }}
-          onSave={handleSave}
+          onSave={onSaveResource}
+          saving={savingResource}
         />
       )}
 
-      {/* Delete Modal */}
+      {/* Delete Confirmation Modal */}
       <DeleteModal
         title="Delete Resource"
-        text={`Are you sure you want to delete "${deleting?.name}"? All linked articles may be affected.`}
-        deleteModal={!!deleting}
+        text={`Delete the resource "${deletingRow?.title}"? A resource that still holds articles, chatbot answers or videos cannot be deleted.`}
+        deleteModal={!!deletingRow}
         setDeleteModal={(open) => {
-          if (!open) setDeleting(null);
+          if (!open) setDeletingRow(null);
         }}
-        selectedRow={deleting}
-        handleDelete={handleDelete}
+        selectedRow={deletingRow}
+        isLoading={deleting}
+        handleDelete={async (row) => {
+          if (!row) return;
+          await onDelete?.(row);
+          // Closed unconditionally: on failure the page has already toasted
+          // the reason (content still filed under it).
+          setDeletingRow(null);
+        }}
       />
     </div>
   );

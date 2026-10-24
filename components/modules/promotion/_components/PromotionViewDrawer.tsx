@@ -177,7 +177,7 @@ export default function PromotionViewDrawer({
           <DetailRow label="Ends" value={formatDate(shown.endDate)} />
           <DetailRow
             label="Sponsor"
-            value={shown.wholesaler?.companyName || "Platform-wide"}
+            value={shown.shop?.companyName || "Platform-wide"}
           />
           <DetailRow
             label="Video URL"

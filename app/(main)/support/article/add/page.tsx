@@ -1,38 +1,46 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { SupportArticle } from "@/components/modules/support/_types/support.types";
-import { MOCK_SUPPORT_RESOURCES } from "@/components/modules/support/_data/mock-support";
-import ArticleForm from "@/components/modules/support/_components/article/ArticleForm";
 import { MoveLeft } from "lucide-react";
-import { toast } from "sonner";
+import ArticleForm from "@/components/modules/support/_components/article/ArticleForm";
+import type { SupportArticlePayload } from "@/components/modules/support/_types/support.types";
+import {
+  useCreateSupportArticleMutation,
+  useGetSupportResourceOptionsQuery,
+} from "@/featured/support/supportApiSlice";
 
 export default function AddArticlePage() {
   const router = useRouter();
 
-  const handleSave = (data: Partial<SupportArticle>) => {
-    console.log("Creating new article:", data);
-    toast.success("Article created successfully!");
-    router.push("/support/article");
-  };
+  const { data: resourceOptions, isLoading: resourcesLoading } =
+    useGetSupportResourceOptionsQuery(undefined);
+  const [createArticle, { isLoading }] = useCreateSupportArticleMutation();
+
+  // `.unwrap()` rethrows the API error, which is what lets the form surface
+  // the reason instead of failing silently.
+  const handleSave = (payload: SupportArticlePayload) =>
+    createArticle(payload).unwrap();
 
   return (
-    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-white dark:bg-darkBg border-text4/30 dark:border-darkBorder/50">
+    <div className="min-h-[calc(100dvh-93px)] sm:min-h-[calc(100dvh-109px)] p-3 sm:p-5 rounded-lg border bg-card border-border/70">
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.back()}
-          className="size-8 center rounded-lg bg-white dark:bg-darkPrimary border border-border/50 dark:border-darkBorder/50 hover:bg-gray-50 dark:hover:bg-darkBorder/40 cursor-pointer"
+          className="size-8 center rounded-lg bg-popover border border-border/50 hover:bg-muted/50 cursor-pointer"
         >
-          <MoveLeft className="w-5 h-5 text-black dark:text-white" />
+          <MoveLeft className="w-5 h-5 text-foreground" />
         </button>
-        <div>
-          <h1 className="sm:text-2xl text-xl font-medium text-black dark:text-white">
-            Add New Article
-          </h1>
-        </div>
+        <h1 className="sm:text-2xl text-xl font-medium text-foreground">
+          Add New Article
+        </h1>
       </div>
 
-      <ArticleForm resources={MOCK_SUPPORT_RESOURCES} onSave={handleSave} />
+      <ArticleForm
+        resourceOptions={resourceOptions ?? []}
+        resourcesLoading={resourcesLoading}
+        onSave={handleSave}
+        saving={isLoading}
+      />
     </div>
   );
 }
