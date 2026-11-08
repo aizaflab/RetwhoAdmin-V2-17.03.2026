@@ -234,6 +234,27 @@ export const ADMIN_MENU: AdminMenuItem[] = [
         requiredPermissions: [PERMISSIONS.WITHDRAW_REPORT_LIST],
       },
       {
+        id: "setting-commission",
+        title: "Commission & Fees",
+        type: "item",
+        path: "/setting/commission",
+        requiredPermissions: [PERMISSIONS.ADMIN_SETTINGS_VIEW],
+      },
+      {
+        id: "setting-wholesaler-commission",
+        title: "Wholesaler Commission",
+        type: "item",
+        path: "/setting/wholesaler-commission",
+        requiredPermissions: [PERMISSIONS.ADMIN_SETTINGS_VIEW],
+      },
+      {
+        id: "setting-commission-collection",
+        title: "Commission Collection",
+        type: "item",
+        path: "/setting/commission/collection",
+        requiredPermissions: [PERMISSIONS.ADMIN_SETTINGS_VIEW],
+      },
+      {
         id: "admin-settings",
         title: "Admin Settings",
         type: "item",
